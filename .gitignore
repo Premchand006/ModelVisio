@@ -1,0 +1,31 @@
+node_modules/
+dist/
+dist-ssr/
+*.vsix
+*.local
+.turbo/
+.vercel/
+.netlify/
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env / secrets — never commit the Gemini API key
+.env
+.env.*
+!.env.example
+
+# Tauri / Rust build artifacts
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/gen/schemas/

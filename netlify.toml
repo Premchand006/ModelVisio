@@ -1,0 +1,9 @@
+# Netlify deploy config for the web app (monorepo root). Set GEMINI_API_KEY
+# in the Netlify site environment so the chat function can reach the Gemini API.
+[build]
+  command = "pnpm install --frozen-lockfile && pnpm --filter @modelvisio/web build"
+  publish = "apps/web/dist"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"

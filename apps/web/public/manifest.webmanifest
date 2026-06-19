@@ -1,0 +1,14 @@
+{
+  "name": "ModelVisio",
+  "short_name": "ModelVisio",
+  "description": "AI-native neural-network model analyzer for edge deployment.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#05070E",
+  "theme_color": "#05070E",
+  "icons": [
+    { "src": "/icon-192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "/icon-512.png", "type": "image/png", "sizes": "512x512" },
+    { "src": "/apple-touch-icon.png", "type": "image/png", "sizes": "180x180" }
+  ]
+}

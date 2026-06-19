@@ -1,0 +1,10 @@
+# Everything except the built extension, webview assets, and manifest.
+src/**
+webview/**
+node_modules/**
+vite.webview.config.ts
+tsconfig*.json
+.vscode/**
+**/*.map
+**/tsconfig.tsbuildinfo
+app-icon.png

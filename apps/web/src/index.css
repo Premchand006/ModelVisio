@@ -1,0 +1,2 @@
+/* ModelVisio's core UI ships its own reset + fonts via an injected
+   <style> block (see App.tsx). No global stylesheet needed here. */

@@ -1,0 +1,29 @@
+[package]
+name = "modelvisio"
+version = "0.0.0"
+description = "ModelVisio — desktop"
+authors = ["ModelVisio"]
+edition = "2021"
+rust-version = "1.77.2"
+
+[lib]
+name = "modelvisio_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# AI copilot proxy: holds GEMINI_API_KEY on the Rust side, calls the Gemini API.
+# rustls-tls avoids an OpenSSL system dependency on Windows/Linux builds.
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+
+[features]
+# By default Tauri runs in production mode; custom-protocol is enabled by Tauri CLI.
+custom-protocol = ["tauri/custom-protocol"]
