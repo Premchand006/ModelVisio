@@ -11,6 +11,10 @@ export const config = { maxDuration: 60 };
 
 const MODEL = process.env.MODELVISIO_MODEL || "gemini-2.5-flash";
 const WEB_SEARCH = (process.env.MODELVISIO_WEB_SEARCH || "on") !== "off";
+const THINKING = (process.env.MODELVISIO_THINKING || "off") === "on";
+// Vercel allows maxDuration (60s); keep a budget just under it so the proxy
+// returns a clean error before the platform kills the function.
+const TIME_BUDGET_MS = Number(process.env.MODELVISIO_TIMEOUT_MS) || 55000;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
@@ -24,7 +28,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
   try {
     const { system, messages } = (req.body ?? {}) as { system?: string; messages?: unknown[] };
-    const out = await runChatProxy({ key, system: system ?? "", messages: messages ?? [], model: MODEL, webSearch: WEB_SEARCH });
+    const out = await runChatProxy({
+      key, system: system ?? "", messages: messages ?? [],
+      model: MODEL, webSearch: WEB_SEARCH, thinking: THINKING, timeBudgetMs: TIME_BUDGET_MS,
+    });
     res.status(200).json(out);
   } catch (e) {
     res.status(500).json({ error: e instanceof Error ? e.message : "Proxy error" });

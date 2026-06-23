@@ -14,7 +14,7 @@ const repoRoot = resolve(here, "../..");
  * the repo-root `.env`. The key stays on the Node dev server — it is never sent
  * to the browser. In production the real serverless function handles this route.
  */
-function chatProxyDev(key: string | undefined, model: string, webSearch: boolean): PluginOption {
+function chatProxyDev(key: string | undefined, model: string, webSearch: boolean, thinking: boolean): PluginOption {
   return {
     name: "modelvisio-chat-proxy-dev",
     apply: "serve",
@@ -31,7 +31,7 @@ function chatProxyDev(key: string | undefined, model: string, webSearch: boolean
           const chunks: Buffer[] = [];
           for await (const c of req) chunks.push(c as Buffer);
           const { system, messages } = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
-          const out = await runChatProxy({ key, system: system ?? "", messages: messages ?? [], model, webSearch });
+          const out = await runChatProxy({ key, system: system ?? "", messages: messages ?? [], model, webSearch, thinking });
           res.statusCode = 200;
           res.end(JSON.stringify(out));
         } catch (e) {
@@ -49,8 +49,9 @@ export default defineConfig(({ mode }) => {
   const key = env.GEMINI_API_KEY || env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   const model = env.MODELVISIO_MODEL || process.env.MODELVISIO_MODEL || "gemini-2.5-flash";
   const webSearch = (env.MODELVISIO_WEB_SEARCH || process.env.MODELVISIO_WEB_SEARCH || "on") !== "off";
+  const thinking = (env.MODELVISIO_THINKING || process.env.MODELVISIO_THINKING || "off") === "on";
   return {
-    plugins: [react(), chatProxyDev(key, model, webSearch)],
+    plugins: [react(), chatProxyDev(key, model, webSearch, thinking)],
     envDir: repoRoot,
     server: { port: 5173 },
   };
