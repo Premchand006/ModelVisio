@@ -7,3 +7,12 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
+
+# The copilot client POSTs to /api/chat; the function is deployed at
+# /.netlify/functions/chat. status=200 rewrites (proxies) the request so the URL
+# stays /api/chat; force=true makes it win over any static/SPA fallback.
+[[redirects]]
+  from = "/api/chat"
+  to = "/.netlify/functions/chat"
+  status = 200
+  force = true
