@@ -5,16 +5,19 @@ import { runChatProxy } from "@modelvisio/ai/proxy";
 // routes /api/chat here.
 //
 // Netlify synchronous functions are killed at a HARD 10s on the free tier (not
-// raisable), and the platform then returns an opaque 502 — not our JSON. So we
-// give the proxy a sub-10s time budget: it disables slow "thinking", never
-// sleeps past the deadline on a 429, and falls back to a fast non-grounded
-// answer if grounded search runs long — so the chat answers instead of 502-ing.
-// Tune with MODELVISIO_TIMEOUT_MS; set MODELVISIO_WEB_SEARCH=off to skip search
-// entirely, or MODELVISIO_THINKING=on if you raise the timeout on a paid plan.
+// raisable), and the platform then returns an opaque 502 — not our JSON. The
+// 10s clock also includes cold-start/init time, so we keep a conservative budget
+// AND default Google-Search grounding OFF here: grounding is the slow path and,
+// combined with a cold start, is the main cause of the free-tier 502. A plain
+// (non-grounded) reply returns in ~1s and stays comfortably inside the limit.
+//
+// To re-enable citations, set MODELVISIO_WEB_SEARCH=on (best paired with a paid
+// plan + a higher MODELVISIO_TIMEOUT_MS). Vercel's 60s shell keeps grounding on.
+// MODELVISIO_THINKING=on only if you raise the timeout on a longer-limit plan.
 const MODEL = process.env.MODELVISIO_MODEL || "gemini-2.5-flash";
-const WEB_SEARCH = (process.env.MODELVISIO_WEB_SEARCH || "on") !== "off";
+const WEB_SEARCH = (process.env.MODELVISIO_WEB_SEARCH || "off") !== "off";
 const THINKING = (process.env.MODELVISIO_THINKING || "off") === "on";
-const TIME_BUDGET_MS = Number(process.env.MODELVISIO_TIMEOUT_MS) || 8500;
+const TIME_BUDGET_MS = Number(process.env.MODELVISIO_TIMEOUT_MS) || 7000;
 
 export default async (req: Request): Promise<Response> => {
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
