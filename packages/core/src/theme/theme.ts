@@ -18,16 +18,18 @@ export interface ThemePalette {
 
 export const TH: Record<ThemeName, ThemePalette> = {
   dark: {
+    // Neutral near-black surfaces (zinc/neutral ramp) — no blue tint. Reads like a
+    // serious dev tool (GitHub/Vercel dark), not a glossy "AI" product.
     mode: "dark",
-    bg: "#05070E", bg1: "#0B1120", bg2: "#111827", bg3: "#1F2937",
-    bdr: "#1E293B", bdr2: "#334155",
-    t0: "#F0F6FC", t1: "#D7E0EC", t2: "#9AA8BC", t3: "#6B7A8E",
-    acc: "#38BDF8", acc2: "#818CF8", acc3: "#2DD4BF",
+    bg: "#0A0A0B", bg1: "#141417", bg2: "#1C1C20", bg3: "#2A2A30",
+    bdr: "#27272E", bdr2: "#3A3A44",
+    t0: "#F4F4F5", t1: "#D2D2D8", t2: "#9A9AA4", t3: "#6E6E78",
+    acc: "#4D8DFF", acc2: "#9B8AE6", acc3: "#3FB6A8",
     suc: "#34D399", wrn: "#FBBF24", err: "#F87171",
-    glow: "rgba(56,189,248,0.15)",
+    glow: "rgba(255,255,255,0.06)",
     cI: "#6EE7B7", cB: "#60A5FA", cN: "#C084FC", cH: "#F472B6", cO: "#FBBF24",
-    nodeGrad1: "#0F172A", nodeGrad2: "#1E293B",
-    glass: "rgba(15,23,42,0.7)", glassBdr: "rgba(56,189,248,0.2)",
+    nodeGrad1: "#141417", nodeGrad2: "#1C1C20",
+    glass: "rgba(20,20,23,0.88)", glassBdr: "#27272E",
   },
   light: {
     mode: "light",

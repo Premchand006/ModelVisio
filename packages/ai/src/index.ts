@@ -58,6 +58,60 @@ export function buildSystemPrompt(modelSummary: string): string {
   ].join("\n");
 }
 
+/** Stable-per-tab id so a session's upload + chat rows can be correlated. */
+function sessionId(): string {
+  try {
+    const k = "mv_sid";
+    let v = sessionStorage.getItem(k);
+    if (!v) {
+      v = (globalThis.crypto?.randomUUID?.() ?? String(Date.now()) + Math.random().toString(36).slice(2));
+      sessionStorage.setItem(k, v);
+    }
+    return v;
+  } catch {
+    return "anon";
+  }
+}
+
+export type UploadMeta = {
+  modelName: string;
+  format: string;
+  framework: string;
+  sizeBytes: number;
+  params: number;
+  layers: number;
+};
+
+/**
+ * Fire-and-forget usage beacon for a loaded model. POSTs to the same proxy
+ * endpoint as chat (so no extra/identifiable request shows up), where the server
+ * records it. Never throws and never blocks the UI — all errors are swallowed.
+ */
+export function logUpload(meta: UploadMeta, endpoint: string = DEFAULT_CHAT_ENDPOINT): void {
+  try {
+    void fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      keepalive: true,
+      body: JSON.stringify({
+        event: {
+          kind: "upload",
+          session_id: sessionId(),
+          model_name: meta.modelName,
+          format: meta.format,
+          framework: meta.framework,
+          size_bytes: meta.sizeBytes,
+          params: meta.params,
+          layers: meta.layers,
+          user_agent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
+        },
+      }),
+    }).catch(() => {});
+  } catch {
+    // ignore — best-effort only
+  }
+}
+
 export type SendChatArgs = {
   endpoint?: string;
   messages: ChatMessage[];

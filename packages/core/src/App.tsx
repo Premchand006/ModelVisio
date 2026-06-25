@@ -15,11 +15,13 @@ import { HWReport } from "./components/HWReport";
 import { Converter } from "./components/Converter";
 import { DeployRecipe } from "./components/DeployRecipe";
 import { Chat } from "./components/Chat";
+import { logUpload } from "@modelvisio/ai";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { BuildingPage } from "./components/BuildingPage";
 import { applyFix, type FixId } from "./fixes/transforms";
-import { DESKTOP_DOWNLOAD_URL, VSCODE_MARKETPLACE_URL } from "./data/links";
 import { useViewport } from "./hooks/useViewport";
 import logoUrl from "./assets/logo.png";
+import graphHexUrl from "./assets/graph-hex.png";
 
 const ACCEPT = FORMAT_SUPPORT.flatMap((f) => f.exts).map((e) => "." + e).join(",");
 
@@ -50,6 +52,9 @@ export function App({
   const [fixUndo, setFixUndo] = useState<Model[]>([]);
   const [rightTab, setRightTab] = useState("inspector");
   const [drag, setDrag] = useState(false);
+  // When set, shows the full-screen "Building" (coming-soon) page for a surface
+  // that isn't shipped yet — e.g. the desktop app or VS Code extension.
+  const [building, setBuilding] = useState<string | null>(null);
   const [sidebarW, setSidebarW] = useState(400);
   const [resizeHover, setResizeHover] = useState(false);
   const { vw, narrow, compact } = useViewport();
@@ -99,6 +104,11 @@ export function App({
       const buf = await f.arrayBuffer();
       const m = await parseBufferInWorker(buf, f.name);
       setModel(m); setModelBytes(buf); setSel(null); setFixUndo([]);
+      logUpload({
+        modelName: m.name, format: m.format, framework: m.framework,
+        sizeBytes: m.sizeBytes, params: m.layers.reduce((s, l) => s + l.params, 0),
+        layers: m.layers.length,
+      });
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -121,23 +131,24 @@ export function App({
 
   return <ThemeCtx.Provider value={t}>
     <ErrorBoundary>
-    <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: t.bg, color: t.t0, fontFamily: "'Inter',-apple-system,sans-serif", overflow: "hidden", transition: "background .3s" }}>
+    {building && <BuildingPage label={building} theme={theme} onToggleTheme={() => setTheme((p) => (p === "dark" ? "light" : "dark"))} onBack={() => setBuilding(null)} />}
+    <div style={{ height: "100dvh", display: "flex", flexDirection: "column", background: t.bg, color: t.t0, fontFamily: "'Inter',-apple-system,sans-serif", overflow: "hidden", transition: "background .3s" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700;800&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
         ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:${t.bdr};border-radius:2px}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
         ::selection{background:${t.acc}44}`}</style>
 
-      {/* Header */}
-      <header style={{ padding: compact ? "6px 10px" : "6px 14px", borderBottom: `1px solid ${t.bdr}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap", flexShrink: 0, background: t.glass, backdropFilter: "blur(16px)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-          <img src={logoUrl} alt="ModelVisio" width={28} height={28} style={{ width: 28, height: 28, borderRadius: 7, objectFit: "cover", boxShadow: `0 0 20px ${t.acc}40`, flexShrink: 0 }} />
+      {/* Header — a full-width ribbon with real presence */}
+      <header style={{ padding: compact ? "10px 14px" : "13px 24px", borderBottom: `1px solid ${t.bdr}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, rowGap: 8, flexWrap: "wrap", flexShrink: 0, background: t.bg1 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 11, minWidth: 0 }}>
+          <img src={logoUrl} alt="ModelVisio" width={34} height={34} style={{ width: 34, height: 34, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 15, fontWeight: 800, color: t.t0, fontFamily: "'Space Grotesk'", letterSpacing: -.3 }}>ModelVisio</div>
-            {!compact && <div style={{ fontSize: 9.5, color: t.t2, letterSpacing: .5, textTransform: "uppercase", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>AI-Native Model Analyzer · Edge Deployment Intelligence</div>}
+            <div style={{ fontSize: 17, fontWeight: 800, color: t.t0, fontFamily: "'Space Grotesk'", letterSpacing: -.3 }}>ModelVisio <span style={{ fontSize: 10.5, fontWeight: 600, color: t.t3 }}>by Premchand</span></div>
+            {!compact && <div style={{ fontSize: 10, color: t.t2, letterSpacing: .5, textTransform: "uppercase", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Model Analyzer · Edge Deployment Intelligence</div>}
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
           {model && <Badge c={t.suc}>{model.format}</Badge>}
           {model && <span style={{ fontSize: 10, color: t.t2, fontFamily: "'JetBrains Mono'", maxWidth: compact ? 90 : 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{model.name}</span>}
           {model && <button type="button" onClick={clearModel} style={{ padding: "2px 6px", borderRadius: 3, border: `1px solid ${t.bdr}`, background: "transparent", color: t.t3, fontSize: 9, cursor: "pointer" }}>✕</button>}
@@ -146,42 +157,47 @@ export function App({
       </header>
 
       {!model ? (
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: compact ? "24px 16px" : 40, gap: compact ? 20 : 28, background: `radial-gradient(ellipse at 50% 40%,${t.acc}08,transparent 70%)`, overflow: "auto" }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: compact ? "24px 16px" : 40, gap: compact ? 20 : 28, background: t.bg, overflow: "auto" }}>
           <div style={{ textAlign: "center" }}>
-            <div key={theme} style={{ display: "inline-block", fontSize: "clamp(30px, 9vw, 54px)", fontWeight: 800, fontFamily: "'Space Grotesk'", letterSpacing: "-0.03em", lineHeight: 1.08, paddingBottom: 6, backgroundImage: `linear-gradient(135deg,${t.acc},${t.acc2},${t.acc3})`, WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent", color: "transparent" }}>ModelVisio</div>
-            <div style={{ fontSize: "clamp(11px, 2.6vw, 14px)", color: t.t2, marginTop: 4 }}>AI-native model analyzer · Compiler pre-flight · Edge deployment intelligence</div>
+            <div style={{ display: "inline-block", fontSize: "clamp(30px, 9vw, 54px)", fontWeight: 800, fontFamily: "'Space Grotesk'", letterSpacing: "-0.03em", lineHeight: 1.08, paddingBottom: 6, color: t.t0 }}>Model<span style={{ color: t.acc }}>Visio</span></div>
+            <div style={{ fontSize: "clamp(11px, 2.6vw, 14px)", color: t.t2, marginTop: 4 }}>Model analyzer · Compiler pre-flight · Edge deployment intelligence</div>
           </div>
           <div onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); handleFile(e.dataTransfer.files[0]); }}
-            style={{ width: "min(480px, 100%)", padding: compact ? "24px 18px" : 40, borderRadius: 16, border: `2px dashed ${drag ? t.acc : t.bdr}`, background: drag ? t.acc + "08" : t.glass, backdropFilter: "blur(12px)", textAlign: "center", transition: "all .2s" }}>
-            <div style={{ fontSize: 32, marginBottom: 6, opacity: .4 }}>⬡</div>
+            style={{ width: "min(480px, 100%)", padding: compact ? "24px 18px" : 40, borderRadius: 14, border: `2px dashed ${drag ? t.acc : t.bdr}`, background: drag ? t.acc + "10" : t.bg1, textAlign: "center", transition: "border-color .2s, background .2s" }}>
+            {/* Node-graph hexagon mark, tinted via CSS mask so it adopts the theme
+                color (works on both the dark and light dropzone). */}
+            <div style={{ width: 82, height: 65, margin: "0 auto 8px", opacity: 0.6, background: t.t2, WebkitMaskImage: `url(${graphHexUrl})`, maskImage: `url(${graphHexUrl})`, WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat", WebkitMaskPosition: "center", maskPosition: "center", WebkitMaskSize: "contain", maskSize: "contain" }} />
             <div style={{ fontSize: 15, fontWeight: 600, color: t.t0, marginBottom: 3 }}>{parsing ? "Parsing model…" : "Drop your model file"}</div>
             <div style={{ fontSize: 11.5, color: t.t2, marginBottom: 16, lineHeight: 1.7 }}>
               {FORMATS.slice(0, 12).join(" · ")}<br />{FORMATS.slice(12).join(" · ")}
             </div>
             {loadError && <div style={{ fontSize: 11, color: t.err, marginBottom: 12, lineHeight: 1.4 }}>{loadError}</div>}
             <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
-              <label style={{ padding: "9px 24px", borderRadius: 7, background: `linear-gradient(135deg,${t.acc},${t.acc2})`, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", boxShadow: `0 0 20px ${t.acc}30`, whiteSpace: "nowrap" }}>
+              <label style={{ padding: "9px 24px", borderRadius: 7, background: t.acc, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>
                 Browse Files<input type="file" accept={ACCEPT} hidden onChange={(e) => handleFile(e.target.files?.[0] || undefined)} />
               </label>
               <button type="button" onClick={loadDemo} style={{ padding: "9px 24px", borderRadius: 7, border: `1px solid ${t.bdr}`, background: "transparent", color: t.t2, fontSize: 12, fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap" }}>Load Demo · YOLO26n</button>
             </div>
           </div>
           <div style={{ display: "flex", gap: 10, rowGap: 8, flexWrap: "wrap", justifyContent: "center" }}>
-            <a href={DESKTOP_DOWNLOAD_URL} target="_blank" rel="noreferrer noopener"
-              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 16px", borderRadius: 8, border: `1px solid ${t.bdr}`, background: t.glass, color: t.t1, fontSize: 11.5, fontWeight: 600, textDecoration: "none", cursor: "pointer" }}>
+            <button type="button" onClick={() => setBuilding("Desktop App")}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 16px", borderRadius: 8, border: `1px solid ${t.bdr}`, background: t.bg1, color: t.t1, fontSize: 11.5, fontWeight: 600, cursor: "pointer" }}>
               ⬇ Download Desktop App
-            </a>
-            <a href={VSCODE_MARKETPLACE_URL} target="_blank" rel="noreferrer noopener"
-              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 16px", borderRadius: 8, border: `1px solid ${t.bdr}`, background: t.glass, color: t.t1, fontSize: 11.5, fontWeight: 600, textDecoration: "none", cursor: "pointer" }}>
-              VS Code Extension ↗
-            </a>
+            </button>
+            <button type="button" onClick={() => setBuilding("VS Code Extension")}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 16px", borderRadius: 8, border: `1px solid ${t.bdr}`, background: t.bg1, color: t.t1, fontSize: 11.5, fontWeight: 600, cursor: "pointer" }}>
+              VS Code Extension
+            </button>
+          </div>
+          <div style={{ marginTop: compact ? 4 : 10, fontSize: 11, color: t.t3, textAlign: "center", letterSpacing: .3 }}>
+            Developed by <span style={{ fontWeight: 700, color: t.t1 }}>Premchand</span>
           </div>
         </div>
       ) : (
         <>
           {/* Stats */}
-          <div style={{ padding: compact ? "6px 10px" : "6px 14px", borderBottom: `1px solid ${t.bdr}`, display: "flex", gap: 6, overflowX: "auto", flexShrink: 0, background: t.glass, backdropFilter: "blur(8px)" }}>
-            {[{ l: "Params", v: fmt(totalP), c: t.acc }, { l: "FLOPs", v: fmt(totalF), c: t.acc2 }, { l: "Size", v: fB(model.sizeBytes), c: t.suc }, { l: "Input", v: model.inputShape.slice(2).join("×") || "—", c: t.wrn }, { l: "Layers", v: model.layers.length, c: "#F472B6" }, { l: "Opset", v: model.opset, c: t.t2 }].map((s) =>
+          <div style={{ padding: compact ? "6px 10px" : "8px 24px", borderBottom: `1px solid ${t.bdr}`, display: "flex", gap: 6, overflowX: "auto", flexShrink: 0, background: t.bg1 }}>
+            {[{ l: "Params", v: fmt(totalP), c: t.acc }, { l: "FLOPs", v: fmt(totalF), c: t.acc2 }, { l: "Size", v: fB(model.sizeBytes), c: t.suc }, { l: "Input", v: model.inputShape.slice(2).join("×") || "—", c: t.wrn }, { l: "Layers", v: model.layers.length, c: t.cH }, { l: "Opset", v: model.opset, c: t.t2 }].map((s) =>
               <div key={s.l} style={{ background: t.bg1, border: `1px solid ${t.bdr}`, borderRadius: 6, padding: "5px 11px", minWidth: 84, flexShrink: 0 }}>
                 <div style={{ fontSize: 9.5, color: t.t2, textTransform: "uppercase", letterSpacing: .6 }}>{s.l}</div>
                 <div style={{ fontSize: 17, fontWeight: 700, color: s.c, fontFamily: "'JetBrains Mono'", marginTop: 1 }}>{s.v}</div>
@@ -220,7 +236,7 @@ export function App({
           </div>
 
           {/* Footer */}
-          <div style={{ padding: compact ? "4px 10px" : "4px 14px", borderTop: `1px solid ${t.bdr}`, display: "flex", justifyContent: "space-between", gap: 12, fontSize: 9.5, color: t.t2, background: t.glass, backdropFilter: "blur(8px)", flexShrink: 0 }}>
+          <div style={{ padding: compact ? "4px 10px" : "5px 24px", borderTop: `1px solid ${t.bdr}`, display: "flex", justifyContent: "space-between", gap: 12, fontSize: 9.5, color: t.t2, background: t.bg1, flexShrink: 0 }}>
             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>ModelVisio · {model.format} · opset {model.opset} · {model.framework}{model.producer ? ` · ${model.producer}` : ""}</span>
             {!narrow && <span style={{ whiteSpace: "nowrap", flexShrink: 0 }}>Phase 1: Graph + Inspector + Compiler Checker + Auto-Fix + Deploy Recipes</span>}
           </div>

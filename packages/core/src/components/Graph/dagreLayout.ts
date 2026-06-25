@@ -5,7 +5,11 @@ import { fmt } from "../../utils/format";
 export type LineKind = "name" | "weight" | "shape" | "metric";
 export type NodeLine = { text: string; kind: LineKind };
 export type NodeView = { id: number; x: number; y: number; w: number; h: number; layer: ModelLayer; lines: NodeLine[] };
-export type EdgeView = { from: number; to: number; points: { x: number; y: number }[]; label: string };
+export type EdgeView = {
+  from: number; to: number; points: { x: number; y: number }[]; label: string;
+  /** Collision-free label center, reserved by the layout (null when no label). */
+  lx: number | null; ly: number | null;
+};
 export type Layout = { nodes: NodeView[]; edges: EdgeView[]; width: number; height: number };
 
 export type LayoutOpts = {
@@ -16,6 +20,14 @@ export type LayoutOpts = {
 };
 
 const HEADER = 22, LINE = 15, PADX = 12, MINW = 96, MAXW = 320, MINH = 30;
+// Edge shape-labels: rendered at 8.5px mono. We register them with dagre as real
+// label boxes so the layout reserves space and never lets them land on a node.
+const LBL_PX = 8.5, LBL_H = 13, LBL_MAX = 22;
+const labelW = (s: string) => Math.max(14, textW(s, LBL_PX) + 8);
+const edgeLabel = (l: ModelLayer | undefined) => {
+  const s = l?.shape ?? "";
+  return s && s !== "?" ? trunc(s, LBL_MAX) : "";
+};
 
 const trunc = (s: string, n: number) => (s.length > n ? s.slice(0, n - 1) + "…" : s);
 const shapeStr = (w: ModelLayer["w"]) =>
@@ -40,8 +52,11 @@ const textW = (s: string, px: number) => s.length * px * 0.62;
 
 /** Compute a Netron-style layered layout with dagre. */
 export function computeGraph(model: Model, o: LayoutOpts): Layout {
+  const byId = new Map(model.layers.map((l) => [l.id, l] as const));
   const g = new dagre.graphlib.Graph();
-  g.setGraph({ rankdir: o.direction, nodesep: 26, ranksep: 46, marginx: 28, marginy: 28, ranker: "tight-tree" });
+  // ranksep is kept modest because each labelled edge inserts a label rank
+  // (≈ 2·ranksep + label height) between its endpoints.
+  g.setGraph({ rankdir: o.direction, nodesep: 26, ranksep: 24, marginx: 28, marginy: 28, ranker: "tight-tree" });
   g.setDefaultEdgeLabel(() => ({}));
 
   const lineMap = new Map<number, NodeLine[]>();
@@ -54,12 +69,15 @@ export function computeGraph(model: Model, o: LayoutOpts): Layout {
     g.setNode(String(l.id), { width: w, height: h });
   }
   for (const [a, b] of model.edges) {
-    if (g.hasNode(String(a)) && g.hasNode(String(b))) g.setEdge(String(a), String(b));
+    if (!g.hasNode(String(a)) || !g.hasNode(String(b))) continue;
+    // Register the shape label as a real, centered label box so dagre reserves
+    // space for it and keeps it off every node — no overlap on any model.
+    const text = edgeLabel(byId.get(a));
+    g.setEdge(String(a), String(b), text ? { width: labelW(text), height: LBL_H, labelpos: "c", labeloffset: 0 } : {});
   }
 
   dagre.layout(g);
 
-  const byId = new Map(model.layers.map((l) => [l.id, l] as const));
   const nodes: NodeView[] = model.layers.map((l) => {
     const n = g.node(String(l.id));
     return { id: l.id, x: n.x, y: n.y, w: n.width, h: n.height, layer: l, lines: lineMap.get(l.id) ?? [] };
@@ -67,8 +85,14 @@ export function computeGraph(model: Model, o: LayoutOpts): Layout {
   const edges: EdgeView[] = model.edges
     .filter(([a, b]) => g.hasEdge(String(a), String(b)))
     .map(([a, b]) => {
-      const e = g.edge(String(a), String(b));
-      return { from: a, to: b, points: e.points as { x: number; y: number }[], label: byId.get(a)?.shape ?? "" };
+      const e = g.edge(String(a), String(b)) as { points: { x: number; y: number }[]; x?: number; y?: number };
+      const label = edgeLabel(byId.get(a));
+      return {
+        from: a, to: b, points: e.points,
+        label,
+        lx: label && typeof e.x === "number" ? e.x : null,
+        ly: label && typeof e.y === "number" ? e.y : null,
+      };
     });
   const gg = g.graph();
   return { nodes, edges, width: gg.width ?? 0, height: gg.height ?? 0 };

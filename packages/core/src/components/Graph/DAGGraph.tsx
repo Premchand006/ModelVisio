@@ -120,7 +120,7 @@ export const DAGGraph = forwardRef<DAGGraphHandle, Props>(function DAGGraph(
       onMouseLeave={endPan}
       style={{
         flex: 1, overflow: "auto", position: "relative", cursor: pan.current ? "grabbing" : "default",
-        background: `radial-gradient(circle at 50% 25%,${t.bg1},${t.bg})`,
+        background: t.bg,
       }}
     >
       <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(${t.bdr} 1px, transparent 1px)`, backgroundSize: "22px 22px", opacity: 0.25, pointerEvents: "none" }} />
@@ -136,7 +136,7 @@ export const DAGGraph = forwardRef<DAGGraphHandle, Props>(function DAGGraph(
             <path d="M0,0 L6,3 L0,6 Z" fill={t.t3} />
           </marker>
           <filter id="emsel" x="-30%" y="-30%" width="160%" height="160%">
-            <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor={t.acc} floodOpacity="0.7" />
+            <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor={t.acc} floodOpacity="0.45" />
           </filter>
         </defs>
 
@@ -144,13 +144,16 @@ export const DAGGraph = forwardRef<DAGGraphHandle, Props>(function DAGGraph(
         <g fill="none">
           {layout.edges.map((e, i) => {
             const active = selected?.id === e.from || selected?.id === e.to;
-            const pts = e.points;
-            const mid = pts[Math.floor(pts.length / 2)] ?? pts[0];
+            const showLabel = !!e.label && e.lx != null && e.ly != null;
+            const lw = e.label.length * 5.3 + 8; // ≤ the box dagre reserved for it
             return (
               <g key={i}>
-                <path d={edgePath(pts)} stroke={active ? t.acc : t.bdr2} strokeWidth={active ? 2 : 1.25} markerEnd="url(#emarr)" />
-                {mid && e.label && e.label !== "?" && (
-                  <text x={mid.x + 5} y={mid.y - 3} fontSize={8.5} fill={active ? t.acc : t.t2} fontFamily="'JetBrains Mono',monospace">{e.label}</text>
+                <path d={edgePath(e.points)} stroke={active ? t.acc : t.bdr2} strokeWidth={active ? 2 : 1.25} markerEnd="url(#emarr)" />
+                {showLabel && (
+                  <g>
+                    <rect x={(e.lx as number) - lw / 2} y={(e.ly as number) - 7} width={lw} height={14} rx={3} fill={t.bg} opacity={0.9} />
+                    <text x={e.lx as number} y={e.ly as number} textAnchor="middle" dominantBaseline="central" fontSize={8.5} fill={active ? t.acc : t.t2} fontFamily="'JetBrains Mono',monospace">{e.label}</text>
+                  </g>
                 )}
               </g>
             );

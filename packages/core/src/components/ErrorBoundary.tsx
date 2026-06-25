@@ -27,12 +27,12 @@ export class ErrorBoundary extends Component<Props, State> {
     const { error } = this.state;
     if (!error) return this.props.children;
     const t = this.context;
-    const bg = t?.bg ?? "#05070E";
-    const card = t?.bg1 ?? "#0B1120";
-    const bdr = t?.bdr ?? "#1E293B";
-    const t0 = t?.t0 ?? "#F0F6FC";
-    const t2 = t?.t2 ?? "#9AA8BC";
-    const acc = t?.acc ?? "#38BDF8";
+    const bg = t?.bg ?? "#0A0A0B";
+    const card = t?.bg1 ?? "#141417";
+    const bdr = t?.bdr ?? "#27272E";
+    const t0 = t?.t0 ?? "#F4F4F5";
+    const t2 = t?.t2 ?? "#9A9AA4";
+    const acc = t?.acc ?? "#4D8DFF";
     const err = t?.err ?? "#F87171";
     return (
       <div style={{ height: "100%", minHeight: 240, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, background: bg, fontFamily: "'Inter',-apple-system,sans-serif" }}>

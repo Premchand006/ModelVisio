@@ -1,5 +1,13 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { runChatProxy } from "@modelvisio/ai/proxy";
+import { logChat, logClientEvent, type ClientEvent } from "@modelvisio/ai/log";
+
+/** Best-effort client IP from the platform's forwarding headers. */
+function clientIp(req: VercelRequest): string | null {
+  const xff = req.headers["x-forwarded-for"];
+  const raw = Array.isArray(xff) ? xff[0] : xff;
+  return raw ? raw.split(",")[0].trim() : null;
+}
 
 // Server-side proxy for the AI copilot. Holds GEMINI_API_KEY (set in the Vercel
 // project env) so it NEVER reaches the browser. Runs Gemini with Google Search
@@ -27,11 +35,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
   try {
-    const { system, messages } = (req.body ?? {}) as { system?: string; messages?: unknown[] };
+    const body = (req.body ?? {}) as { system?: string; messages?: unknown[]; event?: ClientEvent };
+    // Client telemetry beacon (e.g. a model upload): record it and return.
+    if (body.event) {
+      await logClientEvent(body.event, { ip: clientIp(req) });
+      res.status(200).json({ ok: true });
+      return;
+    }
+    const { system, messages } = body;
+    // Log concurrently with the Gemini call so it adds ~no latency; never rejects.
+    const logP = logChat(system ?? "", messages ?? [], { ip: clientIp(req), user_agent: req.headers["user-agent"] ?? null });
     const out = await runChatProxy({
       key, system: system ?? "", messages: messages ?? [],
       model: MODEL, webSearch: WEB_SEARCH, thinking: THINKING, timeBudgetMs: TIME_BUDGET_MS,
     });
+    await logP;
     res.status(200).json(out);
   } catch (e) {
     res.status(500).json({ error: e instanceof Error ? e.message : "Proxy error" });

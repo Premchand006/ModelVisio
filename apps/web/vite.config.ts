@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { defineConfig, loadEnv, type PluginOption } from "vite";
 import react from "@vitejs/plugin-react";
 import { runChatProxy } from "@modelvisio/ai/proxy";
+import { logChat, logClientEvent } from "@modelvisio/ai/log";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../..");
@@ -30,8 +31,21 @@ function chatProxyDev(key: string | undefined, model: string, webSearch: boolean
         try {
           const chunks: Buffer[] = [];
           for await (const c of req) chunks.push(c as Buffer);
-          const { system, messages } = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
+          const body = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
+          const ipHeader = req.headers["x-forwarded-for"];
+          const ip = (Array.isArray(ipHeader) ? ipHeader[0] : ipHeader)?.split(",")[0].trim()
+            || req.socket?.remoteAddress || null;
+          // Client telemetry beacon (e.g. a model upload): record it and return.
+          if (body.event) {
+            await logClientEvent(body.event, { ip });
+            res.statusCode = 200;
+            res.end(JSON.stringify({ ok: true }));
+            return;
+          }
+          const { system, messages } = body;
+          const logP = logChat(system ?? "", messages ?? [], { ip, user_agent: req.headers["user-agent"] ?? null });
           const out = await runChatProxy({ key, system: system ?? "", messages: messages ?? [], model, webSearch, thinking });
+          await logP;
           res.statusCode = 200;
           res.end(JSON.stringify(out));
         } catch (e) {

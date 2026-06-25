@@ -1,4 +1,5 @@
 import { runChatProxy } from "@modelvisio/ai/proxy";
+import { logChat, logClientEvent, type ClientEvent } from "@modelvisio/ai/log";
 
 // Netlify proxy for the AI copilot. Holds GEMINI_API_KEY server-side (set it in
 // the Netlify site env) so it NEVER reaches the browser. Reached at /api/chat via
@@ -20,7 +21,14 @@ const WEB_SEARCH = (process.env.MODELVISIO_WEB_SEARCH || "off") !== "off";
 const THINKING = (process.env.MODELVISIO_THINKING || "off") === "on";
 const TIME_BUDGET_MS = Number(process.env.MODELVISIO_TIMEOUT_MS) || 7000;
 
-type NetlifyEvent = { httpMethod: string; body: string | null };
+type NetlifyEvent = { httpMethod: string; body: string | null; headers?: Record<string, string | undefined> };
+
+/** Best-effort client IP from the platform's forwarding headers. */
+function clientIp(event: NetlifyEvent): string | null {
+  const h = event.headers || {};
+  const raw = h["x-nf-client-connection-ip"] || h["x-forwarded-for"];
+  return raw ? raw.split(",")[0].trim() : null;
+}
 
 const json = (statusCode: number, body: unknown) => ({
   statusCode,
@@ -33,11 +41,20 @@ export const handler = async (event: NetlifyEvent) => {
   const key = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   if (!key) return json(500, { error: "GEMINI_API_KEY is not configured on the server." });
   try {
-    const { system, messages } = JSON.parse(event.body || "{}") as { system?: string; messages?: unknown[] };
+    const body = JSON.parse(event.body || "{}") as { system?: string; messages?: unknown[]; event?: ClientEvent };
+    // Client telemetry beacon (e.g. a model upload): record it and return.
+    if (body.event) {
+      await logClientEvent(body.event, { ip: clientIp(event) });
+      return json(200, { ok: true });
+    }
+    const { system, messages } = body;
+    // Log concurrently with the Gemini call so it adds ~no latency; never rejects.
+    const logP = logChat(system ?? "", messages ?? [], { ip: clientIp(event), user_agent: event.headers?.["user-agent"] ?? null });
     const out = await runChatProxy({
       key, system: system ?? "", messages: messages ?? [],
       model: MODEL, webSearch: WEB_SEARCH, thinking: THINKING, timeBudgetMs: TIME_BUDGET_MS,
     });
+    await logP;
     return json(200, out);
   } catch (e) {
     return json(500, { error: e instanceof Error ? e.message : "Proxy error" });

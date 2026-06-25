@@ -25,6 +25,7 @@ export { HWReport } from "./components/HWReport";
 export { Converter } from "./components/Converter";
 export { DeployRecipe } from "./components/DeployRecipe";
 export { Chat } from "./components/Chat";
+export { BuildingPage } from "./components/BuildingPage";
 export { Badge } from "./components/Badge";
 export { Tabs } from "./components/Tabs";
 export { ErrorBoundary } from "./components/ErrorBoundary";
