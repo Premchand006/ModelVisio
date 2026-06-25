@@ -8,7 +8,8 @@
     "dev": "pnpm --filter @modelvisio/web dev",
     "build": "pnpm --filter @modelvisio/web build",
     "preview": "pnpm --filter @modelvisio/web preview",
-    "typecheck": "pnpm -r --if-present typecheck"
+    "typecheck": "pnpm -r --if-present typecheck",
+    "release:desktop": "node scripts/release-desktop.mjs"
   },
   "engines": {
     "node": ">=18"

@@ -141,6 +141,21 @@ async fn chat(system: String, messages: Vec<ChatMsg>) -> Result<ChatResponse, St
     Err(last_err)
 }
 
+/// Check the configured updater endpoint (the GitHub Release `latest.json`) and,
+/// if a newer signed build is available, download and install it, then restart.
+/// Verified against the public key in tauri.conf.json. Desktop-only.
+#[cfg(desktop)]
+async fn check_for_updates(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
+    use tauri_plugin_updater::UpdaterExt;
+    if let Some(update) = app.updater()?.check().await? {
+        update
+            .download_and_install(|_chunk, _total| {}, || {})
+            .await?;
+        app.restart();
+    }
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -149,6 +164,21 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .invoke_handler(tauri::generate_handler![chat])
         .setup(|app| {
+            // Desktop auto-update: register the updater and check the GitHub
+            // Release `latest.json` in the background, mirroring Netron's
+            // self-update. Mobile has no updater, so this is desktop-only.
+            #[cfg(desktop)]
+            {
+                app.handle()
+                    .plugin(tauri_plugin_updater::Builder::new().build())?;
+                let handle = app.handle().clone();
+                tauri::async_runtime::spawn(async move {
+                    if let Err(e) = check_for_updates(handle).await {
+                        eprintln!("ModelVisio: update check failed: {e}");
+                    }
+                });
+            }
+
             let open_item = MenuItemBuilder::with_id("open_model", "Open Model…")
                 .accelerator("CmdOrCtrl+O")
                 .build(app)?;

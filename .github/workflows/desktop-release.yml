@@ -1,12 +1,24 @@
 name: Desktop Release
 
-# Tag a release (e.g. `git tag desktop-v1.0.0 && git push --tags`) to build signed
-# installers for macOS (.dmg), Windows (.msi/.exe), and Linux (.AppImage/.deb).
+# Cut a cross-platform release like Netron's: tag a version and CI builds
+# installers for macOS (.dmg), Windows (.exe/.msi), and Linux (.AppImage/.deb/.rpm)
+# and attaches them to a GitHub Release.
+#
+#   npm run release:desktop -- 1.0.0      # convenience wrapper, or:
+#   git tag desktop-v1.0.0 && git push origin desktop-v1.0.0
+#
+# The Release is created as a DRAFT so a single failed platform can never publish
+# a half-finished release — review it on the Releases page and click "Publish".
 on:
   push:
     tags:
       - "desktop-v*"
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to build (e.g. 1.0.0). Required for manual runs."
+        required: true
+        default: "0.0.0-dev"
 
 jobs:
   build:
@@ -16,9 +28,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: macos-latest
+          - platform: macos-latest # Apple Silicon (M-series)
             args: "--target aarch64-apple-darwin"
-          - platform: macos-latest
+          - platform: macos-latest # Intel
             args: "--target x86_64-apple-darwin"
           - platform: ubuntu-22.04
             args: ""
@@ -29,11 +41,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Linux build dependencies
-        if: matrix.platform == 'ubuntu-22.04'
+      # Derive a clean semver (strip the `desktop-v` tag prefix) and reuse it for
+      # the bundle version, the release name, and the git tag.
+      - name: Resolve version
+        id: version
+        shell: bash
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+            TAG="desktop-v${VERSION}"
+          else
+            TAG="${{ github.ref_name }}"
+            VERSION="${TAG#desktop-v}"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Building ModelVisio $VERSION (tag $TAG)"
 
       - uses: pnpm/action-setup@v4
         with:
@@ -43,6 +66,18 @@ jobs:
         with:
           node-version: 20
           cache: pnpm
+
+      # Stamp the resolved version into tauri.conf.json + Cargo.toml so installers
+      # are named ModelVisio_<version>_... instead of the placeholder 0.0.0.
+      - name: Stamp version
+        shell: bash
+        run: node scripts/stamp-version.mjs "${{ steps.version.outputs.version }}"
+
+      - name: Install Linux build dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -58,13 +93,31 @@ jobs:
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # AI chat in the desktop app needs the proxy; set this if you wire it
-          # through Tauri's Rust side later.
-          # GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # Auto-update signing: signs the updater artifacts + latest.json so the
+          # installed app trusts them (verified against the pubkey in tauri.conf.json).
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # AI chat in the desktop app reads GEMINI_API_KEY from the environment
+          # that launches the app, so it is NOT needed at build time.
         with:
           projectPath: apps/desktop
-          tagName: ${{ github.ref_name }}
-          releaseName: "ModelVisio ${{ github.ref_name }}"
+          tagName: ${{ steps.version.outputs.tag }}
+          releaseName: "ModelVisio ${{ steps.version.outputs.version }}"
+          releaseBody: |
+            ModelVisio ${{ steps.version.outputs.version }} — AI-native neural-network model analyzer for edge deployment.
+
+            ### Downloads
+            | OS | File |
+            | --- | --- |
+            | **Windows** | `ModelVisio_${{ steps.version.outputs.version }}_x64-setup.exe` (or `.msi`) |
+            | **macOS** (Apple Silicon) | `ModelVisio_${{ steps.version.outputs.version }}_aarch64.dmg` |
+            | **macOS** (Intel) | `ModelVisio_${{ steps.version.outputs.version }}_x64.dmg` |
+            | **Linux** | `.AppImage`, `.deb`, or `.rpm` |
+
+            The desktop AI copilot needs a free Gemini API key — set `GEMINI_API_KEY`
+            in the environment that launches the app (https://aistudio.google.com/apikey).
+
+            _Built automatically by the Desktop Release workflow._
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}

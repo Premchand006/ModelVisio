@@ -48,9 +48,44 @@ changing the source to regenerate `src-tauri/icons/`.
 
 ## Release
 
-Push a `desktop-v*` tag to trigger `.github/workflows/desktop-release.yml`,
-which builds macOS / Windows / Linux installers via `tauri-action`.
-Code-signing certs (Apple Developer, Windows EV) are added later as CI secrets.
+Cut a cross-platform release (like Netron's Releases page) from the repo root:
+
+```bash
+pnpm release:desktop 1.0.0     # tags desktop-v1.0.0 and pushes it
+```
+
+That triggers `.github/workflows/desktop-release.yml`, which on macOS / Windows /
+Linux runners:
+
+1. Stamps the version (`1.0.0`) into `tauri.conf.json` + `Cargo.toml` via
+   `scripts/stamp-version.mjs`, so installers are named `ModelVisio_1.0.0_...`.
+2. Builds installers via `tauri-action` — Windows `.exe`/`.msi`, macOS `.dmg`
+   (Apple Silicon + Intel), Linux `.AppImage`/`.deb`/`.rpm`.
+3. Attaches them to a **draft** GitHub Release named `ModelVisio 1.0.0`. Review
+   it on the Releases page and click **Publish** (draft = a single failed
+   platform can never publish a half-finished release).
+
+To verify the build compiles **without** cutting a release, run the
+**Desktop Build Check** workflow (`workflow_dispatch`) — it builds on all three
+OSes and uploads the installers as workflow artifacts only.
+
+Code-signing certs (Apple Developer, Windows EV) are optional and added later as
+CI secrets; unsigned installers still run (with an OS "unidentified developer"
+prompt the user clicks through).
+
+### Auto-update
+
+The app self-updates via `tauri-plugin-updater`: on launch it checks the latest
+published release's `latest.json` and installs newer **signed** builds in the
+background (`check_for_updates` in `src-tauri/src/lib.rs`). Updates are verified
+against the public key in `tauri.conf.json` (`plugins.updater.pubkey`).
+
+CI signs the update artifacts with a private key held in two repo secrets,
+`TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` (already
+configured). The matching public key is committed; **never commit the private
+key**. To rotate the keypair: `pnpm --filter @modelvisio/desktop exec tauri
+signer generate -w key.private`, update the pubkey in `tauri.conf.json`, and
+reset the two secrets with `gh secret set`.
 
 ## AI chat
 
