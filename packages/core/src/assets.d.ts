@@ -14,6 +14,7 @@ declare module "*.svg" {
 interface ImportMetaEnv {
   readonly VITE_DESKTOP_URL?: string;
   readonly VITE_VSCODE_URL?: string;
+  readonly VITE_GITHUB_URL?: string;
 }
 interface ImportMeta {
   readonly env: ImportMetaEnv;

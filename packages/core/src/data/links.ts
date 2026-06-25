@@ -14,3 +14,10 @@ export const DESKTOP_DOWNLOAD_URL: string =
 
 export const VSCODE_MARKETPLACE_URL: string =
   env?.VITE_VSCODE_URL || "https://marketplace.visualstudio.com/items?itemName=modelvisio.modelvisio-vscode";
+
+/** Public source repository. */
+export const GITHUB_URL: string =
+  env?.VITE_GITHUB_URL || "https://github.com/Premchand006/ModelVisio";
+
+/** Project author / copyright holder (GitHub handle). */
+export const AUTHOR = "Premchand006";

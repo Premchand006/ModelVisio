@@ -20,10 +20,17 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { BuildingPage } from "./components/BuildingPage";
 import { applyFix, type FixId } from "./fixes/transforms";
 import { useViewport } from "./hooks/useViewport";
+import { GITHUB_URL, AUTHOR } from "./data/links";
 import logoUrl from "./assets/logo.png";
 import graphHexUrl from "./assets/graph-hex.png";
 
 const ACCEPT = FORMAT_SUPPORT.flatMap((f) => f.exts).map((e) => "." + e).join(",");
+
+// GitHub "mark" glyph, reused in the header and landing page.
+const GH_PATH = "M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z";
+const GhIcon = ({ size = 15 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d={GH_PATH} /></svg>
+);
 
 /** Imperative handle a shell can use to drive the app (e.g. native menus). */
 export type AppApi = { openFile: (f: File) => void };
@@ -152,6 +159,7 @@ export function App({
           {model && <Badge c={t.suc}>{model.format}</Badge>}
           {model && <span style={{ fontSize: 10, color: t.t2, fontFamily: "'JetBrains Mono'", maxWidth: compact ? 90 : 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{model.name}</span>}
           {model && <button type="button" onClick={clearModel} style={{ padding: "2px 6px", borderRadius: 3, border: `1px solid ${t.bdr}`, background: "transparent", color: t.t3, fontSize: 9, cursor: "pointer" }}>✕</button>}
+          <a href={GITHUB_URL} target="_blank" rel="noreferrer noopener" title="View source on GitHub" style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${t.bdr}`, background: t.bg2, color: t.t1, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><GhIcon /></a>
           <button type="button" onClick={() => setTheme((p) => (p === "dark" ? "light" : "dark"))} style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${t.bdr}`, background: t.bg2, color: t.t1, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>{theme === "dark" ? "☀" : "☾"}</button>
         </div>
       </header>
@@ -169,7 +177,7 @@ export function App({
             <div style={{ width: 82, height: 65, margin: "0 auto 8px", opacity: 0.6, background: t.t2, WebkitMaskImage: `url(${graphHexUrl})`, maskImage: `url(${graphHexUrl})`, WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat", WebkitMaskPosition: "center", maskPosition: "center", WebkitMaskSize: "contain", maskSize: "contain" }} />
             <div style={{ fontSize: 15, fontWeight: 600, color: t.t0, marginBottom: 3 }}>{parsing ? "Parsing model…" : "Drop your model file"}</div>
             <div style={{ fontSize: 11.5, color: t.t2, marginBottom: 16, lineHeight: 1.7 }}>
-              {FORMATS.slice(0, 12).join(" · ")}<br />{FORMATS.slice(12).join(" · ")}
+              {FORMATS.join(" · ")}
             </div>
             {loadError && <div style={{ fontSize: 11, color: t.err, marginBottom: 12, lineHeight: 1.4 }}>{loadError}</div>}
             <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
@@ -188,9 +196,14 @@ export function App({
               style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 16px", borderRadius: 8, border: `1px solid ${t.bdr}`, background: t.bg1, color: t.t1, fontSize: 11.5, fontWeight: 600, cursor: "pointer" }}>
               VS Code Extension
             </button>
+            <a href={GITHUB_URL} target="_blank" rel="noreferrer noopener"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 16px", borderRadius: 8, border: `1px solid ${t.bdr}`, background: t.bg1, color: t.t1, fontSize: 11.5, fontWeight: 600, textDecoration: "none", cursor: "pointer" }}>
+              <GhIcon /> GitHub
+            </a>
           </div>
           <div style={{ marginTop: compact ? 4 : 10, fontSize: 11, color: t.t3, textAlign: "center", letterSpacing: .3 }}>
-            Developed by <span style={{ fontWeight: 700, color: t.t1 }}>Premchand</span>
+            Developed by <span style={{ fontWeight: 700, color: t.t1 }}>Premchand</span> · © 2026{" "}
+            <a href={GITHUB_URL} target="_blank" rel="noreferrer noopener" style={{ color: t.t2, fontWeight: 600, textDecoration: "none" }}>@{AUTHOR}</a>
           </div>
         </div>
       ) : (
@@ -236,9 +249,12 @@ export function App({
           </div>
 
           {/* Footer */}
-          <div style={{ padding: compact ? "4px 10px" : "5px 24px", borderTop: `1px solid ${t.bdr}`, display: "flex", justifyContent: "space-between", gap: 12, fontSize: 9.5, color: t.t2, background: t.bg1, flexShrink: 0 }}>
+          <div style={{ padding: compact ? "4px 10px" : "5px 24px", borderTop: `1px solid ${t.bdr}`, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, fontSize: 9.5, color: t.t2, background: t.bg1, flexShrink: 0 }}>
             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>ModelVisio · {model.format} · opset {model.opset} · {model.framework}{model.producer ? ` · ${model.producer}` : ""}</span>
-            {!narrow && <span style={{ whiteSpace: "nowrap", flexShrink: 0 }}>Phase 1: Graph + Inspector + Compiler Checker + Auto-Fix + Deploy Recipes</span>}
+            <span style={{ display: "flex", alignItems: "center", gap: 10, whiteSpace: "nowrap", flexShrink: 0 }}>
+              <span>© 2026 {AUTHOR}</span>
+              <a href={GITHUB_URL} target="_blank" rel="noreferrer noopener" title="View source on GitHub" style={{ color: t.t2, display: "inline-flex", alignItems: "center" }}><GhIcon size={12} /></a>
+            </span>
           </div>
         </>
       )}

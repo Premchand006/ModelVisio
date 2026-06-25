@@ -77,8 +77,11 @@ export const DAGGraph = forwardRef<DAGGraphHandle, Props>(function DAGGraph(
 
   const fit = () => {
     const c = scroller.current;
-    if (!c || !layout.width || !layout.height) return;
-    const z = Math.min(c.clientWidth / (layout.width + 20), c.clientHeight / (layout.height + 20));
+    if (!c || !layout.width) return;
+    // Fit to WIDTH only: scale so the graph fills the available width and the
+    // user scrolls vertically — instead of shrinking it to cram the full height
+    // (which makes a tall, Netron-style vertical graph tiny).
+    const z = c.clientWidth / (layout.width + 20);
     onZoomChange(Math.max(0.1, Math.min(1.5, z)));
     c.scrollTo({ left: 0, top: 0 });
   };

@@ -363,9 +363,10 @@ export const HW: DeviceSpec[] = [
 ];
 
 export const FORMATS: string[] = [
-  "ONNX", "TFLite", "PyTorch (.pt)", "torch.export", "ExecuTorch", "TorchScript",
-  "TensorFlow (SavedModel)", "TF.js", "Core ML", "OpenVINO", "Keras (.keras)",
-  "Caffe (.caffemodel)", "Darknet (.cfg/.weights)", "Safetensors", "NumPy (.npz)",
-  "MLIR", "JAX (StableHLO)", "GGUF", "RKNN", "ncnn", "MNN", "PaddlePaddle",
-  "scikit-learn (.pkl)", "TensorRT (.engine)",
+  "ONNX", "ONNX Runtime", "TFLite", "PyTorch (.pt)", "TorchScript", "torch.export",
+  "ExecuTorch", "TensorFlow", "TF.js", "Keras", "Core ML", "OpenVINO", "Caffe",
+  "Darknet", "MXNet", "PaddlePaddle", "MNN", "ncnn", "TNN", "RKNN", "Hailo",
+  "TensorRT (.engine)", "UFF", "CNTK", "MegEngine", "NNabla", "Barracuda",
+  "Huawei OM", "ML.NET", "BigDL", "CatBoost", "scikit-learn", "Safetensors",
+  "NumPy (.npz)", "GGUF", "MLIR",
 ];

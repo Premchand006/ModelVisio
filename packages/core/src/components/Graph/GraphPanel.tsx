@@ -54,7 +54,7 @@ export function GraphPanel({
           <button type="button" style={btn(false)} title="Zoom out" onClick={() => setZoom((z) => Math.max(0.1, +(z - 0.15).toFixed(2)))}>−</button>
           <span style={{ fontSize: 11, color: t.t2, width: 38, textAlign: "center", fontFamily: "'JetBrains Mono'" }}>{Math.round(zoom * 100)}%</span>
           <button type="button" style={btn(false)} title="Zoom in" onClick={() => setZoom((z) => Math.min(2, +(z + 0.15).toFixed(2)))}>+</button>
-          <button type="button" style={btn(false)} title="Fit to screen" onClick={() => graphRef.current?.fit()}>⤢ Fit</button>
+          <button type="button" style={btn(false)} title="Fit to width" onClick={() => graphRef.current?.fit()}>⤢ Fit</button>
           <button type="button" style={btn(false)} title="Actual size" onClick={() => setZoom(1)}>1:1</button>
           <span style={{ width: 1, height: 18, background: t.bdr }} />
           <button type="button" style={btn(direction === "LR")} title="Layout direction" onClick={() => setDirection((d) => (d === "TB" ? "LR" : "TB"))}>{direction === "TB" ? "↓ Vert" : "→ Horiz"}</button>
