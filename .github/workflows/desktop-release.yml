@@ -58,13 +58,14 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "Building ModelVisio $VERSION (tag $TAG)"
 
+      # No `version:` input on purpose — pnpm/action-setup@v4 reads the version
+      # from the root package.json `packageManager` field (pnpm@10.29.3). Pinning
+      # it here too makes the action error with ERR_PNPM_BAD_PM_VERSION.
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
       # Stamp the resolved version into tauri.conf.json + Cargo.toml so installers
