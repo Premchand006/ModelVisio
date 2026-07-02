@@ -227,10 +227,85 @@ apps/
 
 ## Contributing
 
-Features go in `packages/core` (UI) or `packages/parsers` (formats) so all three shells benefit.
-Keep parsers pure (no React), ship a fixture-backed test with each parser change, and run
-`pnpm -r typecheck && pnpm -r --if-present test` before a PR.
+Contributions are welcome — from a one-line fix to a whole new format parser or edge device.
+The project is deliberately structured so **one change benefits all three shells**: put product
+logic in `packages/`, and the web, desktop, and VS Code apps pick it up automatically.
+
+> **Golden rule.** Features go in `packages/core` (UI) or `packages/parsers` (formats). The apps in
+> `apps/` are thin shells — only platform glue (file pickers, hosting, WebView bridges) lives there.
+
+### Ways to contribute
+
+| You want to… | Start here |
+|---|---|
+| 🐛 Report a bug | [Open an issue](https://github.com/Premchand006/ModelVisio/issues/new) → **Bug report** |
+| 💡 Request a feature / device / format | [Open an issue](https://github.com/Premchand006/ModelVisio/issues/new) → **Feature request** |
+| 🧩 Add a **model-format parser** | `packages/parsers` — see [Add-ons](#add-ons--extending-modelvisio) |
+| 🖥️ Add an **edge accelerator** to hardware scoring | `packages/core/src/data/hardware.ts` |
+| 🛠️ Add a **compiler auto-fix** | `packages/core/src/fixes/transforms.ts` |
+| 🎨 Improve UI / a component | `packages/core/src/components` |
+| 📖 Improve docs | this README / `apps/*/README.md` |
+| 💬 Ask a question / share an idea | [Discussions](https://github.com/Premchand006/ModelVisio/discussions) |
+
+### Development setup
+
+```bash
+git clone https://github.com/Premchand006/ModelVisio.git
+cd ModelVisio
+pnpm install
+pnpm dev                         # web app → http://localhost:5173
+pnpm -r typecheck                # type-check every package
+pnpm -r --if-present test        # run the test suite
+```
+
+New to the codebase? Read [`CLAUDE.md`](CLAUDE.md) — it's the concise architecture + conventions brief.
+Then `pnpm dev`, click **Load Demo · YOLO26n**, and poke around.
+
+### Add-ons — extending ModelVisio
+
+The engine is built to grow along three axes; each is a self-contained, pure-TS addition with a test.
+
+- **New format parser** (`packages/parsers`) — the highest-impact contribution. A parser takes raw
+  file bytes and emits the normalized `Model` shape (`{ layers, edges, stats… }`) that the whole app
+  already understands, so a new format lights up the graph, inspector, scoring, and copilot for free.
+  1. Add `detectFormat` handling (extension + magic bytes) and register it in `src/registry.ts`.
+  2. Emit the normalized `Model` (see the `ModelLayer` / `Model` shapes in [`CLAUDE.md`](CLAUDE.md)).
+  3. **Ship a test with a real fixture model** — `packages/parsers/test` (kept small).
+  4. If it fully parses, add it to the "Fully parsed" list; otherwise wire it into `FORMAT_SUPPORT`
+     so the UI honestly shows "detected (metadata)".
+- **New edge device** (`hardware.ts`) — add a `DeviceSpec` (dense TOPS, bandwidth, RAM/SRAM, power).
+  Prefer a **calibrated** utilization factor from a real benchmark (MLPerf/vendor) and label it as
+  such; an honest estimate is fine too — just mark it.
+- **New auto-fix** (`transforms.ts`) — a pure, **reversible** graph transform plus its applicability
+  check, so the compiler pre-flight can offer and undo it live.
+
+### Reporting issues
+
+Good issues get fixed faster. Please include:
+
+- **Bugs:** what you did, what you expected, what happened; the **model format** (and a minimal sample
+  file if shareable); browser/OS or app version; and any console errors.
+- **Security / key concerns:** do **not** open a public issue — see [Security](#security) and email the
+  maintainer instead.
+
+### Pull requests
+
+1. **Branch** off `main` and keep the PR scoped to **one** thing (mirrors the build-order in `CLAUDE.md`).
+2. Follow the conventions: one component per file in `core`; **pure functions, no React imports** in
+   `parsers/` and `ai/`; keep the shared theme context; match the surrounding style.
+3. Every **parser change ships a fixture-backed test.**
+4. **Before pushing**, make it green:
+   ```bash
+   pnpm -r typecheck && pnpm -r --if-present test
+   ```
+5. Write a clear description (what + why); link the issue it closes. Small, reviewable PRs merge fastest.
+
+### Code of conduct
+
+Be respectful and constructive — assume good intent, keep feedback about the code. Harassment or
+dismissiveness isn't welcome. Maintainers may edit/close contributions that don't fit the project's
+direction; that's not personal.
 
 ## License
 
-[MIT](LICENSE) © 2026 ModelVisio.
+[MIT](LICENSE) © 2026 Premchand ([@Premchand006](https://github.com/Premchand006)).

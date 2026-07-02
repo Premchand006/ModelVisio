@@ -7,6 +7,10 @@ export { useViewport, type Viewport } from "./hooks/useViewport";
 export { TH, GC, type ThemeName, type ThemePalette } from "./theme/theme";
 export { demoModel } from "./demo/demoModel";
 
+// Bring-your-own-key helpers (desktop AI copilot). The shared storage-key
+// constant is also read by the desktop proxy (apps/web/src/tauri.ts).
+export { GEMINI_KEY_STORAGE, isDesktop, getUserApiKey, setUserApiKey } from "./utils/apiKey";
+
 // Roofline-grounded hardware scoring (pure; usable headless).
 export {
   scoreDevice, scoreAll, estimateRoofline, modelCompute, peakActivationBytes,

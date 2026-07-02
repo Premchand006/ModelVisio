@@ -36,14 +36,25 @@ struct ChatResponse {
 /// serverless function. The frontend (apps/web/src/tauri.ts) routes its
 /// /api/chat POST here via `invoke("chat", ...)`.
 #[tauri::command]
-async fn chat(system: String, messages: Vec<ChatMsg>) -> Result<ChatResponse, String> {
-    let key = std::env::var("GEMINI_API_KEY")
-        .or_else(|_| std::env::var("GOOGLE_API_KEY"))
-        .map_err(|_| {
-            "GEMINI_API_KEY is not set in the environment that launched ModelVisio. \
-             Get a free key at https://aistudio.google.com/apikey and set GEMINI_API_KEY."
-                .to_string()
-        })?;
+async fn chat(api_key: String, system: String, messages: Vec<ChatMsg>) -> Result<ChatResponse, String> {
+    // Bring-your-own-key: the user's own Gemini key is entered in the app's AI
+    // settings, stored locally in the WebView, and passed in here per call. No
+    // key is bundled in the app. The environment is only a convenience fallback
+    // for local dev (a maintainer running with GEMINI_API_KEY set).
+    let key = {
+        let k = api_key.trim();
+        if !k.is_empty() {
+            k.to_string()
+        } else {
+            std::env::var("GEMINI_API_KEY")
+                .or_else(|_| std::env::var("GOOGLE_API_KEY"))
+                .map_err(|_| {
+                    "No Gemini API key set. Click the key icon in the AI Copilot and paste \
+                     your free key from https://aistudio.google.com/apikey."
+                        .to_string()
+                })?
+        }
+    };
     let model = std::env::var("MODELVISIO_MODEL").unwrap_or_else(|_| "gemini-2.5-flash".to_string());
     // Grounding ON unless MODELVISIO_WEB_SEARCH=off, matching the web/VS Code
     // shells; the call falls back to ungrounded if grounding is unavailable.
