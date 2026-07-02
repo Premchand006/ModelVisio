@@ -121,3 +121,21 @@ jobs:
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
+
+      # Attach a STABLE, version-independent filename for the Windows installer so
+      # the website's Download button can link to a URL that never changes:
+      #   /releases/latest/download/ModelVisio-Windows-x64-setup.exe
+      # (always resolves to the newest PUBLISHED release). tauri-action names the
+      # asset with the version (ModelVisio_1.2.3_x64-setup.exe); this uploads a
+      # fixed-name copy alongside it on the same draft release.
+      - name: Attach stable-named Windows installer
+        if: matrix.platform == 'windows-latest'
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          setup=$(find apps/desktop/src-tauri/target/release/bundle/nsis -name '*-setup.exe' | head -n1)
+          if [ -z "$setup" ]; then echo "No NSIS installer found under bundle/nsis" >&2; exit 1; fi
+          echo "Stable-naming: $setup"
+          cp "$setup" "ModelVisio-Windows-x64-setup.exe"
+          gh release upload "${{ steps.version.outputs.tag }}" "ModelVisio-Windows-x64-setup.exe" --clobber

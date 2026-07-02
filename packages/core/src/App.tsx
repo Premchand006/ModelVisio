@@ -20,7 +20,8 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { BuildingPage } from "./components/BuildingPage";
 import { applyFix, type FixId } from "./fixes/transforms";
 import { useViewport } from "./hooks/useViewport";
-import { GITHUB_URL, AUTHOR } from "./data/links";
+import { GITHUB_URL, AUTHOR, DESKTOP_DOWNLOAD_URL } from "./data/links";
+import { isDesktop } from "./utils/apiKey";
 import logoUrl from "./assets/logo.png";
 import graphHexUrl from "./assets/graph-hex.png";
 
@@ -188,14 +189,18 @@ export function App({
             </div>
           </div>
           <div style={{ display: "flex", gap: 10, rowGap: 8, flexWrap: "wrap", justifyContent: "center" }}>
-            <button type="button" onClick={() => setBuilding("Desktop App")}
-              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 16px", borderRadius: 8, border: `1px solid ${t.bdr}`, background: t.bg1, color: t.t1, fontSize: 11.5, fontWeight: 600, cursor: "pointer" }}>
-              ⬇ Download Desktop App
-            </button>
-            <button type="button" onClick={() => setBuilding("VS Code Extension")}
-              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 16px", borderRadius: 8, border: `1px solid ${t.bdr}`, background: t.bg1, color: t.t1, fontSize: 11.5, fontWeight: 600, cursor: "pointer" }}>
-              VS Code Extension
-            </button>
+            {/* Distribution downloads — hidden inside the desktop app itself (you're
+                already running it), shown on the web + VS Code surfaces. */}
+            {!isDesktop() && <>
+              <a href={DESKTOP_DOWNLOAD_URL} target="_blank" rel="noreferrer noopener" title="Download the Windows desktop installer"
+                style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 16px", borderRadius: 8, border: `1px solid ${t.bdr}`, background: t.bg1, color: t.t1, fontSize: 11.5, fontWeight: 600, textDecoration: "none", cursor: "pointer" }}>
+                ⬇ Download Desktop App
+              </a>
+              <button type="button" onClick={() => setBuilding("VS Code Extension")}
+                style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 16px", borderRadius: 8, border: `1px solid ${t.bdr}`, background: t.bg1, color: t.t1, fontSize: 11.5, fontWeight: 600, cursor: "pointer" }}>
+                VS Code Extension
+              </button>
+            </>}
             <a href={GITHUB_URL} target="_blank" rel="noreferrer noopener"
               style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 16px", borderRadius: 8, border: `1px solid ${t.bdr}`, background: t.bg1, color: t.t1, fontSize: 11.5, fontWeight: 600, textDecoration: "none", cursor: "pointer" }}>
               <GhIcon /> GitHub
