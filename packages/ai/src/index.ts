@@ -5,6 +5,16 @@
 /** Endpoint of the server-side proxy that holds GEMINI_API_KEY. */
 export const DEFAULT_CHAT_ENDPOINT = "/api/chat";
 
+/** Endpoint of the server-side scrape proxy (SSRF-guarded, size-capped). */
+export const DEFAULT_SCRAPE_ENDPOINT = "/api/scrape";
+
+// Re-export the pure URL extractor from the scrape module; the actual scrapeUrl
+// implementation is server-side only and NOT re-exported here so scraper code
+// never enters the browser bundle. Consumers call fetchScraped() below, which
+// POSTs to the /api/scrape proxy.
+export { extractUrls } from "./scrape";
+export type { ScrapeResult } from "./scrape";
+
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 export type Source = { title: string; url: string };
 export type ChatResponse = { text: string; sources: Source[] };
@@ -141,4 +151,75 @@ export async function sendChat({
     throw new Error(data.error || `Chat proxy returned ${res.status}. Is the serverless function running?`);
   }
   return { text: data.text ?? "(empty response)", sources: Array.isArray(data.sources) ? data.sources : [] };
+}
+
+// ─── Web scraping (real-time URL grounding) ──────────────────────────────────
+// Companion to Gemini's google_search grounding. The user (or a copilot step)
+// can pin a specific URL — a vendor op-support page, an MLPerf result table, a
+// changelog — and get its readable text back to feed into the chat context, so
+// answers stay grounded in the actual document rather than the model's prior.
+
+export type ScrapedPage = {
+  url: string;
+  finalUrl: string;
+  title: string;
+  text: string;
+  truncated: boolean;
+  bytes: number;
+  contentType: string;
+};
+
+export type FetchScrapedArgs = {
+  url: string;
+  endpoint?: string;
+  signal?: AbortSignal;
+};
+
+/**
+ * POST a URL to the /api/scrape proxy and return the page's readable text +
+ * title. The proxy enforces SSRF guards, size caps, timeouts, and the optional
+ * MODELVISIO_SCRAPE_ALLOWLIST — the browser never fetches cross-origin itself.
+ */
+export async function fetchScraped({
+  url,
+  endpoint = DEFAULT_SCRAPE_ENDPOINT,
+  signal,
+}: FetchScrapedArgs): Promise<ScrapedPage> {
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url }),
+    signal,
+  });
+  const data = (await res.json().catch(() => ({}))) as Partial<ScrapedPage> & { error?: string };
+  if (!res.ok || data.error) {
+    throw new Error(data.error || `Scrape proxy returned ${res.status}.`);
+  }
+  return {
+    url: data.url ?? url,
+    finalUrl: data.finalUrl ?? url,
+    title: data.title ?? "",
+    text: data.text ?? "",
+    truncated: !!data.truncated,
+    bytes: data.bytes ?? 0,
+    contentType: data.contentType ?? "",
+  };
+}
+
+/**
+ * Compact a scraped page into a system-prompt-ready block. Keeps the source
+ * URL visible so the model can cite it in the reply.
+ */
+export function formatScrapedForPrompt(pages: ScrapedPage[]): string {
+  if (pages.length === 0) return "";
+  const parts = pages.map((p, i) => {
+    const head = `[Source ${i + 1}] ${p.title || "(untitled)"} — ${p.finalUrl}`;
+    return `${head}\n${p.text}${p.truncated ? "\n…(truncated)" : ""}`;
+  });
+  return [
+    "REAL-TIME SCRAPED SOURCES (grounding for this turn):",
+    "Use these verbatim over your prior knowledge. Cite the source URL when you draw on it.",
+    "",
+    parts.join("\n\n---\n\n"),
+  ].join("\n");
 }
