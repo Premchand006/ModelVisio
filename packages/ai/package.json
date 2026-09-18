@@ -9,12 +9,15 @@
   "exports": {
     ".": "./src/index.ts",
     "./proxy": "./src/proxy.ts",
-    "./log": "./src/log.ts"
+    "./log": "./src/log.ts",
+    "./scrape": "./src/scrape.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "devDependencies": {
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
   }
 }
