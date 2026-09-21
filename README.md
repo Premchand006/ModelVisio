@@ -17,7 +17,7 @@
   <img src="https://img.shields.io/badge/Vite_5-646CFF?logo=vite&logoColor=white" alt="Vite 5" />
   <img src="https://img.shields.io/badge/Tauri_2-FFC131?logo=tauri&logoColor=black" alt="Tauri 2" />
   <img src="https://img.shields.io/badge/pnpm-workspaces-F69220?logo=pnpm&logoColor=white" alt="pnpm workspaces" />
-  <img src="https://img.shields.io/badge/tests-62_passing-34D399" alt="62 tests passing" />
+  <img src="https://img.shields.io/badge/tests-84_passing-34D399" alt="84 tests passing" />
 </p>
 
 ---
@@ -186,7 +186,7 @@ ONNX is the priority target and is built end-to-end (`onnxruntime-web` + `protob
 ## Testing
 
 ```bash
-pnpm -r --if-present test     # 62 tests (parsers + core scoring/transforms/render)
+pnpm -r --if-present test     # 84 tests (parsers + core scoring/transforms/render + ai scrape)
 pnpm -r typecheck             # all packages
 ```
 

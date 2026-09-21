@@ -16,3 +16,9 @@
   to = "/.netlify/functions/chat"
   status = 200
   force = true
+
+[[redirects]]
+  from = "/api/scrape"
+  to = "/.netlify/functions/scrape"
+  status = 200
+  force = true
