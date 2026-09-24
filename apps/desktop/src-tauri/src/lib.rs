@@ -4,6 +4,17 @@ use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
 use tauri::Emitter;
 use tauri_plugin_dialog::DialogExt;
 
+/// Extensions offered by File → Open Model. Mirrors the `exts` lists in
+/// packages/parsers/src/registry.ts — keep the two in sync when adding a format.
+const MODEL_EXTENSIONS: &[&str] = &[
+    "onnx", "ort", "tflite", "lite", "tfl", "safetensors", "gguf", "ggml", "npy", "npz", "cfg",
+    "weights", "pt", "pth", "ckpt", "bin", "ptl", "torchscript", "pt2", "pte", "mlmodel",
+    "mlmodelc", "xml", "pb", "meta", "pbtxt", "keras", "h5", "hdf5", "json", "params",
+    "caffemodel", "prototxt", "pdmodel", "pdparams", "nb", "param", "mnn", "tnnproto",
+    "tnnmodel", "rknn", "engine", "plan", "trt", "uff", "mlir", "cntk", "dnn", "nn", "mge", "tm",
+    "nntxt", "har", "hn", "om", "mlnet", "bigdl", "cbm", "pkl", "joblib", "pickle",
+];
+
 /// Payload emitted to the WebView when a model is opened via the native menu.
 /// The web layer (apps/web/src/tauri.ts) turns this into a File and parses it.
 #[derive(Clone, Serialize)]
@@ -153,18 +164,46 @@ async fn chat(api_key: String, system: String, messages: Vec<ChatMsg>) -> Result
 }
 
 /// Check the configured updater endpoint (the GitHub Release `latest.json`) and,
-/// if a newer signed build is available, download and install it, then restart.
-/// Verified against the public key in tauri.conf.json. Desktop-only.
+/// if a newer signed build is available, ask the user before downloading and
+/// installing it (installing restarts the app, and on Windows closes it to run
+/// the installer — never do that under someone mid-analysis). Verified against
+/// the public key in tauri.conf.json. Desktop-only.
 #[cfg(desktop)]
 async fn check_for_updates(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
+    use tauri_plugin_dialog::{MessageDialogButtons, MessageDialogKind};
     use tauri_plugin_updater::UpdaterExt;
-    if let Some(update) = app.updater()?.check().await? {
-        update
-            .download_and_install(|_chunk, _total| {}, || {})
-            .await?;
-        app.restart();
+
+    let Some(update) = app.updater()?.check().await? else {
+        return Ok(());
+    };
+    let prompt = format!(
+        "ModelVisio {} is available (you have {}).
+
+Install it now? The app will restart.",
+        update.version, update.current_version
+    );
+    let dialog_app = app.clone();
+    let accepted = tauri::async_runtime::spawn_blocking(move || {
+        dialog_app
+            .dialog()
+            .message(prompt)
+            .title("Update available")
+            .kind(MessageDialogKind::Info)
+            .buttons(MessageDialogButtons::OkCancelCustom(
+                "Update now".to_string(),
+                "Later".to_string(),
+            ))
+            .blocking_show()
+    })
+    .await
+    .unwrap_or(false);
+    if !accepted {
+        return Ok(());
     }
-    Ok(())
+    update
+        .download_and_install(|_chunk, _total| {}, || {})
+        .await?;
+    app.restart();
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -172,7 +211,6 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_fs::init())
         .invoke_handler(tauri::generate_handler![chat])
         .setup(|app| {
             // Desktop auto-update: register the updater and check the GitHub
@@ -207,7 +245,8 @@ pub fn run() {
                 let app_handle = app.clone();
                 app.dialog()
                     .file()
-                    .add_filter("Models", &["onnx"])
+                    .add_filter("Models", MODEL_EXTENSIONS)
+                    .add_filter("All files", &["*"])
                     .pick_file(move |path| {
                         let Some(fp) = path else { return };
                         let Some(p) = fp.as_path() else { return };

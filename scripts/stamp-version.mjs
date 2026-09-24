@@ -7,8 +7,8 @@
 // Updates apps/desktop/src-tauri/tauri.conf.json (the version tauri-action reads
 // for bundle naming) and apps/desktop/src-tauri/Cargo.toml (the crate version).
 // Idempotent and cross-platform (runs the same on the Windows/macOS/Linux CI
-// runners). Validates the version is plain semver so a bad tag can't silently
-// produce a broken bundle name.
+// runners). Validates the version is X.Y.Z with an optional NUMERIC pre-release
+// (the Windows MSI bundler rejects "-beta" etc.) so a bad tag fails fast.
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -21,8 +21,8 @@ if (!raw) {
   process.exit(1);
 }
 // Accept an optional leading `v` / `desktop-v`; keep only the semver core.
-const version = raw.replace(/^.*?v/, "").trim();
-if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(version)) {
+const version = raw.trim().replace(/^(?:desktop-)?v/, "");
+if (!/^\d+\.\d+\.\d+(?:-\d+)?$/.test(version)) {
   console.error(`error: "${raw}" is not a valid semver version (got "${version}")`);
   process.exit(1);
 }

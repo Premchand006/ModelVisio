@@ -1,14 +1,13 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Core permissions plus native file open for model loading.",
-  "windows": ["main"],
+  "description": "Core permissions, native file dialogs, and opening links in the system browser.",
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:default",
     "opener:default",
-    "dialog:default",
-    "dialog:allow-open",
-    "fs:default",
-    "fs:allow-read-file"
+    "dialog:default"
   ]
 }
