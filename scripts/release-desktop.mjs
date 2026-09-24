@@ -10,8 +10,9 @@
 import { execSync } from "node:child_process";
 
 const version = (process.argv[2] || "").replace(/^v/, "").trim();
-if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(version)) {
-  console.error(`error: pass a semver version, e.g. "npm run release:desktop -- 1.0.0" (got "${process.argv[2] ?? ""}")`);
+if (!/^\d+\.\d+\.\d+(?:-\d+)?$/.test(version)) {
+  // Pre-release must be numeric (1.1.0-1): the Windows MSI bundler rejects "-beta" etc.
+  console.error(`error: pass a version like "1.0.1" or "1.1.0-1", e.g. "npm run release:desktop -- 1.0.1" (got "${process.argv[2] ?? ""}")`);
   process.exit(1);
 }
 

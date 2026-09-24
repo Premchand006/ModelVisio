@@ -16,9 +16,10 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version to build (e.g. 1.0.0). Required for manual runs."
+        # Plain X.Y.Z (or a NUMERIC pre-release like 1.1.0-1): the Windows MSI
+        # bundler rejects non-numeric pre-release tags such as "-dev"/"-beta".
+        description: "Version to build, e.g. 1.0.1"
         required: true
-        default: "0.0.0-dev"
 
 jobs:
   build:
@@ -57,6 +58,27 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "Building ModelVisio $VERSION (tag $TAG)"
+
+      # Fail in seconds, not after a ~6 min compile, if the updater signing key is
+      # missing or malformed. tauri's own error for this is the cryptic
+      # "failed to decode secret key: ... Missing comment in secret key".
+      # The secret must be the FULL contents of the private key file written by
+      # `pnpm tauri signer generate -w ~/.tauri/modelvisio.key` (one base64 line
+      # that decodes to "untrusted comment: ... secret key" + the key).
+      - name: Verify updater signing key
+        shell: bash
+        env:
+          KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          if [ -z "$KEY" ]; then
+            echo "::error::TAURI_SIGNING_PRIVATE_KEY secret is not set (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+          if ! printf '%s' "$KEY" | tr -d '\r\n ' | base64 -d 2>/dev/null | head -n1 | grep -q '^untrusted comment:.*secret key'; then
+            echo "::error::TAURI_SIGNING_PRIVATE_KEY is not a valid Tauri private key. Paste the whole contents of the .key file (not the .pub file, not the file path)."
+            exit 1
+          fi
+          echo "Updater signing key looks valid."
 
       # No `version:` input on purpose — pnpm/action-setup@v4 reads the version
       # from the root package.json `packageManager` field (pnpm@10.29.3). Pinning
@@ -98,8 +120,8 @@ jobs:
           # installed app trusts them (verified against the pubkey in tauri.conf.json).
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          # AI chat in the desktop app reads GEMINI_API_KEY from the environment
-          # that launches the app, so it is NOT needed at build time.
+          # No Gemini key at build time: the desktop AI copilot is bring-your-own-key
+          # (entered in the app, stored locally).
         with:
           projectPath: apps/desktop
           tagName: ${{ steps.version.outputs.tag }}
@@ -115,8 +137,9 @@ jobs:
             | **macOS** (Intel) | `ModelVisio_${{ steps.version.outputs.version }}_x64.dmg` |
             | **Linux** | `.AppImage`, `.deb`, or `.rpm` |
 
-            The desktop AI copilot needs a free Gemini API key — set `GEMINI_API_KEY`
-            in the environment that launches the app (https://aistudio.google.com/apikey).
+            The AI copilot uses your own free Gemini API key — click the key icon in the
+            AI Copilot panel and paste it (get one at https://aistudio.google.com/apikey).
+            Installed apps update themselves automatically from new releases.
 
             _Built automatically by the Desktop Release workflow._
           releaseDraft: true
