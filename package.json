@@ -9,6 +9,7 @@
     "build": "pnpm --filter @modelvisio/web build",
     "preview": "pnpm --filter @modelvisio/web preview",
     "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm -r --if-present test",
     "release:desktop": "node scripts/release-desktop.mjs"
   },
   "engines": {
