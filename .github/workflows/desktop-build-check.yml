@@ -1,9 +1,13 @@
 name: Desktop Build Check
 
 # Compile + bundle the Tauri desktop app on all three OSes WITHOUT publishing a
-# release. Use this to verify the Rust side builds before tagging a real release
-# (the dev environment has no Rust toolchain, so this is where compilation is
-# actually checked). Runs on manual dispatch and on PRs touching the desktop app.
+# release. Use this to verify the Rust side builds on every OS before tagging a
+# real release. Runs on manual dispatch and on PRs touching the desktop app.
+#
+# Updater signing is deliberately OFF here (src-tauri/tauri.ci.conf.json):
+# GitHub never passes secrets to PRs from forks, so TAURI_SIGNING_PRIVATE_KEY is
+# empty there and `tauri build` dies with "failed to decode secret key". Signing
+# only matters for real releases, which desktop-release.yml handles.
 on:
   workflow_dispatch:
   pull_request:
@@ -11,6 +15,7 @@ on:
       - "apps/desktop/**"
       - "apps/web/**"
       - "packages/**"
+      - "pnpm-lock.yaml"
       - ".github/workflows/desktop-build-check.yml"
 
 jobs:
@@ -48,12 +53,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # No tagName → tauri-action just builds the installers and uploads them as
-      # workflow artifacts; it does NOT create a GitHub Release.
+      # No tagName → tauri-action only builds the installers; it does NOT create a
+      # GitHub Release. The CI config overlay disables updater artifacts so no
+      # signing key is needed (works for fork PRs, which get no secrets).
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: apps/desktop
+          args: --config src-tauri/tauri.ci.conf.json
