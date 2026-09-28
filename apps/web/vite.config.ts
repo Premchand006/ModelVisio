@@ -4,7 +4,7 @@ import { defineConfig, loadEnv, type PluginOption } from "vite";
 import react from "@vitejs/plugin-react";
 import { runChatProxy } from "@modelvisio/ai/proxy";
 import { logChat, logClientEvent } from "@modelvisio/ai/log";
-import { scrapeUrl } from "@modelvisio/ai/scrape";
+import { handleScrapeRequest } from "@modelvisio/ai/scrape";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../..");
@@ -64,7 +64,7 @@ function chatProxyDev(key: string | undefined, model: string, webSearch: boolean
  * functions/scrape.ts). Delegates to the shared SSRF-guarded, size-capped
  * scraper in @modelvisio/ai/scrape — no scraper code enters the browser bundle.
  */
-function scrapeProxyDev(allowlist: string[], maxBytes: number, maxChars: number, timeoutMs: number): PluginOption {
+function scrapeProxyDev(env: Record<string, string | undefined>): PluginOption {
   return {
     name: "modelvisio-scrape-proxy-dev",
     apply: "serve",
@@ -72,27 +72,19 @@ function scrapeProxyDev(allowlist: string[], maxBytes: number, maxChars: number,
       server.middlewares.use("/api/scrape", async (req, res) => {
         res.setHeader("content-type", "application/json");
         if (req.method !== "POST") { res.statusCode = 405; res.end(JSON.stringify({ error: "Method not allowed" })); return; }
+        let body: unknown;
         try {
           const chunks: Buffer[] = [];
           for await (const c of req) chunks.push(c as Buffer);
-          const body = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}") as { url?: string };
-          if (!body.url || typeof body.url !== "string") {
-            res.statusCode = 400;
-            res.end(JSON.stringify({ error: "Missing `url` (string) in request body." }));
-            return;
-          }
-          const out = await scrapeUrl({
-            url: body.url,
-            allowlist: allowlist.length ? allowlist : undefined,
-            maxBytes, maxChars, timeoutMs,
-          });
-          res.statusCode = 200;
-          res.end(JSON.stringify(out));
-        } catch (e) {
-          const msg = e instanceof Error ? e.message : "Scrape error";
-          res.statusCode = /timed out|fetch failed|HTTP 5\d\d/i.test(msg) ? 502 : 400;
-          res.end(JSON.stringify({ error: msg }));
+          body = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
+        } catch {
+          res.statusCode = 400;
+          res.end(JSON.stringify({ error: "Request body must be JSON." }));
+          return;
         }
+        const out = await handleScrapeRequest(body, env);
+        res.statusCode = out.status;
+        res.end(JSON.stringify(out.body));
       });
     },
   };
@@ -105,16 +97,12 @@ export default defineConfig(({ mode }) => {
   const model = env.MODELVISIO_MODEL || process.env.MODELVISIO_MODEL || "gemini-2.5-flash";
   const webSearch = (env.MODELVISIO_WEB_SEARCH || process.env.MODELVISIO_WEB_SEARCH || "on") !== "off";
   const thinking = (env.MODELVISIO_THINKING || process.env.MODELVISIO_THINKING || "off") === "on";
-  const scrapeAllowlist = (env.MODELVISIO_SCRAPE_ALLOWLIST || process.env.MODELVISIO_SCRAPE_ALLOWLIST || "")
-    .split(",").map((s) => s.trim()).filter(Boolean);
-  const scrapeMaxBytes = Number(env.MODELVISIO_SCRAPE_MAX_BYTES || process.env.MODELVISIO_SCRAPE_MAX_BYTES) || 512 * 1024;
-  const scrapeMaxChars = Number(env.MODELVISIO_SCRAPE_MAX_CHARS || process.env.MODELVISIO_SCRAPE_MAX_CHARS) || 12_000;
-  const scrapeTimeoutMs = Number(env.MODELVISIO_SCRAPE_TIMEOUT_MS || process.env.MODELVISIO_SCRAPE_TIMEOUT_MS) || 8000;
   return {
     plugins: [
       react(),
       chatProxyDev(key, model, webSearch, thinking),
-      scrapeProxyDev(scrapeAllowlist, scrapeMaxBytes, scrapeMaxChars, scrapeTimeoutMs),
+      // Repo-root .env wins over the shell env, matching the chat proxy above.
+      scrapeProxyDev({ ...process.env, ...env }),
     ],
     envDir: repoRoot,
     server: { port: 5173 },
