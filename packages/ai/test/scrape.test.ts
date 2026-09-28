@@ -1,7 +1,8 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
 import {
-  scrapeUrl, htmlToText, isPrivateHost, extractUrls, handleScrapeRequest, scrapeOptionsFromEnv, ScrapeError,
+  scrapeUrl, htmlToText, isPrivateHost, handleScrapeRequest, scrapeOptionsFromEnv, ScrapeError,
 } from "../src/scrape";
+import { extractUrls } from "../src/urls";
 
 const originalFetch = globalThis.fetch;
 afterEach(() => { globalThis.fetch = originalFetch; vi.restoreAllMocks(); });
