@@ -76,6 +76,11 @@ export function installTauriChatProxy(): void {
         .then((r) => new Response(JSON.stringify(r as ChatReply), { status: 200, headers: { "content-type": "application/json" } }))
         .catch((e) => new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), { status: 500, headers: { "content-type": "application/json" } }));
     }
+    // The URL scraper has no Rust port yet: answer with a clear message so the
+    // chat shows "Couldn't read <url>" and still replies, instead of a 404.
+    if (url && /\/api\/scrape$/.test(url) && method === "POST") {
+      return Promise.resolve(new Response(JSON.stringify({ error: "Reading linked pages isn't available in the desktop app yet." }), { status: 501, headers: { "content-type": "application/json" } }));
+    }
     return realFetch(input, init);
   };
 }

@@ -17,7 +17,7 @@
   <img src="https://img.shields.io/badge/Vite_5-646CFF?logo=vite&logoColor=white" alt="Vite 5" />
   <img src="https://img.shields.io/badge/Tauri_2-FFC131?logo=tauri&logoColor=black" alt="Tauri 2" />
   <img src="https://img.shields.io/badge/pnpm-workspaces-F69220?logo=pnpm&logoColor=white" alt="pnpm workspaces" />
-  <img src="https://img.shields.io/badge/tests-84_passing-34D399" alt="84 tests passing" />
+  <img src="https://img.shields.io/badge/tests-113_passing-34D399" alt="113 tests passing" />
 </p>
 
 ---
@@ -143,6 +143,14 @@ flowchart LR
   GEM --> OUT["text + cited sources"]
 ```
 
+**Paste a URL and the copilot reads it.** Links in a chat message (vendor op-support pages, spec
+sheets, GitHub issues, changelogs) are fetched by the server-side `/api/scrape` proxy, reduced to
+readable text, and injected as fenced, untrusted grounding for that turn and follow-ups. The scraper
+refuses private/loopback/metadata targets — including hostnames that *resolve* to them and every
+redirect hop, checked before it's requested — and caps size, time, and content-type. Restrict it to
+known docs sites with `MODELVISIO_SCRAPE_ALLOWLIST`. (Web only for now; the desktop and VS Code
+shells report that URL reading isn't available yet and still answer.)
+
 ## Quick start
 
 ```bash
@@ -186,7 +194,7 @@ ONNX is the priority target and is built end-to-end (`onnxruntime-web` + `protob
 ## Testing
 
 ```bash
-pnpm -r --if-present test     # 84 tests (parsers + core scoring/transforms/render + ai scrape)
+pnpm -r --if-present test     # 113 tests (parsers + core scoring/transforms/render + ai scrape/client)
 pnpm -r typecheck             # all packages
 ```
 

@@ -31,6 +31,14 @@ window.fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response>
       headers: { "content-type": "application/json" },
     }));
   }
+  // The URL scraper isn't bridged to the extension host yet: answer with a clear
+  // message so the chat shows "Couldn't read <url>" and still replies.
+  if (url && /\/api\/scrape$/.test(url) && method === "POST") {
+    return Promise.resolve(new Response(JSON.stringify({ error: "Reading linked pages isn't available in the VS Code extension yet." }), {
+      status: 501,
+      headers: { "content-type": "application/json" },
+    }));
+  }
   return realFetch(input, init);
 };
 

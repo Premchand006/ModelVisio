@@ -1,4 +1,4 @@
-import { scrapeUrl } from "@modelvisio/ai/scrape";
+import { handleScrapeRequest } from "@modelvisio/ai/scrape";
 
 // Netlify proxy for the AI copilot's URL scraper. Reached at /api/scrape via
 // the rewrite in netlify.toml (this function lives at /.netlify/functions/scrape).
@@ -8,13 +8,8 @@ import { scrapeUrl } from "@modelvisio/ai/scrape";
 // opaque 502 on every call. Same reasoning as netlify/functions/chat.ts.
 //
 // Netlify free tier kills synchronous functions at 10s — the scraper's default
-// 8s timeout keeps it inside that budget with margin for cold start.
-
-const ALLOWLIST = (process.env.MODELVISIO_SCRAPE_ALLOWLIST || "")
-  .split(",").map((s) => s.trim()).filter(Boolean);
-const MAX_BYTES = Number(process.env.MODELVISIO_SCRAPE_MAX_BYTES) || 512 * 1024;
-const MAX_CHARS = Number(process.env.MODELVISIO_SCRAPE_MAX_CHARS) || 12_000;
-const TIMEOUT_MS = Number(process.env.MODELVISIO_SCRAPE_TIMEOUT_MS) || 8000;
+// 8s timeout keeps it inside that budget with margin for cold start. Env knobs
+// (MODELVISIO_SCRAPE_*) are documented in apps/web/api/scrape.ts.
 
 type NetlifyEvent = { httpMethod: string; body: string | null };
 
@@ -26,22 +21,12 @@ const json = (statusCode: number, body: unknown) => ({
 
 export const handler = async (event: NetlifyEvent) => {
   if (event.httpMethod !== "POST") return json(405, { error: "Method not allowed" });
+  let body: unknown;
   try {
-    const body = JSON.parse(event.body || "{}") as { url?: string };
-    if (!body.url || typeof body.url !== "string") {
-      return json(400, { error: "Missing `url` (string) in request body." });
-    }
-    const out = await scrapeUrl({
-      url: body.url,
-      allowlist: ALLOWLIST.length ? ALLOWLIST : undefined,
-      maxBytes: MAX_BYTES,
-      maxChars: MAX_CHARS,
-      timeoutMs: TIMEOUT_MS,
-    });
-    return json(200, out);
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : "Scrape error";
-    const status = /timed out|fetch failed|HTTP 5\d\d/i.test(msg) ? 502 : 400;
-    return json(status, { error: msg });
+    body = JSON.parse(event.body || "{}");
+  } catch {
+    return json(400, { error: "Request body must be JSON." });
   }
+  const out = await handleScrapeRequest(body, process.env);
+  return json(out.status, out.body);
 };
