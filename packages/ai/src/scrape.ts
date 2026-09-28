@@ -23,9 +23,12 @@
 //  5. Optional allowlist: MODELVISIO_SCRAPE_ALLOWLIST is a comma-separated list
 //     of host suffixes; if set, only matching hosts (every hop) are fetched.
 
+// NOTE: vite.config.ts imports this file, and Node loads it natively with
+// type-stripping (no transpile). So: erasable TS syntax only (no parameter
+// properties/enums/namespaces) and no extensionless runtime imports —
+// `import type` is fine because it's erased.
 import type { ScrapedPage } from "./urls";
 
-export { extractUrls } from "./urls";
 export type ScrapeResult = ScrapedPage;
 
 /** Resolves a hostname to its IP addresses (A + AAAA). */
@@ -57,9 +60,11 @@ export type ScrapeArgs = {
  *  400 = caller's fault (bad/blocked URL, wrong content-type, origin 4xx),
  *  502 = origin failure (timeout, network error, origin 5xx, redirect loop). */
 export class ScrapeError extends Error {
-  constructor(message: string, readonly status: 400 | 502 = 400) {
+  readonly status: 400 | 502;
+  constructor(message: string, status: 400 | 502 = 400) {
     super(message);
     this.name = "ScrapeError";
+    this.status = status;
   }
 }
 
