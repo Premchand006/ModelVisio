@@ -1,4 +1,4 @@
-# ModelVisio — Project Context
+# ModelVisio — Architecture & Conventions
 
 AI-native neural-network model analyzer for edge deployment. Think "Netron + TensorRT advisor + AI copilot" in one tool. Ships as a **website**, **VS Code extension**, and **desktop app** from a single shared core.
 

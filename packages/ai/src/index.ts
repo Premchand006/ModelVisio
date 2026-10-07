@@ -1,6 +1,6 @@
 // @modelvisio/ai — Gemini API prompt templates + client.
 // Pure functions, no React. The API key NEVER lives here or in the browser;
-// this calls the per-shell server-side proxy (see Security in CLAUDE.md).
+// this calls the per-shell server-side proxy (see Security in ARCHITECTURE.md).
 
 /** Endpoint of the server-side proxy that holds GEMINI_API_KEY. */
 export const DEFAULT_CHAT_ENDPOINT = "/api/chat";
@@ -131,8 +131,8 @@ export type SendChatArgs = {
 
 /**
  * POSTs a chat turn to the server-side proxy and returns the assistant text +
- * any cited reference links. The proxy holds the API key, runs Claude with the
- * web-search tool, and extracts citations.
+ * any cited reference links. The proxy holds the API key, runs Gemini with Google
+ * Search grounding, and extracts citations.
  */
 export async function sendChat({
   endpoint = DEFAULT_CHAT_ENDPOINT,
