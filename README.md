@@ -266,7 +266,7 @@ pnpm -r typecheck                # type-check every package
 pnpm -r --if-present test        # run the test suite
 ```
 
-New to the codebase? Read [`CLAUDE.md`](CLAUDE.md) — it's the concise architecture + conventions brief.
+New to the codebase? Read [`ARCHITECTURE.md`](ARCHITECTURE.md) — it's the concise architecture + conventions brief.
 Then `pnpm dev`, click **Load Demo · YOLO26n**, and poke around.
 
 ### Add-ons — extending ModelVisio
@@ -277,7 +277,7 @@ The engine is built to grow along three axes; each is a self-contained, pure-TS 
   file bytes and emits the normalized `Model` shape (`{ layers, edges, stats… }`) that the whole app
   already understands, so a new format lights up the graph, inspector, scoring, and copilot for free.
   1. Add `detectFormat` handling (extension + magic bytes) and register it in `src/registry.ts`.
-  2. Emit the normalized `Model` (see the `ModelLayer` / `Model` shapes in [`CLAUDE.md`](CLAUDE.md)).
+  2. Emit the normalized `Model` (see the `ModelLayer` / `Model` shapes in [`ARCHITECTURE.md`](ARCHITECTURE.md)).
   3. **Ship a test with a real fixture model** — `packages/parsers/test` (kept small).
   4. If it fully parses, add it to the "Fully parsed" list; otherwise wire it into `FORMAT_SUPPORT`
      so the UI honestly shows "detected (metadata)".
@@ -298,7 +298,7 @@ Good issues get fixed faster. Please include:
 
 ### Pull requests
 
-1. **Branch** off `main` and keep the PR scoped to **one** thing (mirrors the build-order in `CLAUDE.md`).
+1. **Branch** off `main` and keep the PR scoped to **one** thing (mirrors the build-order in `ARCHITECTURE.md`).
 2. Follow the conventions: one component per file in `core`; **pure functions, no React imports** in
    `parsers/` and `ai/`; keep the shared theme context; match the surrounding style.
 3. Every **parser change ships a fixture-backed test.**
