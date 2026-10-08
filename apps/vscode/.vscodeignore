@@ -1,10 +1,11 @@
-# Everything except the built extension, webview assets, and manifest.
-src/**
-webview/**
-node_modules/**
-vite.webview.config.ts
-tsconfig*.json
-.vscode/**
+# Allowlist: ship only the bundled host, the WebView build, and docs. The host
+# is fully bundled by esbuild.mjs, so node_modules is never needed at runtime.
+**
+!package.json
+!out/extension.js
+!media/**
+!icon.png
+!README.md
+!CHANGELOG.md
+!LICENSE
 **/*.map
-**/tsconfig.tsbuildinfo
-app-icon.png
