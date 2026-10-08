@@ -1,0 +1,136 @@
+name: VS Code Release
+
+# Package the VS Code extension and attach the .vsix to a GitHub Release, then
+# (optionally) publish it to the Visual Studio Marketplace.
+#
+#   1. bump "version" in apps/vscode/package.json + add an apps/vscode/CHANGELOG.md entry
+#   2. git tag vscode-v0.1.0 && git push origin vscode-v0.1.0
+#
+# The tag must match package.json's version: vsce stamps the .vsix (and the
+# Marketplace listing) from package.json, so a mismatch would ship the wrong
+# number. Marketplace versions are plain X.Y.Z — no "-beta" suffixes.
+#
+# Marketplace publishing runs only when the VSCE_PAT secret is set (an Azure
+# DevOps personal access token with the Marketplace › Manage scope for the
+# "modelvisio" publisher). Without it the job still succeeds and the .vsix is on
+# the GitHub Release for manual install (`code --install-extension <file>.vsix`).
+on:
+  push:
+    tags:
+      - "vscode-v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, e.g. 0.1.0 (must equal apps/vscode/package.json version)"
+        required: true
+
+concurrency:
+  group: vscode-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      # Derive a clean semver (strip the `vscode-v` tag prefix) and reuse it for
+      # the asset name, the release name, and the git tag.
+      - name: Resolve version
+        id: version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+            VERSION="${VERSION#v}"
+            TAG="vscode-v${VERSION}"
+          else
+            TAG="${{ github.ref_name }}"
+            VERSION="${TAG#vscode-v}"
+          fi
+          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::\"$VERSION\" is not a plain X.Y.Z version (the Marketplace rejects pre-release suffixes)."
+            exit 1
+          fi
+          MANIFEST=$(node -p "require('./apps/vscode/package.json').version")
+          if [ "$VERSION" != "$MANIFEST" ]; then
+            echo "::error::Tag version $VERSION does not match apps/vscode/package.json version $MANIFEST. Bump package.json (and CHANGELOG.md) first."
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Releasing ModelVisio for VS Code $VERSION (tag $TAG)"
+
+      # No `version:` input on purpose — pnpm/action-setup@v4 reads the version
+      # from the root package.json `packageManager` field (pnpm@10.29.3). Pinning
+      # it here too makes the action error with ERR_PNPM_BAD_PM_VERSION.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Release builds still have to pass the extension's own checks.
+      - name: Typecheck + test extension
+        run: |
+          pnpm --filter modelvisio-vscode typecheck
+          pnpm --filter modelvisio-vscode test
+
+      # Builds the host (esbuild → out/) and webview (vite → media/), then
+      # `vsce package` → apps/vscode/modelvisio.vsix.
+      - name: Build + package extension
+        run: pnpm --filter modelvisio-vscode package
+
+      - name: Name release asset
+        id: asset
+        shell: bash
+        run: |
+          ASSET="apps/vscode/modelvisio-${{ steps.version.outputs.version }}.vsix"
+          cp apps/vscode/modelvisio.vsix "$ASSET"
+          echo "path=$ASSET" >> "$GITHUB_OUTPUT"
+          ls -l "$ASSET"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: "ModelVisio for VS Code ${{ steps.version.outputs.version }}"
+          files: ${{ steps.asset.outputs.path }}
+          fail_on_unmatched_files: true
+          body: |
+            ModelVisio for VS Code ${{ steps.version.outputs.version }} — open ONNX, TFLite, PyTorch, Safetensors, GGUF and 30+ other model formats as an interactive graph + inspector + compiler pre-flight, right in the editor.
+
+            ### Install
+            - **Marketplace:** search for **ModelVisio** in the Extensions view (if this version has been published there), or
+            - **From this release:** download `modelvisio-${{ steps.version.outputs.version }}.vsix`, then run
+              `code --install-extension modelvisio-${{ steps.version.outputs.version }}.vsix`
+              (or Extensions view → `…` → *Install from VSIX…*).
+
+            The AI copilot uses your own free Gemini API key: run **ModelVisio: Set Gemini API Key** from the Command Palette (get one at https://aistudio.google.com/apikey).
+
+            See [CHANGELOG.md](https://github.com/Premchand006/ModelVisio/blob/${{ steps.version.outputs.tag }}/apps/vscode/CHANGELOG.md) for what changed.
+
+            _Built automatically by the VS Code Release workflow._
+
+      # Skips cleanly (job stays green) when the secret isn't configured — e.g.
+      # on forks, or before a Marketplace publisher exists. vsce reads the token
+      # from the VSCE_PAT environment variable, so it never appears in the
+      # command line.
+      - name: Publish to VS Code Marketplace
+        working-directory: apps/vscode
+        shell: bash
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if [ -z "$VSCE_PAT" ]; then
+            echo "::notice::VSCE_PAT secret is not set — skipping Marketplace publish. The .vsix is attached to the GitHub Release."
+            exit 0
+          fi
+          pnpm exec vsce publish --no-dependencies --packagePath modelvisio.vsix

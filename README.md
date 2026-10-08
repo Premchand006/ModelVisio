@@ -148,8 +148,9 @@ sheets, GitHub issues, changelogs) are fetched by the server-side `/api/scrape` 
 readable text, and injected as fenced, untrusted grounding for that turn and follow-ups. The scraper
 refuses private/loopback/metadata targets — including hostnames that *resolve* to them and every
 redirect hop, checked before it's requested — and caps size, time, and content-type. Restrict it to
-known docs sites with `MODELVISIO_SCRAPE_ALLOWLIST`. (Web only for now; the desktop and VS Code
-shells report that URL reading isn't available yet and still answer.)
+known docs sites with `MODELVISIO_SCRAPE_ALLOWLIST` (in VS Code, the `modelvisio.scrapeAllowlist`
+setting). Works on the web and in VS Code; the desktop shell reports that URL reading isn't available
+yet and still answers.
 
 ## Quick start
 
@@ -178,7 +179,25 @@ The key stays server-side — see [Security](#security).
 |---|---|---|
 | **Web** | `pnpm dev` | `pnpm --filter @modelvisio/web build` → deploy to **Vercel** (Root Directory `apps/web`, set `GEMINI_API_KEY`) or **Netlify** (`netlify.toml` included) |
 | **Desktop** (Tauri 2) | `pnpm --filter @modelvisio/desktop dev` | `pnpm --filter @modelvisio/desktop build` — requires the [Rust toolchain](https://rustup.rs); push a `desktop-v*` tag to build installers via GitHub Actions |
-| **VS Code** | open `apps/vscode`, press **F5** | `pnpm --filter modelvisio-vscode package` → `vsce publish`; set the key in *Settings → ModelVisio: Gemini API Key* |
+| **VS Code** | open `apps/vscode` as the workspace folder, press **F5** | `pnpm package:vscode` → `apps/vscode/modelvisio.vsix`; push a `vscode-v*` tag to attach it to a GitHub Release (and publish to the Marketplace when `VSCE_PAT` is set) |
+
+### VS Code extension
+
+Opens model files in a custom editor running the same core app. Unambiguous model extensions
+(`.onnx`, `.tflite`, `.pt`, `.safetensors`, `.gguf`, …) open in ModelVisio by default. Generic ones
+(`.json`, `.bin`, `.xml`, `.pb`, `.h5`, …) stay with their usual editor and are offered via
+right-click → **Open with ModelVisio**. Parsing runs in a Web Worker, the view live-reloads when the
+file changes, and exports open a native Save dialog. For the AI copilot, run **ModelVisio: Set Gemini
+API Key**. The key goes into VS Code's encrypted Secret Storage and never reaches the WebView.
+
+```bash
+pnpm build:vscode                         # out/extension.js (esbuild) + media/ (vite)
+pnpm --filter modelvisio-vscode test      # host + webview glue unit tests
+pnpm package:vscode                       # → apps/vscode/modelvisio.vsix
+code --install-extension apps/vscode/modelvisio.vsix
+```
+
+Commands, settings, privacy and architecture: [apps/vscode/README.md](apps/vscode/README.md).
 
 ## Supported formats
 

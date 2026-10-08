@@ -10,6 +10,8 @@
     "preview": "pnpm --filter @modelvisio/web preview",
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
+    "build:vscode": "pnpm --filter modelvisio-vscode build",
+    "package:vscode": "pnpm --filter modelvisio-vscode package",
     "release:desktop": "node scripts/release-desktop.mjs"
   },
   "engines": {
