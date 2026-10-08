@@ -9,7 +9,11 @@ export { demoModel } from "./demo/demoModel";
 
 // Bring-your-own-key helpers (desktop AI copilot). The shared storage-key
 // constant is also read by the desktop proxy (apps/web/src/tauri.ts).
-export { GEMINI_KEY_STORAGE, isDesktop, getUserApiKey, setUserApiKey } from "./utils/apiKey";
+export { GEMINI_KEY_STORAGE, isDesktop, isVsCodeWebview, getUserApiKey, setUserApiKey } from "./utils/apiKey";
+
+// File saves. Shells where `<a download>` is a no-op (VS Code WebView) install
+// a save handler to route every export to a native Save dialog.
+export { downloadFile, setSaveHandler, type SaveHandler } from "./utils/download";
 
 // Roofline-grounded hardware scoring (pure; usable headless).
 export {
