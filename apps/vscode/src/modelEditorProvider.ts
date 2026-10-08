@@ -1,34 +1,49 @@
 import * as vscode from "vscode";
+import { existsSync } from "node:fs";
+import type { HostToWebview } from "./protocol";
+import { handleRequest, rejectMalformed } from "./bridge";
+import { settings } from "./config";
+import { dirnamePosix, formatBytes, sizeLimitError, toTransferable, watchGlobFor } from "./files";
+import { basename, VIEW_TYPE, VIEW_TYPE_OPTION } from "./formats";
+import { buildHtml, makeNonce } from "./html";
+import { parseWebviewMessage } from "./messages";
+import type { ApiKeyStore } from "./secrets";
+import { errMsg, log } from "./log";
+
+/** Coalesces the burst of events one save produces (truncate + write, or an
+ *  atomic rename's delete + create) into a single reload. */
+const RELOAD_DEBOUNCE_MS = 300;
 
 /**
  * Opens model files in a WebView running the @modelvisio/core app. Read-only:
  * we never write the model back. File bytes are read on the extension host and
- * pushed to the WebView, which parses them in its worker.
+ * pushed to the WebView as a Uint8Array, which parses them in its worker.
+ * Serves both viewTypes (default + "Reopen With…" option) with one instance.
  */
 export class ModelEditorProvider implements vscode.CustomReadonlyEditorProvider {
-  public static readonly viewType = "modelvisio.modelViewer";
-
-  static register(context: vscode.ExtensionContext): vscode.Disposable {
-    return vscode.window.registerCustomEditorProvider(
-      ModelEditorProvider.viewType,
-      new ModelEditorProvider(context),
-      {
-        webviewOptions: { retainContextWhenHidden: true },
-        supportsMultipleEditorsPerDocument: false,
-      },
+  static register(context: vscode.ExtensionContext, keys: ApiKeyStore): vscode.Disposable[] {
+    const provider = new ModelEditorProvider(context, keys);
+    const options = {
+      webviewOptions: { retainContextWhenHidden: true },
+      supportsMultipleEditorsPerDocument: false,
+    };
+    return [VIEW_TYPE, VIEW_TYPE_OPTION].map((viewType) =>
+      vscode.window.registerCustomEditorProvider(viewType, provider, options),
     );
   }
 
-  constructor(private readonly context: vscode.ExtensionContext) {}
+  private constructor(
+    private readonly context: vscode.ExtensionContext,
+    private readonly keys: ApiKeyStore,
+  ) {}
 
   openCustomDocument(uri: vscode.Uri): vscode.CustomDocument {
     return { uri, dispose: () => undefined };
   }
 
-  async resolveCustomEditor(
-    document: vscode.CustomDocument,
-    panel: vscode.WebviewPanel,
-  ): Promise<void> {
+  async resolveCustomEditor(document: vscode.CustomDocument, panel: vscode.WebviewPanel): Promise<void> {
+    const { uri } = document;
+    const name = basename(uri.path) || "model";
     const webview = panel.webview;
     webview.options = {
       enableScripts: true,
@@ -36,141 +51,151 @@ export class ModelEditorProvider implements vscode.CustomReadonlyEditorProvider 
     };
     webview.html = this.getHtml(webview);
 
-    const sendModel = async () => {
-      const bytes = await vscode.workspace.fs.readFile(document.uri);
-      const name = document.uri.path.split("/").pop() || "model";
-      // base64 survives the JSON message bridge intact (Uint8Array would not).
-      webview.postMessage({ type: "model", name, b64: Buffer.from(bytes).toString("base64") });
+    let disposed = false;
+    const post = (msg: HostToWebview) => {
+      if (disposed) return;
+      try {
+        void webview.postMessage(msg).then(undefined, (e) => log.debug(`postMessage failed: ${errMsg(e)}`));
+      } catch (e) {
+        log.debug(`postMessage failed: ${errMsg(e)}`);
+      }
     };
+    const postTheme = () => post({ type: "theme", theme: currentTheme() });
+    const sendModel = this.modelSender(uri, name, post, () => disposed);
 
     const subs: vscode.Disposable[] = [];
     subs.push(
-      webview.onDidReceiveMessage(async (msg: ChatMsg | { type?: string }) => {
-        if (msg?.type === "ready") {
-          webview.postMessage({ type: "theme", theme: currentTheme() });
-          await sendModel();
-        } else if (msg?.type === "chat") {
-          await handleChat(webview, msg as ChatMsg);
+      webview.onDidReceiveMessage((raw: unknown) => {
+        const msg = parseWebviewMessage(raw);
+        if (!msg) return rejectMalformed(raw, post);
+        if (msg.type === "ready") {
+          // Also re-sent if the WebView reloads itself (e.g. after a crash).
+          postTheme();
+          void sendModel(false);
+          return;
         }
+        handleRequest(msg, { post, keys: this.keys, modelUri: uri }).catch((e) =>
+          log.error(`Unhandled error in ${msg.type} handler: ${errMsg(e)}`),
+        );
       }),
-      vscode.window.onDidChangeActiveColorTheme(() => {
-        webview.postMessage({ type: "theme", theme: currentTheme() });
-      }),
+      vscode.window.onDidChangeActiveColorTheme(postTheme),
+      ...this.watch(uri, () => void sendModel(true)),
     );
-    panel.onDidDispose(() => subs.forEach((s) => s.dispose()));
+    panel.onDidDispose(() => {
+      disposed = true;
+      subs.forEach((s) => s.dispose());
+    });
+  }
+
+  /**
+   * Reads the file and posts it. A sequence number drops results that a newer
+   * (re)load overtook, so a slow read can't replace fresher bytes.
+   */
+  private modelSender(
+    uri: vscode.Uri,
+    name: string,
+    post: (msg: HostToWebview) => void,
+    isDisposed: () => boolean,
+  ): (reload: boolean) => Promise<void> {
+    let seq = 0;
+    let offeredSizeSetting = false;
+    return async (reload) => {
+      const mine = ++seq;
+      const started = Date.now();
+      try {
+        const stat = await vscode.workspace.fs.stat(uri);
+        if (stat.type & vscode.FileType.Directory) throw new Error(`${name} is a folder, not a model file.`);
+        const tooBig = sizeLimitError(name, stat.size, settings().maxFileSizeMB);
+        if (tooBig) {
+          if (mine !== seq || isDisposed()) return;
+          log.warn(tooBig);
+          post({ type: "modelError", name, error: tooBig });
+          // Toast once per panel, on open only: a file being rewritten fires a
+          // reload per save, and those must not stack identical warnings.
+          if (!reload && !offeredSizeSetting) {
+            offeredSizeSetting = true;
+            void offerSizeSetting(tooBig);
+          }
+          return;
+        }
+        const bytes = await vscode.workspace.fs.readFile(uri);
+        if (mine !== seq || isDisposed()) return;
+        post(reload ? { type: "model", name, bytes: toTransferable(bytes), reload: true } : { type: "model", name, bytes: toTransferable(bytes) });
+        log.info(`${reload ? "Reloaded" : "Loaded"} ${name} (${formatBytes(bytes.byteLength)}) in ${Date.now() - started} ms.`);
+      } catch (e) {
+        if (mine !== seq || isDisposed()) return;
+        const error =
+          e instanceof vscode.FileSystemError && e.code === "FileNotFound"
+            ? `${name} was deleted or moved.`
+            : `Could not read ${name}: ${errMsg(e)}`;
+        log.error(error);
+        post({ type: "modelError", name, error });
+      }
+    };
+  }
+
+  /**
+   * Live reload: watch exactly this file. Every event (change, create, delete)
+   * funnels into one debounced re-read — a delete then surfaces as modelError
+   * from the read, while an atomic save (delete + create) just reloads.
+   */
+  private watch(uri: vscode.Uri, reload: () => void): vscode.Disposable[] {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const target = uri.toString();
+    const onEvent = (changed: vscode.Uri) => {
+      if (changed.toString() !== target) return; // the glob may over-match siblings
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        timer = undefined;
+        reload();
+      }, RELOAD_DEBOUNCE_MS);
+    };
+    try {
+      const base = uri.with({ path: dirnamePosix(uri.path) });
+      const watcher = vscode.workspace.createFileSystemWatcher(
+        new vscode.RelativePattern(base, watchGlobFor(basename(uri.path))),
+      );
+      return [
+        watcher,
+        watcher.onDidChange(onEvent),
+        watcher.onDidCreate(onEvent),
+        watcher.onDidDelete(onEvent),
+        { dispose: () => timer && clearTimeout(timer) },
+      ];
+    } catch (e) {
+      log.warn(`Live reload unavailable for ${uri.toString()}: ${errMsg(e)}`);
+      return [];
+    }
   }
 
   private getHtml(webview: vscode.Webview): string {
-    const scriptUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this.context.extensionUri, "media", "webview.js"),
-    );
-    const nonce = makeNonce();
-    const csp = [
-      `default-src 'none'`,
-      `img-src ${webview.cspSource} data: blob:`,
-      `script-src 'nonce-${nonce}'`,
-      `style-src ${webview.cspSource} 'unsafe-inline' https://fonts.googleapis.com`,
-      `font-src https://fonts.gstatic.com`,
-      `connect-src https:`,
-      `worker-src ${webview.cspSource} blob:`,
-    ].join("; ");
-    return `<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="Content-Security-Policy" content="${csp}" />
-    <style>html,body,#root{height:100%;margin:0;padding:0}</style>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script nonce="${nonce}" src="${scriptUri}"></script>
-  </body>
-</html>`;
+    const media = vscode.Uri.joinPath(this.context.extensionUri, "media");
+    // Vite emits a stylesheet only if the WebView build stops injecting CSS
+    // from JS; link it when present so either build mode renders styled.
+    const styleUris =
+      media.scheme === "file"
+        ? ["webview.css", "style.css"]
+            .map((f) => vscode.Uri.joinPath(media, f))
+            .filter((u) => existsSync(u.fsPath))
+            .map((u) => webview.asWebviewUri(u).toString())
+        : [];
+    return buildHtml({
+      cspSource: webview.cspSource,
+      nonce: makeNonce(),
+      scriptUri: webview.asWebviewUri(vscode.Uri.joinPath(media, "webview.js")).toString(),
+      styleUris,
+    });
   }
 }
 
-type ChatMsg = { type: "chat"; id: number; system?: string; messages?: { role: string; content: string }[] };
-
-/**
- * AI copilot bridge: the webview forwards its /api/chat POST here. We hold the
- * Gemini key (from VS Code settings, never the webview) and call the API on the
- * extension host, then post the result back. Mirrors the web serverless proxy.
- */
-async function handleChat(webview: vscode.Webview, msg: ChatMsg): Promise<void> {
-  const cfg = vscode.workspace.getConfiguration("modelvisio");
-  const key = cfg.get<string>("geminiApiKey")?.trim() || process.env.GEMINI_API_KEY;
-  if (!key) {
-    webview.postMessage({
-      type: "chatError",
-      id: msg.id,
-      error: "No Gemini API key. Set 'ModelVisio: Gemini API Key' in VS Code Settings — get a free key at https://aistudio.google.com/apikey",
-    });
-    return;
+async function offerSizeSetting(message: string): Promise<void> {
+  const open = "Open Settings";
+  if ((await vscode.window.showWarningMessage(message, open)) === open) {
+    await vscode.commands.executeCommand("workbench.action.openSettings", "modelvisio.maxFileSizeMB");
   }
-  const model = cfg.get<string>("geminiModel")?.trim() || "gemini-2.5-flash";
-  const webSearch = cfg.get<boolean>("webSearch") ?? false;
-  try {
-    const out = await callGemini(key, model, webSearch, msg.system ?? "", msg.messages ?? []);
-    webview.postMessage({ type: "chatResult", id: msg.id, text: out.text, sources: out.sources });
-  } catch (e) {
-    webview.postMessage({ type: "chatError", id: msg.id, error: e instanceof Error ? e.message : String(e) });
-  }
-}
-
-type GeminiPart = { text?: string };
-type GeminiChunk = { web?: { uri?: string; title?: string } };
-type GeminiResp = {
-  candidates?: { content?: { parts?: GeminiPart[] }; groundingMetadata?: { groundingChunks?: GeminiChunk[] } }[];
-  error?: { message?: string };
-};
-
-async function callGemini(
-  key: string,
-  model: string,
-  webSearch: boolean,
-  system: string,
-  messages: { role: string; content: string }[],
-): Promise<{ text: string; sources: { title: string; url: string }[] }> {
-  const contents = messages
-    .filter((m) => m && typeof m.content === "string" && m.content.length > 0)
-    .map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] }));
-  const base: Record<string, unknown> = { contents, generationConfig: { maxOutputTokens: 4096, temperature: 0.4 } };
-  if (system) base.systemInstruction = { parts: [{ text: system }] };
-  const payloads = webSearch ? [{ ...base, tools: [{ google_search: {} }] }, base] : [base];
-
-  let lastErr = "Gemini request failed";
-  for (const payload of payloads) {
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-goog-api-key": key },
-      body: JSON.stringify(payload),
-    });
-    const data = (await r.json().catch(() => ({}))) as GeminiResp;
-    if (!r.ok) { lastErr = `Gemini API error ${r.status}: ${data?.error?.message || "request failed"}`; continue; }
-    const cand = data.candidates?.[0];
-    const text = (cand?.content?.parts ?? []).map((p) => p.text).filter(Boolean).join("");
-    const chunks = cand?.groundingMetadata?.groundingChunks ?? [];
-    const seen = new Set<string>();
-    const sources: { title: string; url: string }[] = [];
-    for (const c of chunks) {
-      const u = c?.web?.uri;
-      if (u && !seen.has(u)) { seen.add(u); sources.push({ title: c.web?.title || u, url: u }); }
-    }
-    return { text: text || "(empty response)", sources };
-  }
-  throw new Error(lastErr);
 }
 
 function currentTheme(): "dark" | "light" {
   const k = vscode.window.activeColorTheme.kind;
-  return k === vscode.ColorThemeKind.Light || k === vscode.ColorThemeKind.HighContrastLight
-    ? "light"
-    : "dark";
-}
-
-function makeNonce(): string {
-  let text = "";
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  for (let i = 0; i < 32; i++) text += chars.charAt(Math.floor(Math.random() * chars.length));
-  return text;
+  return k === vscode.ColorThemeKind.Light || k === vscode.ColorThemeKind.HighContrastLight ? "light" : "dark";
 }

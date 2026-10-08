@@ -5,10 +5,11 @@
       "label": "build-vscode-extension",
       "type": "shell",
       "command": "pnpm",
-      "args": ["--filter", "modelvisio-vscode", "build"],
-      "options": { "cwd": "${workspaceFolder}/../.." },
+      "args": ["build"],
+      "options": { "cwd": "${workspaceFolder}" },
       "group": "build",
-      "problemMatcher": ["$tsc"]
+      // vite + esbuild output doesn't fit a matcher; failures still stop the launch.
+      "problemMatcher": []
     }
   ]
 }
