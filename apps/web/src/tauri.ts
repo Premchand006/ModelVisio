@@ -2,11 +2,11 @@
 // browser; when hosted inside the Tauri WebView, `withGlobalTauri` exposes the
 // runtime on `window.__TAURI__`, so we (a) wire the native "File → Open Model"
 // menu to the same openFile handler the browser UI uses, and (b) route the AI
-// copilot's /api/chat call through a Rust command — passing the user's own
-// Gemini key (bring-your-own-key, entered in the AI settings and stored locally;
-// no key ships in the app).
+// copilot's /api/chat call through a Rust command — passing the selected
+// provider (Gemini or Grok) and the user's own key for it (bring-your-own-key,
+// entered in the AI settings and stored locally; no key ships in the app).
 
-import { GEMINI_KEY_STORAGE } from "@modelvisio/core";
+import { getAiProvider, getUserApiKey } from "@modelvisio/core";
 
 type InvokeFn = (cmd: string, args?: Record<string, unknown>) => Promise<unknown>;
 type GlobalTauri = {
@@ -68,11 +68,12 @@ export function installTauriChatProxy(): void {
       if (!Array.isArray(body.messages) || body.messages.length === 0) {
         return Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "content-type": "application/json" } }));
       }
-      // Bring-your-own-key: read the user's locally-stored Gemini key and hand it
-      // to the Rust command (which never stores or bundles a key of its own).
-      let apiKey = "";
-      try { apiKey = localStorage.getItem(GEMINI_KEY_STORAGE) ?? ""; } catch { /* ignore */ }
-      return invoke("chat", { apiKey, system: body.system ?? "", messages: body.messages })
+      // Bring-your-own-key: read the selected provider (default Gemini) and the
+      // user's locally-stored key for it, and hand both to the Rust command
+      // (which never stores or bundles a key of its own). Neither helper throws.
+      const provider = getAiProvider();
+      const apiKey = getUserApiKey(provider);
+      return invoke("chat", { provider, apiKey, system: body.system ?? "", messages: body.messages })
         .then((r) => new Response(JSON.stringify(r as ChatReply), { status: 200, headers: { "content-type": "application/json" } }))
         .catch((e) => new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), { status: 500, headers: { "content-type": "application/json" } }));
     }
