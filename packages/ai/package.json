@@ -9,6 +9,9 @@
   "exports": {
     ".": "./src/index.ts",
     "./proxy": "./src/proxy.ts",
+    "./grok": "./src/grok.ts",
+    "./providers": "./src/providers.ts",
+    "./search": "./src/search.ts",
     "./log": "./src/log.ts",
     "./scrape": "./src/scrape.ts"
   },
