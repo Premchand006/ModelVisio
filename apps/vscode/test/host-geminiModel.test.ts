@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_GEMINI_MODEL, sanitizeGeminiModel } from "../src/geminiModel";
+import { DEFAULT_GEMINI_MODEL, DEFAULT_GROK_MODEL, sanitizeGeminiModel, sanitizeGrokModel } from "../src/geminiModel";
+import { DEFAULT_GROK_MODEL as AI_DEFAULT_GROK_MODEL } from "@modelvisio/ai/providers";
 
 describe("sanitizeGeminiModel", () => {
   it("keeps plain model ids (trimmed)", () => {
@@ -29,5 +30,19 @@ describe("sanitizeGeminiModel", () => {
     expect(sanitizeGeminiModel(null)).toBe(DEFAULT_GEMINI_MODEL);
     expect(sanitizeGeminiModel(42)).toBe(DEFAULT_GEMINI_MODEL);
     expect(sanitizeGeminiModel(["gemini-2.5-flash"])).toBe(DEFAULT_GEMINI_MODEL);
+  });
+});
+
+describe("sanitizeGrokModel", () => {
+  it("keeps plain ids and falls back to the Grok default otherwise", () => {
+    expect(sanitizeGrokModel(" grok-4.7 ")).toBe("grok-4.7");
+    expect(sanitizeGrokModel("grok-420-reasoning")).toBe("grok-420-reasoning");
+    expect(sanitizeGrokModel("grok 4")).toBe(DEFAULT_GROK_MODEL);
+    expect(sanitizeGrokModel("grok/../x")).toBe(DEFAULT_GROK_MODEL);
+    expect(sanitizeGrokModel(undefined)).toBe(DEFAULT_GROK_MODEL);
+  });
+
+  it("matches the server-side default", () => {
+    expect(DEFAULT_GROK_MODEL).toBe(AI_DEFAULT_GROK_MODEL);
   });
 });

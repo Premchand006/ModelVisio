@@ -1,17 +1,20 @@
 import * as vscode from "vscode";
 import { ModelEditorProvider } from "./modelEditorProvider";
-import { ApiKeyStore, clearApiKey, promptForApiKey } from "./secrets";
+import { clearApiKey, createApiKeys, promptForApiKey, selectProvider } from "./secrets";
 import { openDialogFilters, viewTypeFor } from "./formats";
 import { errMsg, initLog, log, showLogs } from "./log";
 
 export function activate(context: vscode.ExtensionContext) {
   initLog(context);
-  const keys = new ApiKeyStore(context.secrets, context.globalState);
+  const keys = createApiKeys(context.secrets, context.globalState);
 
   context.subscriptions.push(
     ...ModelEditorProvider.register(context, keys),
-    vscode.commands.registerCommand("modelvisio.setApiKey", () => promptForApiKey(keys)),
-    vscode.commands.registerCommand("modelvisio.clearApiKey", () => clearApiKey(keys)),
+    vscode.commands.registerCommand("modelvisio.setApiKey", () => promptForApiKey(keys.gemini)),
+    vscode.commands.registerCommand("modelvisio.clearApiKey", () => clearApiKey(keys.gemini)),
+    vscode.commands.registerCommand("modelvisio.setGrokApiKey", () => promptForApiKey(keys.grok)),
+    vscode.commands.registerCommand("modelvisio.clearGrokApiKey", () => clearApiKey(keys.grok)),
+    vscode.commands.registerCommand("modelvisio.selectProvider", () => selectProvider(keys)),
     vscode.commands.registerCommand("modelvisio.showLogs", showLogs),
     vscode.commands.registerCommand("modelvisio.openModel", openModel),
     vscode.commands.registerCommand("modelvisio.openWith", openWith),
@@ -19,7 +22,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Fire-and-forget: the migration prompt must not delay opening the editor
   // that triggered activation.
-  keys.migrateLegacySetting().catch((e) => log.warn(`API key migration failed: ${errMsg(e)}`));
+  keys.gemini.migrateLegacySetting().catch((e) => log.warn(`API key migration failed: ${errMsg(e)}`));
 }
 
 export function deactivate() {

@@ -1,5 +1,10 @@
-// Gemini API key resolution order. Pure (no `vscode` import) so the precedence
-// rules are unit tested; secrets.ts feeds it the actual values.
+// Copilot API keys (Gemini or Grok): per-provider details and the resolution
+// order. Pure (no `vscode` import) so the precedence rules are unit tested;
+// secrets.ts feeds it the actual values.
+
+import type { ChatProvider } from "@modelvisio/ai/providers";
+
+export type { ChatProvider };
 
 export type KeySource = "secret" | "setting" | "env";
 
@@ -7,17 +12,57 @@ export type KeyCandidates = {
   /** VS Code SecretStorage (encrypted, per machine). */
   secret?: string | null;
   /** Legacy plain-text `modelvisio.geminiApiKey` setting — user level only
-   *  (see userSettingKey). */
+   *  (see userSettingKey). Gemini only. */
   setting?: string | null;
-  /** GEMINI_API_KEY in the environment that launched VS Code. */
+  /** GEMINI_API_KEY / XAI_API_KEY in the environment that launched VS Code. */
   env?: string | null;
 };
 
 export const API_KEY_URL = "https://aistudio.google.com/apikey";
+export const GROK_KEY_URL = "https://console.x.ai";
 
-export const MISSING_KEY_MESSAGE =
-  `No Gemini API key configured. Run "ModelVisio: Set Gemini API Key" from the Command Palette ` +
-  `(free key at ${API_KEY_URL}), or set GEMINI_API_KEY in the environment that launches VS Code.`;
+export type ProviderInfo = {
+  label: string;
+  keyUrl: string;
+  /** Environment variable read as the last fallback. */
+  envVar: string;
+  /** SecretStorage slot. */
+  secretId: string;
+  setCommand: string;
+  setTitle: string;
+  placeholder: string;
+};
+
+export const PROVIDERS: Record<ChatProvider, ProviderInfo> = {
+  gemini: {
+    label: "Gemini",
+    keyUrl: API_KEY_URL,
+    envVar: "GEMINI_API_KEY",
+    // Same id as the legacy setting, for discoverability.
+    secretId: "modelvisio.geminiApiKey",
+    setCommand: "modelvisio.setApiKey",
+    setTitle: "ModelVisio: Set Gemini API Key",
+    placeholder: "AIza…",
+  },
+  grok: {
+    label: "Grok (xAI)",
+    keyUrl: GROK_KEY_URL,
+    envVar: "XAI_API_KEY",
+    secretId: "modelvisio.grokApiKey",
+    setCommand: "modelvisio.setGrokApiKey",
+    setTitle: "ModelVisio: Set Grok (xAI) API Key",
+    placeholder: "xai-…",
+  },
+};
+
+export function missingKeyMessage(provider: ChatProvider): string {
+  const p = PROVIDERS[provider];
+  const where = provider === "gemini" ? `free key at ${p.keyUrl}` : `get a key at ${p.keyUrl}`;
+  return `No ${p.label} API key configured. Run "${p.setTitle}" from the Command Palette ` +
+    `(${where}), or set ${p.envVar} in the environment that launches VS Code.`;
+}
+
+export const MISSING_KEY_MESSAGE = missingKeyMessage("gemini");
 
 /** First non-blank key in precedence order: SecretStorage → legacy setting → env. */
 export function resolveApiKey(c: KeyCandidates): { key: string; source: KeySource } | null {

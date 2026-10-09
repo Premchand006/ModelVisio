@@ -3,8 +3,11 @@ import { fileURLToPath } from "node:url";
 import { defineConfig, loadEnv, type PluginOption } from "vite";
 import react from "@vitejs/plugin-react";
 import { runChatProxy } from "@modelvisio/ai/proxy";
+import { runGrokChat } from "@modelvisio/ai/grok";
+import { chatProviderFromEnv } from "@modelvisio/ai/providers";
+import { chatWithWebResearch, freeSearchApplies, parseFreeSearchMode } from "@modelvisio/ai/search";
 import { logChat, logClientEvent } from "@modelvisio/ai/log";
-import { handleScrapeRequest } from "@modelvisio/ai/scrape";
+import { handleScrapeRequest, scrapeOptionsFromEnv, scrapeUrl } from "@modelvisio/ai/scrape";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../..");
@@ -12,11 +15,17 @@ const repoRoot = resolve(here, "../..");
 /**
  * Dev-only middleware that answers POST /api/chat during `pnpm dev`, so the AI
  * copilot works locally WITHOUT deploying or running `vercel dev`. It mirrors
- * the production serverless proxy (apps/web/api/chat.ts) and reads the key from
- * the repo-root `.env`. The key stays on the Node dev server — it is never sent
- * to the browser. In production the real serverless function handles this route.
+ * the production serverless proxy (apps/web/api/chat.ts) and reads the provider
+ * key (GEMINI_API_KEY, or XAI_API_KEY for Grok) from the repo-root `.env`. The
+ * key stays on the Node dev server — it is never sent to the browser. In
+ * production the real serverless function handles this route.
  */
-function chatProxyDev(key: string | undefined, model: string, webSearch: boolean, thinking: boolean): PluginOption {
+function chatProxyDev(env: Record<string, string | undefined>): PluginOption {
+  const { provider, key, model, missingKeyError } = chatProviderFromEnv(env);
+  const webSearch = (env.MODELVISIO_WEB_SEARCH || "on") !== "off";
+  const freeSearch = parseFreeSearchMode(env.MODELVISIO_FREE_SEARCH, "auto");
+  const thinking = (env.MODELVISIO_THINKING || "off") === "on";
+  const scrape = scrapeOptionsFromEnv(env);
   return {
     name: "modelvisio-chat-proxy-dev",
     apply: "serve",
@@ -26,7 +35,7 @@ function chatProxyDev(key: string | undefined, model: string, webSearch: boolean
         if (req.method !== "POST") { res.statusCode = 405; res.end(JSON.stringify({ error: "Method not allowed" })); return; }
         if (!key) {
           res.statusCode = 500;
-          res.end(JSON.stringify({ error: "GEMINI_API_KEY is not set. Add it to .env at the repo root (free key: https://aistudio.google.com/apikey) and restart `pnpm dev`." }));
+          res.end(JSON.stringify({ error: `${missingKeyError} Add it to .env at the repo root and restart \`pnpm dev\`.` }));
           return;
         }
         try {
@@ -43,9 +52,20 @@ function chatProxyDev(key: string | undefined, model: string, webSearch: boolean
             res.end(JSON.stringify({ ok: true }));
             return;
           }
-          const { system, messages } = body;
-          const logP = logChat(system ?? "", messages ?? [], { ip, user_agent: req.headers["user-agent"] ?? null });
-          const out = await runChatProxy({ key, system: system ?? "", messages: messages ?? [], model, webSearch, thinking });
+          const system: string = body.system ?? "";
+          const messages: unknown[] = body.messages ?? [];
+          const logP = logChat(system, messages, { ip, user_agent: req.headers["user-agent"] ?? null });
+          const run = (sys: string) =>
+            provider === "grok"
+              ? runGrokChat({ key, system: sys, messages, model, thinking })
+              : runChatProxy({ key, system: sys, messages, model, webSearch, thinking });
+          const out = freeSearchApplies(provider, webSearch, freeSearch)
+            ? await chatWithWebResearch({
+                system, messages, mode: freeSearch, searxngUrl: env.MODELVISIO_SEARXNG_URL || undefined,
+                read: (url, limits) => scrapeUrl({ url, ...scrape, ...limits }),
+                onError: (m) => server.config.logger.warn(`[modelvisio] ${m}`),
+              }, run)
+            : await run(system);
           await logP;
           res.statusCode = 200;
           res.end(JSON.stringify(out));
@@ -93,16 +113,13 @@ function scrapeProxyDev(env: Record<string, string | undefined>): PluginOption {
 export default defineConfig(({ mode }) => {
   // Load all vars (no VITE_ prefix filter) from the repo-root .env for the dev proxy.
   const env = loadEnv(mode, repoRoot, "");
-  const key = env.GEMINI_API_KEY || env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-  const model = env.MODELVISIO_MODEL || process.env.MODELVISIO_MODEL || "gemini-2.5-flash";
-  const webSearch = (env.MODELVISIO_WEB_SEARCH || process.env.MODELVISIO_WEB_SEARCH || "on") !== "off";
-  const thinking = (env.MODELVISIO_THINKING || process.env.MODELVISIO_THINKING || "off") === "on";
+  // Repo-root .env wins over the shell env; a blank .env entry falls back to it.
+  const merged = { ...process.env, ...Object.fromEntries(Object.entries(env).filter(([, v]) => v)) };
   return {
     plugins: [
       react(),
-      chatProxyDev(key, model, webSearch, thinking),
-      // Repo-root .env wins over the shell env, matching the chat proxy above.
-      scrapeProxyDev({ ...process.env, ...env }),
+      chatProxyDev(merged),
+      scrapeProxyDev(merged),
     ],
     envDir: repoRoot,
     server: { port: 5173 },

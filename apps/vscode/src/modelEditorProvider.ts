@@ -7,7 +7,7 @@ import { dirnamePosix, formatBytes, sizeLimitError, toTransferable, watchGlobFor
 import { basename, VIEW_TYPE, VIEW_TYPE_OPTION } from "./formats";
 import { buildHtml, makeNonce } from "./html";
 import { parseWebviewMessage } from "./messages";
-import type { ApiKeyStore } from "./secrets";
+import type { ApiKeys } from "./secrets";
 import { errMsg, log } from "./log";
 
 /** Coalesces the burst of events one save produces (truncate + write, or an
@@ -21,7 +21,7 @@ const RELOAD_DEBOUNCE_MS = 300;
  * Serves both viewTypes (default + "Reopen With…" option) with one instance.
  */
 export class ModelEditorProvider implements vscode.CustomReadonlyEditorProvider {
-  static register(context: vscode.ExtensionContext, keys: ApiKeyStore): vscode.Disposable[] {
+  static register(context: vscode.ExtensionContext, keys: ApiKeys): vscode.Disposable[] {
     const provider = new ModelEditorProvider(context, keys);
     const options = {
       webviewOptions: { retainContextWhenHidden: true },
@@ -34,7 +34,7 @@ export class ModelEditorProvider implements vscode.CustomReadonlyEditorProvider 
 
   private constructor(
     private readonly context: vscode.ExtensionContext,
-    private readonly keys: ApiKeyStore,
+    private readonly keys: ApiKeys,
   ) {}
 
   openCustomDocument(uri: vscode.Uri): vscode.CustomDocument {
