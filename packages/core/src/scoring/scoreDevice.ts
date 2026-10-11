@@ -1,15 +1,15 @@
-// scoreDevice(model, device) — a defensible 0-100 model→hardware fit score.
+// scoreDevice(model, device): a defensible 0-100 model→hardware fit score.
 //
 // The number is COMPUTED from the loaded model, not hand-assigned. It folds four
 // sub-scores under a deployment profile, with two hard overrides:
-//   • memory-fit hard-fail — a model that doesn't fit in device memory can never
+//   • memory-fit hard-fail: a model that doesn't fit in device memory can never
 //     show green, regardless of compute headroom (the highest-value guard);
-//   • compile-fail — an unsupported core op on a no-fallback part caps the score.
+//   • compile-fail: an unsupported core op on a no-fallback part caps the score.
 //
 // Sub-scores: latency (roofline FPS), memoryFit, format/op-support (incl. the
 // Coral single-partition CPU-fallback rule), and efficiency (FPS/W, FPS/$).
 //
-// Pure module — no React.
+// Pure module, no React.
 
 import type { Model } from "@modelvisio/parsers";
 import { BYTES, type DeviceSpec } from "../data/hardware";
@@ -81,18 +81,18 @@ export function scoreDevice(model: Model, dev: DeviceSpec, profile: Profile = "t
   let memScore: number;
   let hardFail = false;
   if (budgetBytes <= 0) {
-    memScore = 40; // unknown budget — neutral, low confidence handled below
+    memScore = 40; // unknown budget: neutral, low confidence handled below
   } else {
     const headroom = budgetBytes / footprintBytes;
     if (headroom < 1) {
       if (onchip && dev.externalMem) {
         // Spills to external/host memory: heavy throughput penalty, not a hard fail.
         memScore = clamp(Math.round(25 * headroom));
-        banners.push({ level: "warn", msg: `Model (${fmtB(footprintBytes)}) exceeds on-chip budget (${fmtB(budgetBytes)}) — spills to host, severe slowdown` });
+        banners.push({ level: "warn", msg: `Model (${fmtB(footprintBytes)}) exceeds on-chip budget (${fmtB(budgetBytes)}); spills to host, severe slowdown` });
       } else {
         hardFail = true;
         memScore = clamp(Math.round(15 * headroom));
-        banners.push({ level: "error", msg: `Model footprint ${fmtB(footprintBytes)} > device memory ${fmtB(budgetBytes)} — cannot deploy` });
+        banners.push({ level: "error", msg: `Model footprint ${fmtB(footprintBytes)} > device memory ${fmtB(budgetBytes)}: cannot deploy` });
       }
     } else {
       memScore = clamp(Math.round(50 + 40 * log2(headroom)));
@@ -121,7 +121,7 @@ export function scoreDevice(model: Model, dev: DeviceSpec, profile: Profile = "t
     if (dev.cpuFallback === "none") {
       compileFail = true;
       coverage = 0;
-      banners.push({ level: "error", msg: `${errLayers.length} unsupported op(s); no CPU fallback — model will not compile` });
+      banners.push({ level: "error", msg: `${errLayers.length} unsupported op(s); no CPU fallback, so the model will not compile` });
     } else if (dev.cpuFallback === "single-partition") {
       // Everything from the FIRST unsupported op to the end runs on the host CPU.
       const firstErrId = Math.min(...errLayers.map((l) => l.id));
@@ -154,7 +154,7 @@ export function scoreDevice(model: Model, dev: DeviceSpec, profile: Profile = "t
     const pen = Math.min(15, avgQSens * 120);
     opScore -= pen;
     const sensCount = model.layers.filter((l) => l.qSens > 0.1).length;
-    if (sensCount > 0) banners.push({ level: "info", msg: `INT8-only: ${sensCount} quantization-sensitive layer(s) — validate accuracy` });
+    if (sensCount > 0) banners.push({ level: "info", msg: `INT8-only: ${sensCount} quantization-sensitive layer(s); validate accuracy` });
   }
   opScore = clamp(Math.round(opScore));
 

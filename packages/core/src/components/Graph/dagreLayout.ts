@@ -71,7 +71,7 @@ export function computeGraph(model: Model, o: LayoutOpts): Layout {
   for (const [a, b] of model.edges) {
     if (!g.hasNode(String(a)) || !g.hasNode(String(b))) continue;
     // Register the shape label as a real, centered label box so dagre reserves
-    // space for it and keeps it off every node — no overlap on any model.
+    // space for it and keeps it off every node, so no overlap on any model.
     const text = edgeLabel(byId.get(a));
     g.setEdge(String(a), String(b), text ? { width: labelW(text), height: LBL_H, labelpos: "c", labeloffset: 0 } : {});
   }

@@ -17,7 +17,7 @@ function model(layers: ModelLayer[]): Model {
 const totalParams = (m: typeof demoModel) => m.layers.reduce((s, l) => s + l.params, 0);
 
 describe("apply-fix transforms (real graph rewrites)", () => {
-  it("is immutable — the original model is never mutated", () => {
+  it("is immutable: the original model is never mutated", () => {
     const before = JSON.stringify(demoModel);
     for (const f of FIXES) {
       const out = applyFix(demoModel, f.id);
@@ -70,7 +70,7 @@ describe("apply-fix transforms (real graph rewrites)", () => {
 });
 
 describe("apply-fix edge cases (regression guards)", () => {
-  it("does NOT rewrite a standalone Sigmoid — only SiLU / Mul(Sigmoid)", () => {
+  it("does NOT rewrite a standalone Sigmoid, only SiLU / Mul(Sigmoid)", () => {
     const m = model([
       layer({ id: 0, type: "Sigmoid", op: "Sigmoid" }),
       layer({ id: 1, type: "SiLU", op: "Mul(Sigmoid)" }),

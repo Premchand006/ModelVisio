@@ -10,7 +10,7 @@ import { MISSING_KEY_MESSAGE } from "./apiKey";
 import { notifyMissingKey, type ApiKeyStore } from "./secrets";
 import { errMsg, log } from "./log";
 
-/** Not serverless, so no hard platform limit — but a hung Gemini request
+/** Not serverless, so no hard platform limit, but a hung Gemini request
  *  must still end so the chat UI can recover. */
 const CHAT_TIME_BUDGET_MS = 60_000;
 
@@ -60,7 +60,7 @@ async function handleChat(msg: Extract<WebviewToHost, { type: "chat" }>, ctx: Br
   // never become a billed Gemini request.
   if (msg.messages.length === 0) {
     log.debug(`Ignored empty chat request #${msg.id}.`);
-    ctx.post({ type: "chatError", id: msg.id, error: "Empty chat request — nothing to send." });
+    ctx.post({ type: "chatError", id: msg.id, error: "Empty chat request, nothing to send." });
     return;
   }
   const found = await ctx.keys.resolve();
@@ -86,7 +86,7 @@ async function handleChat(msg: Extract<WebviewToHost, { type: "chat" }>, ctx: Br
     ctx.post({ type: "chatResult", id: msg.id, text: out.text, sources: out.sources });
   } catch (e) {
     const error =
-      errMsg(e) === "TIMEOUT" ? `Gemini did not answer within ${CHAT_TIME_BUDGET_MS / 1000}s — try again.` : errMsg(e);
+      errMsg(e) === "TIMEOUT" ? `Gemini did not answer within ${CHAT_TIME_BUDGET_MS / 1000}s. Try again.` : errMsg(e);
     log.error(`Chat #${msg.id} failed: ${error}`);
     ctx.post({ type: "chatError", id: msg.id, error });
   }
@@ -141,7 +141,7 @@ async function handleSave(msg: Extract<WebviewToHost, { type: "save" }>, ctx: Br
 /** Where the Save dialog starts: next to the model, unless its file system is
  *  read-only (e.g. a git: or zip-backed virtual FS), then the first writable
  *  workspace folder, else undefined so VS Code picks its own default.
- *  `isWritableFileSystem` returns undefined for unknown schemes — assume writable. */
+ *  `isWritableFileSystem` returns undefined for unknown schemes, so assume writable. */
 function saveDirFor(modelUri: vscode.Uri): vscode.Uri | undefined {
   const writable = (u: vscode.Uri) => vscode.workspace.fs.isWritableFileSystem(u.scheme) !== false;
   if (writable(modelUri)) return vscode.Uri.joinPath(modelUri, "..");

@@ -66,9 +66,9 @@ export function readNpy(buf: Uint8Array, name: string): NumpyTensor {
   const descrM = header.match(/'descr'\s*:\s*'([^']+)'/);
   const shapeM = header.match(/'shape'\s*:\s*\(([^)]*)\)/);
   const fortran = /'fortran_order'\s*:\s*True/.test(header);
-  if (fortran) throw new Error(`NumPy: ${name} is Fortran-ordered (column-major) — not supported.`);
+  if (fortran) throw new Error(`NumPy: ${name} is Fortran-ordered (column-major), not supported.`);
   const descr = descrM ? descrM[1] : "|u1";
-  if (/^>/.test(descr) && !/^>[ui]1$/.test(descr)) throw new Error(`NumPy: ${name} is big-endian (${descr}) — not supported.`);
+  if (/^>/.test(descr) && !/^>[ui]1$/.test(descr)) throw new Error(`NumPy: ${name} is big-endian (${descr}), not supported.`);
   const key = descr.replace(/^[<>|=]/, "");
   const dtype = DESCR_TO_ST[key];
   if (!dtype) throw new Error(`NumPy: unsupported dtype ${descr} in ${name}.`);
@@ -88,7 +88,7 @@ export function readNumpy(buf: Uint8Array, name: string): NumpyTensor[] {
       out.push(readNpy(member, e.name.replace(/\.npy$/, "")));
     }
     if (out.length === 0) {
-      throw new Error(skippedCompressed > 0 ? "This .npz is compressed (np.savez_compressed) — only uncompressed np.savez is supported." : "No arrays found in this .npz.");
+      throw new Error(skippedCompressed > 0 ? "This .npz is compressed (np.savez_compressed). Only uncompressed np.savez is supported." : "No arrays found in this .npz.");
     }
     return out;
   }

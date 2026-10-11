@@ -6,7 +6,7 @@ const SRC = "https://file+.vscode-resource.vscode-cdn.net";
 describe("CSP", () => {
   it("is exactly the policy the WebView bundle depends on", () => {
     expect(buildCsp(SRC, "N0nce")).toBe(
-      `default-src 'none'; img-src ${SRC} data: blob:; script-src 'nonce-N0nce' 'unsafe-eval'; ` +
+      `default-src 'none'; img-src ${SRC} data: blob:; script-src 'nonce-N0nce' 'unsafe-eval' 'wasm-unsafe-eval'; ` +
         `style-src ${SRC} 'unsafe-inline' https://fonts.googleapis.com; ` +
         `font-src ${SRC} https://fonts.gstatic.com data:; connect-src ${SRC} https:; worker-src ${SRC} blob:`,
     );

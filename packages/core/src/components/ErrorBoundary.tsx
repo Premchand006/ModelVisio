@@ -40,7 +40,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <div style={{ fontSize: 30, marginBottom: 8 }}>⚠️</div>
           <div style={{ fontSize: 16, fontWeight: 700, color: t0, marginBottom: 6 }}>Something went wrong</div>
           <div style={{ fontSize: 12, color: t2, lineHeight: 1.6, marginBottom: 14 }}>
-            A panel hit an unexpected error. Your data is safe — try again, or reload and re-open the model.
+            A panel hit an unexpected error. Your data is safe. Try again, or reload and re-open the model.
           </div>
           <pre style={{ fontSize: 10, color: err, background: bg, border: `1px solid ${bdr}`, borderRadius: 6, padding: 10, margin: "0 0 14px", textAlign: "left", whiteSpace: "pre-wrap", maxHeight: 140, overflow: "auto", fontFamily: "'JetBrains Mono',monospace" }}>{error.message || String(error)}</pre>
           <button type="button" onClick={() => this.setState({ error: null })} style={{ padding: "8px 18px", borderRadius: 7, border: "none", background: acc, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Try again</button>

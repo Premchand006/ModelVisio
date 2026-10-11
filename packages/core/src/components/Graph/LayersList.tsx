@@ -5,12 +5,14 @@ import { GC } from "../../theme/theme";
 import { fmt } from "../../utils/format";
 
 export function LayersList({
-  model, selected, onSelect, qHeatmap, query,
+  model, selected, onSelect, qHeatmap, nodeColors, query,
 }: {
   model: Model;
   selected: ModelLayer | null;
   onSelect: (l: ModelLayer) => void;
-  qHeatmap: boolean;
+  qHeatmap?: boolean;
+  /** "Color by" overlay: layer id → color (see colorBy.ts). */
+  nodeColors?: Map<number, string> | null;
   query: string;
 }) {
   const t = useT();
@@ -40,7 +42,7 @@ export function LayersList({
       </div>
       <div style={{ flex: 1, overflow: "auto", padding: "10px 12px" }}>
         <div style={{ maxWidth: COL, margin: "0 auto", display: "flex", flexDirection: "column", gap: 5 }}>
-          {rows.length === 0 && <div style={{ padding: 24, textAlign: "center", color: t.t3, fontSize: 11 }}>No layers match “{q}”.</div>}
+          {rows.length === 0 && <div style={{ padding: 24, textAlign: "center", color: t.t3, fontSize: 11 }}>No layers match "{q}".</div>}
           {rows.map((l) => {
             const gc = t[GC[l.group]] || t.bdr;
             const qc = qHeatmap && l.qSens > 0 ? (l.qSens > 0.12 ? t.err : l.qSens > 0.06 ? t.wrn : t.suc) : null;
@@ -53,10 +55,10 @@ export function LayersList({
                   padding: "7px 11px", borderRadius: 8, cursor: "pointer",
                   background: isSel ? t.bg2 : t.bg1,
                   border: `1px solid ${isSel ? t.bdr2 : t.bdr}`,
-                  borderLeft: `3px solid ${qc || gc}`,
+                  borderLeft: `${nodeColors ? 6 : 3}px solid ${nodeColors?.get(l.id) || qc || gc}`,
                 }}
               >
-                {/* Op + name on one line, left-aligned — name truncates rather than
+                {/* Op + name on one line, left-aligned; name truncates rather than
                     pushing anything to the far edge. */}
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8, minWidth: 0 }}>
                   <span style={{ fontSize: 11.5, fontWeight: 700, color: t.t0, fontFamily: "'JetBrains Mono'", flexShrink: 0 }}>{l.op}</span>

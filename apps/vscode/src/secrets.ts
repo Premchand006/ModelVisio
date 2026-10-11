@@ -14,7 +14,7 @@ import { errMsg, log } from "./log";
 const SECRET_ID = "modelvisio.geminiApiKey";
 const LEGACY_SETTING = "geminiApiKey";
 /** globalState flag: the legacy setting has been dealt with (migrated, or
- *  superseded by a key the user stored or cleared) — never migrate again. */
+ *  superseded by a key the user stored or cleared): never migrate again. */
 const MIGRATED_FLAG = "modelvisio.keyMigrated";
 
 /** The legacy setting's user-level value; workspace values are never used. */
@@ -24,7 +24,7 @@ function legacyUserKey(): string | undefined {
 
 /**
  * Where the Gemini key lives. The key only ever leaves the extension host as
- * the x-goog-api-key header to Google — it is never posted to the WebView.
+ * the x-goog-api-key header to Google. It is never posted to the WebView.
  */
 export class ApiKeyStore {
   constructor(
@@ -105,7 +105,7 @@ export class ApiKeyStore {
   }
 }
 
-/** "ModelVisio: Set Gemini API Key" — password InputBox with a "get a key" link button. */
+/** "ModelVisio: Set Gemini API Key": password InputBox with a "get a key" link button. */
 export async function promptForApiKey(store: ApiKeyStore): Promise<boolean> {
   const input = vscode.window.createInputBox();
   input.title = "ModelVisio: Gemini API Key";

@@ -1,4 +1,4 @@
-// Roofline-grounded model→hardware scoring. Pure TS — usable from any shell.
+// Roofline-grounded model→hardware scoring. Pure TS, usable from any shell.
 export {
   estimateRoofline, modelCompute, peakActivationBytes, pickPrecision,
   classifyWorkload, peakOpsPerSec, utilFor, calibratedUtil,

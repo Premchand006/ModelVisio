@@ -201,7 +201,7 @@
         "modelvisio.webSearch": {
           "type": "boolean",
           "default": false,
-          "description": "Enable Google Search grounding so the copilot can cite live links. Requires a paid-tier key — leave off for free keys."
+          "description": "Enable Google Search grounding so the copilot can cite live links. Requires a paid-tier key. Leave off for free keys."
         },
         "modelvisio.thinking": {
           "type": "boolean",

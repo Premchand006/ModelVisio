@@ -3,7 +3,7 @@
 // Backbone: Williams, Waterman & Patterson, "Roofline: An Insightful Visual
 // Performance Model for Multicore Architectures," CACM 52(4), 2009. Attainable
 // performance is bounded by min(peak_compute, bandwidth × arithmetic_intensity).
-// Applied per-layer from the parsed ONNX shapes, then aggregated — the same
+// Applied per-layer from the parsed ONNX shapes, then aggregated. This is the same
 // per-layer-then-aggregate scheme used by PRoof (ICPP'24) and LLM-Viewer.
 //
 // nn-Meter (MobiSys'21) showed pure FLOP-counting predicts latency at only
@@ -11,7 +11,7 @@
 // factor calibrated from benchmarks is the best *implementable* compromise when
 // we have model shapes but cannot run every model on every chip.
 //
-// Pure module — no React, no side effects.
+// Pure module: no React, no side effects.
 
 import type { Model, ModelLayer } from "@modelvisio/parsers";
 import { BYTES, type DeviceSpec, type Precision, type Util } from "../data/hardware";
@@ -43,7 +43,7 @@ export function pickPrecision(dev: DeviceSpec): Precision {
   return "fp32";
 }
 
-/** Peak ops/sec for a precision (TOPS/TFLOPS → ops/s). Uses DENSE int8 only —
+/** Peak ops/sec for a precision (TOPS/TFLOPS → ops/s). Uses DENSE int8 only,
  *  never NVIDIA's sparse figure, which is unreachable on dense weights. */
 export function peakOpsPerSec(dev: DeviceSpec, prec: Precision): number {
   const t = prec === "int8" ? dev.peak.int8
@@ -82,7 +82,7 @@ export function utilFor(wc: WorkloadClass, u: Util): number {
  *
  * Note: the public anchors are achievable-THROUGHPUT figures (MLPerf offline /
  * Hailo batched), so the implied factor reflects max sustained utilization, not
- * batch-1 latency — the FPS estimate is throughput-oriented and the anchor's
+ * batch-1 latency. The FPS estimate is throughput-oriented and the anchor's
  * batched/offline nature is disclosed in the UI's "Calibration source" line. If
  * the implied value is outside a sane band [0.08, 0.6] the calibration is
  * REJECTED and we fall back to the generic estimate (calibrated:false).
@@ -135,7 +135,7 @@ export type Roofline = {
 
 /**
  * Estimate steady-state throughput. For each layer the binding resource is
- * max(compute_time, memory_time) — equivalent to flops / min(peak, bw·AI) but
+ * max(compute_time, memory_time), equivalent to flops / min(peak, bw·AI) but
  * NaN-safe for zero-FLOP memory-move layers (Resize/Concat). On-chip dataflow
  * parts (Hailo) keep weights resident, so weight bytes are excluded and the
  * effective bandwidth is on-chip (compute-bound).

@@ -1,14 +1,14 @@
 // Compiler auto-fix transforms. Each fix is a PURE function over the normalized
 // Model graph: it rewrites the applicable layers (op/type, params, FLOPs, and the
-// per-target compatibility issues it resolves) and returns a NEW Model — the
+// per-target compatibility issues it resolves) and returns a NEW Model; the
 // input is never mutated. The app swaps its in-memory model to the result, so the
 // graph, stats, and compiler pre-flight all update live and visibly.
 //
-// Scope (honest): these edit the in-memory *analysis* model — the graph, stats,
+// Scope: these edit the in-memory *analysis* model: the graph, stats,
 // compiler pre-flight, and the Convert tab's Graph-JSON / Layers-CSV exports all
 // reflect them. They do NOT rewrite the original model file's bytes; producing a
 // fixed binary (ONNX/TFLite/…) is a training/export-pipeline step, done with the
-// op-level recipe these fixes describe — not in the browser.
+// op-level recipe these fixes describe, not in the browser.
 
 import type { Model, ModelLayer } from "@modelvisio/parsers";
 
@@ -21,7 +21,7 @@ export type FixDef = {
   impact: string;
   /** Does this fix apply to layer `l`? Drives the count + affected-layers list. */
   applies: (l: ModelLayer) => boolean;
-  /** Rewrite one applicable layer (pure — returns a new layer). */
+  /** Rewrite one applicable layer (pure; returns a new layer). */
   apply: (l: ModelLayer) => ModelLayer;
 };
 
@@ -57,7 +57,7 @@ export const FIXES: FixDef[] = [
     title: "SiLU → HardSwish",
     change: "Replace SiLU/Swish activations with HardSwish (piecewise-linear).",
     impact: "≈ same accuracy (−0.2% typical) · fuses on NPUs · no Sigmoid+Mul CPU fallback.",
-    // SiLU/Swish either by type, or the decomposed "Mul(Sigmoid)" op — NOT a
+    // SiLU/Swish either by type, or the decomposed "Mul(Sigmoid)" op, NOT a
     // standalone Sigmoid (which is a different function we must not rewrite).
     applies: (l) => /silu|swish/i.test(l.type) || (/sigmoid/i.test(l.op) && /mul/i.test(l.op)),
     apply: (l) => ({
@@ -65,7 +65,7 @@ export const FIXES: FixDef[] = [
       type: "Hardswish",
       op: "HardSwish",
       math: "HardSwish(x) = x · ReLU6(x + 3) / 6",
-      insight: "Hardened activation — piecewise-linear, maps to a single op on Coral / RKNN / most NPUs.",
+      insight: "Hardened activation: piecewise-linear, maps to a single op on Coral / RKNN / most NPUs.",
       qSens: +(l.qSens * 0.7).toFixed(3),
       compIssues: dropIssues(l, /silu|sigmoid|swish/i),
     }),
@@ -80,7 +80,7 @@ export const FIXES: FixDef[] = [
       ...l,
       type: "SPP",
       op: "MaxPool×3(parallel)+Concat+Conv",
-      insight: "Parallel SPP — three independent pools instead of a cascade; compiler-friendly.",
+      insight: "Parallel SPP: three independent pools instead of a cascade; compiler-friendly.",
       compIssues: dropIssues(l, /maxpool|sppf|cascad/i),
     }),
   },
@@ -102,7 +102,7 @@ export const FIXES: FixDef[] = [
         params: l.params + addParams,
         macs: l.macs + Math.round(addFlops / 2),
         flops: l.flops + addFlops,
-        insight: "Learned 2× upsample (depthwise transposed conv) — on-chip, no Resize CPU path.",
+        insight: "Learned 2× upsample (depthwise transposed conv), on-chip, no Resize CPU path.",
         qSens: Math.max(l.qSens, 0.02),
         compIssues: dropIssues(l, /resize|upsample|nearest/i),
       };

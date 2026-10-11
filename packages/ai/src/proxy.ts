@@ -2,7 +2,7 @@
 // function (apps/web/api/chat.ts), the Netlify function (netlify/functions/
 // chat.ts), and the Vite dev middleware (apps/web/vite.config.ts).
 //
-// This runs ONLY on a server/Node/edge runtime — it is intentionally NOT
+// This runs ONLY on a server/Node/edge runtime. It is intentionally NOT
 // re-exported from index.ts, so the API key path never enters the browser
 // bundle. Uses global `fetch` (Node 18+, Vercel, Netlify, Vite dev server).
 //
@@ -17,7 +17,7 @@
 // 502 instead of our JSON. To stay inside the budget we (1) disable thinking by
 // default, (2) never sleep past the deadline on a 429 retry, (3) abort the fetch
 // at the deadline, and (4) fall back to a fast non-grounded answer if grounding
-// runs long — so the chat always responds within budget rather than 502-ing.
+// runs long, so the chat always responds within budget rather than 502-ing.
 
 export type ProxyResult = { text: string; sources: { title: string; url: string }[] };
 export type ChatTurn = { role: "user" | "assistant"; content: string };
@@ -81,7 +81,7 @@ function retryDelaySec(msg: string): number | null {
   return m ? parseFloat(m[1]) : null;
 }
 
-/** True when the 429 means the quota ceiling itself is 0 — not a transient rate
+/** True when the 429 means the quota ceiling itself is 0, not a transient rate
  *  limit. Retrying/waiting can NOT help; the key/project/region must change. */
 function isZeroQuota(msg: string): boolean {
   return /limit:?\s*"?0\b/.test(msg);
@@ -91,10 +91,10 @@ function formatError(status: number, data: GeminiResponse, model: string): strin
   const msg = data?.error?.message || JSON.stringify(data);
   if (status === 429) {
     if (isZeroQuota(msg)) {
-      return `Gemini free-tier quota is 0 for "${model}" on this key — Google grants it no requests, so retrying won't help. `
+      return `Gemini free-tier quota is 0 for "${model}" on this key. Google grants it no requests, so retrying won't help. `
         + `Fix on the Google side: (1) create a NEW key in a NEW project at https://aistudio.google.com/apikey ; `
         + `(2) try MODELVISIO_MODEL=gemini-2.5-flash-lite or gemini-2.0-flash; `
-        + `(3) the free tier may not be offered in your region — enabling billing keeps a free monthly allowance. Original: ${msg}`;
+        + `(3) the free tier may not be offered in your region; enabling billing keeps a free monthly allowance. Original: ${msg}`;
     }
     return `Gemini rate limit (429) on "${model}": ${msg}`;
   }
@@ -110,7 +110,7 @@ const TIMEOUT = "TIMEOUT";
  *  - Disables gemini-2.5 "thinking" by default so the call fits short serverless
  *    timeouts; pass thinking:true to re-enable it where the budget allows.
  *  - Bounds the whole call by timeBudgetMs: aborts the fetch at the deadline and
- *    only waits out a transient 429 if the suggested delay fits the budget — so
+ *    only waits out a transient 429 if the suggested delay fits the budget, so
  *    it surfaces a clean error instead of being killed mid-flight (opaque 502).
  *  - If grounding is unavailable OR runs past its slice of the budget, retries
  *    once WITHOUT the search tool so the chat still answers rather than failing.
@@ -193,7 +193,7 @@ export async function runChatProxy({
       data = await call(grounded, groundedBudget);
     } catch (e) {
       const m = e instanceof Error ? e.message : "";
-      // A rate-limit/zero-quota failure repeats without grounding too — don't
+      // A rate-limit/zero-quota failure repeats without grounding too, so don't
       // burn the rest of the budget retrying; surface it as-is.
       if (/quota is 0/.test(m) || /rate limit/.test(m)) throw e;
       // Grounding unavailable or too slow → fast non-grounded retry if any

@@ -9,6 +9,7 @@ import { buildHtml, makeNonce } from "./html";
 import { parseWebviewMessage } from "./messages";
 import type { ApiKeyStore } from "./secrets";
 import { errMsg, log } from "./log";
+import { companionNames } from "@modelvisio/parsers/companions";
 
 /** Coalesces the burst of events one save produces (truncate + write, or an
  *  atomic rename's delete + create) into a single reload. */
@@ -119,9 +120,11 @@ export class ModelEditorProvider implements vscode.CustomReadonlyEditorProvider 
           return;
         }
         const bytes = await vscode.workspace.fs.readFile(uri);
+        const companions = await readCompanions(uri, name, bytes);
         if (mine !== seq || isDisposed()) return;
-        post(reload ? { type: "model", name, bytes: toTransferable(bytes), reload: true } : { type: "model", name, bytes: toTransferable(bytes) });
-        log.info(`${reload ? "Reloaded" : "Loaded"} ${name} (${formatBytes(bytes.byteLength)}) in ${Date.now() - started} ms.`);
+        post({ type: "model", name, bytes: toTransferable(bytes), ...(reload ? { reload: true } : {}), ...(companions.length ? { companions } : {}) });
+        const extra = companions.length ? ` + ${companions.map((c) => c.name).join(", ")}` : "";
+        log.info(`${reload ? "Reloaded" : "Loaded"} ${name}${extra} (${formatBytes(bytes.byteLength)}) in ${Date.now() - started} ms.`);
       } catch (e) {
         if (mine !== seq || isDisposed()) return;
         const error =
@@ -136,7 +139,7 @@ export class ModelEditorProvider implements vscode.CustomReadonlyEditorProvider 
 
   /**
    * Live reload: watch exactly this file. Every event (change, create, delete)
-   * funnels into one debounced re-read — a delete then surfaces as modelError
+   * funnels into one debounced re-read. A delete then surfaces as modelError
    * from the read, while an atomic save (delete + create) just reloads.
    */
   private watch(uri: vscode.Uri, reload: () => void): vscode.Disposable[] {
@@ -198,4 +201,29 @@ async function offerSizeSetting(message: string): Promise<void> {
 function currentTheme(): "dark" | "light" {
   const k = vscode.window.activeColorTheme.kind;
   return k === vscode.ColorThemeKind.Light || k === vscode.ColorThemeKind.HighContrastLight ? "light" : "dark";
+}
+
+/**
+ * Sibling weight files the format keeps next to the graph (OpenVINO .bin,
+ * ncnn .bin, Paddle .pdiparams, TF.js shards, SavedModel variables/), read
+ * from the same folder. Missing or oversized siblings are skipped: the model
+ * still opens, and the app notes that weight statistics are unavailable.
+ */
+async function readCompanions(uri: vscode.Uri, name: string, bytes: Uint8Array): Promise<{ name: string; bytes: Uint8Array }[]> {
+  const dir = uri.with({ path: dirnamePosix(uri.path) });
+  const out: { name: string; bytes: Uint8Array }[] = [];
+  for (const rel of companionNames(name, bytes)) {
+    const sib = vscode.Uri.joinPath(dir, ...rel.split("/"));
+    try {
+      const stat = await vscode.workspace.fs.stat(sib);
+      if (sizeLimitError(rel, stat.size, settings().maxFileSizeMB)) {
+        log.warn(`Skipping ${rel}: larger than modelvisio.maxFileSizeMB.`);
+        continue;
+      }
+      out.push({ name: rel, bytes: toTransferable(await vscode.workspace.fs.readFile(sib)) });
+    } catch {
+      log.debug(`No companion ${rel} next to ${name}.`);
+    }
+  }
+  return out;
 }

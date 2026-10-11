@@ -2,7 +2,7 @@
 // (webview/). Type-only: both sides import it with `import type`, so nothing
 // here may emit runtime code.
 //
-// Binary payloads travel as Uint8Array — VS Code's postMessage transfers typed
+// Binary payloads travel as Uint8Array. VS Code's postMessage transfers typed
 // arrays natively (no base64 round-trip), which matters for 100MB+ models.
 
 import type { ThemeName } from "@modelvisio/core";
@@ -40,7 +40,7 @@ export type WebviewToHost =
 export type HostToWebview =
   | { type: "theme"; theme: ThemeName }
   /** Model bytes to open. Re-sent whenever the file changes on disk. */
-  | { type: "model"; name: string; bytes: Uint8Array; reload?: boolean }
+  | { type: "model"; name: string; bytes: Uint8Array; reload?: boolean; companions?: { name: string; bytes: Uint8Array }[] }
   /** The host could not read the file (too large, deleted, permission). */
   | { type: "modelError"; name: string; error: string }
   | { type: "chatResult"; id: number; text: string; sources: Source[] }

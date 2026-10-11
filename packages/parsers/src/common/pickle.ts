@@ -1,5 +1,5 @@
-// Minimal Python unpickler — enough opcodes to read PyTorch `.pt` archives
-// (protocol 2–5). It does not execute Python; unknown classes become PyObj
+// Minimal Python unpickler: enough opcodes to read PyTorch `.pt` archives
+// (protocol 2-5). It does not execute Python; unknown classes become PyObj
 // holders whose state (`__dict__`) we can walk. Inspired by Netron's approach.
 
 const MARK = Symbol("mark");
@@ -15,6 +15,12 @@ export type Handlers = {
   findClass: (module: string, name: string) => unknown;
   reduce: (func: unknown, args: unknown[]) => unknown;
   build?: (obj: unknown, state: unknown) => unknown;
+  /**
+   * Called after each BUILD with the built object and the stream position just
+   * past the opcode. Returning a number moves the cursor there, which lets
+   * joblib-style readers skip raw array bytes stored inline after a BUILD.
+   */
+  afterBuild?: (obj: unknown, buf: Uint8Array, pos: number) => number | undefined;
 };
 
 const isGlobal = (x: unknown): x is GlobalRef =>
@@ -90,7 +96,14 @@ export function unpickle(buf: Uint8Array, h: Handlers): unknown {
       case 0x52: { const args = stack.pop() as unknown[]; const func = stack.pop(); stack.push(h.reduce(func, args)); break; } // REDUCE
       case 0x81: { const args = stack.pop() as unknown[]; const cls = stack.pop(); stack.push(newObj(cls, args, h)); break; } // NEWOBJ
       case 0x92: { stack.pop(); const args = stack.pop() as unknown[]; const cls = stack.pop(); stack.push(newObj(cls, args, h)); break; } // NEWOBJ_EX
-      case 0x62: { const state = stack.pop(); const obj = stack.pop(); stack.push(doBuild(obj, state, h)); break; } // BUILD
+      case 0x62: { // BUILD
+        const state = stack.pop(); const obj = stack.pop(); const built = doBuild(obj, state, h); stack.push(built);
+        if (h.afterBuild) { const np = h.afterBuild(built, buf, pos); if (np != null) pos = np; }
+        break;
+      }
+      case 0x96: stack.push(bytes(u64())); break;              // BYTEARRAY8 (protocol 5, in-band)
+      case 0x97: stack.push(null); break;                      // NEXT_BUFFER (out-of-band data unavailable)
+      case 0x98: break;                                        // READONLY_BUFFER (no-op)
       case 0x51: { const pid = stack.pop(); stack.push(h.persistentLoad(pid)); break; } // BINPERSID
       case 0x50: { const pid = line(); stack.push(h.persistentLoad(pid)); break; }      // PERSID
       case 0x68: stack.push(memo.get(u8())); break;            // BINGET

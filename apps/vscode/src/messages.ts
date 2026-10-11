@@ -56,7 +56,7 @@ export function parseWebviewMessage(raw: unknown): WebviewToHost | null {
   }
 }
 
-/** The request id of a malformed message, if it had one — so the host can
+/** The request id of a malformed message, if it had one, so the host can
  *  still answer with an error instead of leaving the WebView's promise hanging. */
 export function messageId(raw: unknown): { type: string; id: number } | null {
   if (!isObj(raw) || typeof raw.type !== "string" || !isId(raw.id)) return null;

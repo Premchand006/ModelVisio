@@ -11,7 +11,7 @@ import { logChat, logClientEvent, type ClientEvent } from "@modelvisio/ai/log";
 // call. The v1 handler is detected reliably on every plan/build image.
 //
 // Netlify synchronous functions are killed at a HARD 10s on the free tier (not
-// raisable) — and that clock includes cold start. So we keep a conservative time
+// raisable), and that clock includes cold start. So we keep a conservative time
 // budget AND default Google-Search grounding OFF: grounding is the slow path and,
 // with a cold start, is the main cause of free-tier 502s. A plain reply returns
 // in ~1s. Re-enable citations with MODELVISIO_WEB_SEARCH=on (best on a paid plan

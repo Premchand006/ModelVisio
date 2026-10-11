@@ -1,7 +1,7 @@
 import protobuf from "protobufjs";
 
 // A faithful subset of onnx.proto (proto3). Field numbers MUST match the
-// official ONNX spec — they are stable across opsets, so decoding any real
+// official ONNX spec. They are stable across opsets, so decoding any real
 // .onnx file works. We include only the messages the parser reads.
 //
 // Reference: https://github.com/onnx/onnx/blob/main/onnx/onnx.proto

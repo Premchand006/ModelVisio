@@ -37,8 +37,18 @@
       "icons/icon.ico"
     ],
     "category": "DeveloperTool",
-    "shortDescription": "AI-native neural-network model analyzer for edge deployment",
-    "longDescription": "ModelVisio — Netron + TensorRT advisor + AI copilot in one tool."
+    "shortDescription": "Neural-network model analyzer for edge deployment",
+    "longDescription": "ModelVisio: a model graph viewer, edge hardware advisor and AI copilot in one tool.",
+    "copyright": "Copyright © 2026 EdgeModel Studio. MIT License.",
+    "macOS": {
+      "signingIdentity": "-",
+      "dmg": {
+        "background": "dmg/background.png",
+        "windowSize": { "width": 660, "height": 400 },
+        "appPosition": { "x": 180, "y": 170 },
+        "applicationFolderPosition": { "x": 480, "y": 170 }
+      }
+    }
   },
   "plugins": {
     "updater": {

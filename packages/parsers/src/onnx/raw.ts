@@ -1,5 +1,5 @@
 // Shapes of the protobufjs-decoded ONNX messages we read. These mirror the
-// proto in proto.ts. int64 fields arrive as `Long | number` — normalize with
+// proto in proto.ts. int64 fields arrive as `Long | number`; normalize with
 // num()/numArr() before use.
 
 export type Long = { toNumber(): number; low: number; high: number };
@@ -71,6 +71,7 @@ export interface RawModel {
   producer_name?: string;
   graph?: RawGraph;
   opset_import?: RawOpsetId[];
+  metadata_props?: { key?: string; value?: string }[];
 }
 
 /** Normalize a protobuf int64 (Long or number) to a JS number. */

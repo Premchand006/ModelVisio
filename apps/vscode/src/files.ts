@@ -27,7 +27,7 @@ export function sizeLimitError(name: string, sizeBytes: number, maxMB: number): 
   if (sizeBytes <= maxMB * 1024 * 1024) return null;
   return (
     `${name} is ${formatBytes(sizeBytes)}, over the ${maxMB} MB limit. ` +
-    `Raise "modelvisio.maxFileSizeMB" in Settings to open it — very large models can exhaust the editor's memory.`
+    `Raise "modelvisio.maxFileSizeMB" in Settings to open it. Very large models can exhaust the editor's memory.`
   );
 }
 

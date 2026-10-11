@@ -5,7 +5,7 @@
 // Like proxy.ts this runs ONLY on a server/Node/edge runtime and is
 // intentionally NOT re-exported from index.ts, so the Supabase service key path
 // never enters the browser bundle. Writes go straight to Supabase's PostgREST
-// endpoint with the service-role key, which bypasses RLS — the table has RLS on
+// endpoint with the service-role key, which bypasses RLS. The table has RLS on
 // and no policies, so the browser/anon side can neither read nor write it.
 //
 // Telemetry is strictly best-effort: every failure (no creds, network error,
@@ -37,7 +37,7 @@ export type UsageLog = {
 export async function logEvent(row: UsageLog): Promise<void> {
   const url = env("SUPABASE_URL");
   const key = env("SUPABASE_SERVICE_ROLE_KEY") || env("SUPABASE_KEY");
-  if (!url || !key) return; // logging disabled — nothing configured
+  if (!url || !key) return; // logging disabled, nothing configured
   try {
     await fetch(`${url.replace(/\/$/, "")}/rest/v1/${TABLE}`, {
       method: "POST",

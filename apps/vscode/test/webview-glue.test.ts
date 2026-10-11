@@ -53,7 +53,7 @@ describe("model sink", () => {
     sink.push("new.onnx", new Uint8Array([2, 3]));
     const a = api();
     sink.setApi(a);
-    sink.setApi(a); // onReady can fire again — must not re-open
+    sink.setApi(a); // onReady can fire again; must not re-open
     expect(a.openFile).toHaveBeenCalledTimes(1);
     const f = a.openFile.mock.calls[0][0];
     expect(f.name).toBe("new.onnx");
@@ -67,6 +67,16 @@ describe("model sink", () => {
     sink.push("m.onnx", new Uint8Array([1]));
     sink.push("m.onnx", new Uint8Array([1, 2]));
     expect(a.openFile.mock.calls.map(([f]) => f.size)).toEqual([1, 2]);
+  });
+
+  it("hands sibling weight files to the app with the model", () => {
+    const sink = createModelSink();
+    sink.push("net.xml", new Uint8Array([1]), [{ name: "net.bin", bytes: new Uint8Array([2, 3, 4]) }]);
+    const a = api();
+    sink.setApi(a);
+    const [file, companions] = a.openFile.mock.calls[0];
+    expect(file.name).toBe("net.xml");
+    expect(companions?.map((c) => [c.name, c.size])).toEqual([["net.bin", 3]]);
   });
 });
 

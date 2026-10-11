@@ -1,5 +1,5 @@
 // Cut a desktop release: validate the version, create the `desktop-v<version>`
-// tag, and push it — which triggers .github/workflows/desktop-release.yml to
+// tag, and push it, which triggers .github/workflows/desktop-release.yml to
 // build and attach Windows/macOS/Linux installers to a GitHub Release.
 //
 //   npm run release:desktop -- 1.0.0
@@ -19,8 +19,8 @@ if (!/^\d+\.\d+\.\d+(?:-\d+)?$/.test(version)) {
 const tag = `desktop-v${version}`;
 const run = (cmd) => execSync(cmd, { encoding: "utf8" }).trim();
 
-// A dirty tree is fine — the release builds from the tagged commit (HEAD), not
-// the working tree — but warn so uncommitted work isn't silently left out.
+// A dirty tree is fine. The release builds from the tagged commit (HEAD), not
+// the working tree, but warn so uncommitted work isn't silently left out.
 if (run("git status --porcelain")) {
   console.warn(
     "warning: working tree has uncommitted changes. The release builds from the\n" +

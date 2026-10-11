@@ -18,7 +18,7 @@ export function Converter({ model, modelBytes }: { model: Model; modelBytes: Arr
   const isGguf = /gguf/i.test(fmt);
   const isPt = /pytorch|torchscript|\.?pt$|\.?pth$|torch/i.test(fmt);
   // Only offer conversion targets whose SOURCE matches the loaded model.
-  // ONNX is the standard interchange format — no format conversion is offered.
+  // ONNX is the standard interchange format, so no format conversion is offered.
   const srcKey = isPt ? "pt" : null;
   const eligible = srcKey ? convs.filter((c) => c.split("→")[0] === srcKey) : [];
 
@@ -105,12 +105,12 @@ export function Converter({ model, modelBytes }: { model: Model; modelBytes: Arr
       {done && !err && <div style={{ marginTop: 6, fontSize: 10, color: t.suc }}>✓ Downloaded {done}</div>}
       <div style={{ marginTop: 6, fontSize: 9, color: t.t3, lineHeight: 1.5 }}>
         {isOnnx
-          ? "ONNX is already the standard interchange format — no model-format conversion is offered. Graph JSON / Layers CSV export the analysis."
-          : "In-browser exports (JSON / CSV / Safetensors / NumPy .npz, FP16↔FP32 recast) produce a real file instantly. Native targets (TensorRT, TFLite, CoreML, OpenVINO, RKNN, …) need their toolchain — the kit bundles your model + a one-command script (Docker or pip)."}
+          ? "ONNX is already the standard interchange format, so no model-format conversion is offered. Graph JSON / Layers CSV export the analysis."
+          : "In-browser exports (JSON / CSV / Safetensors / NumPy .npz, FP16↔FP32 recast) produce a real file instantly. Native targets (TensorRT, TFLite, CoreML, OpenVINO, RKNN, …) need their toolchain. The kit bundles your model + a one-command script (Docker or pip)."}
       </div>
     </div>
 
-    {/* Target + options + script — only for sources with native conversion targets (ONNX, PyTorch) */}
+    {/* Target + options + script, only for sources with native conversion targets (ONNX, PyTorch) */}
     {hasTargets ? <>
       <div style={{ fontSize: 9, fontWeight: 700, color: t.t3, textTransform: "uppercase", letterSpacing: 1 }}>Conversion kit / script · {srcKey} source</div>
       <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>{eligible.map((c) => <button key={c} type="button" onClick={() => setSel(c)} style={{ padding: "4px 8px", borderRadius: 4, border: `1px solid ${sel === c ? t.acc : t.bdr}`, background: sel === c ? t.acc + "18" : t.bg1, color: sel === c ? t.acc : t.t2, fontSize: 10, fontWeight: 600, cursor: "pointer", fontFamily: "'JetBrains Mono',monospace" }}>{c}</button>)}</div>
@@ -125,8 +125,8 @@ export function Converter({ model, modelBytes }: { model: Model; modelBytes: Arr
     </> : (
       <div style={{ fontSize: 10, color: t.t3, lineHeight: 1.5 }}>
         {isOnnx
-          ? "This is an ONNX model — the standard interchange format. No conversion needed; it runs directly in any ONNX runtime (ONNX Runtime, TensorRT, OpenVINO, etc.)."
-          : `No native conversion targets for a ${fmt} source yet — use the in-browser exports above. (Conversion kits are available for PyTorch sources.)`}
+          ? "This is an ONNX model, the standard interchange format. No conversion needed; it runs directly in any ONNX runtime (ONNX Runtime, TensorRT, OpenVINO, etc.)."
+          : `No native conversion targets for a ${fmt} source yet. Use the in-browser exports above. (Conversion kits are available for PyTorch sources.)`}
       </div>
     )}
   </div>;

@@ -13,7 +13,7 @@ const repoRoot = resolve(here, "../..");
  * Dev-only middleware that answers POST /api/chat during `pnpm dev`, so the AI
  * copilot works locally WITHOUT deploying or running `vercel dev`. It mirrors
  * the production serverless proxy (apps/web/api/chat.ts) and reads the key from
- * the repo-root `.env`. The key stays on the Node dev server — it is never sent
+ * the repo-root `.env`. The key stays on the Node dev server and is never sent
  * to the browser. In production the real serverless function handles this route.
  */
 function chatProxyDev(key: string | undefined, model: string, webSearch: boolean, thinking: boolean): PluginOption {
@@ -62,7 +62,7 @@ function chatProxyDev(key: string | undefined, model: string, webSearch: boolean
  * Dev-only middleware that answers POST /api/scrape during `pnpm dev`, mirroring
  * the production serverless scrape proxy (apps/web/api/scrape.ts and netlify/
  * functions/scrape.ts). Delegates to the shared SSRF-guarded, size-capped
- * scraper in @modelvisio/ai/scrape — no scraper code enters the browser bundle.
+ * scraper in @modelvisio/ai/scrape. No scraper code enters the browser bundle.
  */
 function scrapeProxyDev(env: Record<string, string | undefined>): PluginOption {
   return {
@@ -90,6 +90,29 @@ function scrapeProxyDev(env: Record<string, string | undefined>): PluginOption {
   };
 }
 
+/**
+ * Keep onnxruntime-web's GPU binary (ort-wasm-simd-threaded.asyncify.wasm,
+ * ~27 MB) out of the build: it is over Cloudflare Pages' 25 MiB per-file limit.
+ * Core's GPU benchmark never lets ORT resolve that URL (it downloads the binary
+ * from a pinned CDN URL, checks its SHA-256 and passes the bytes), so hiding
+ * the `new URL(…, import.meta.url)` from Vite's asset handling only stops the
+ * copy. The CPU build's 14 MB binary is still emitted and served locally.
+ */
+function ortGpuWasmExternal(): PluginOption {
+  return {
+    name: "modelvisio:ort-gpu-wasm-external",
+    enforce: "pre",
+    transform(code, id) {
+      if (!/onnxruntime-web[\/]dist[\/][^\/]+\.mjs$/.test(id.split("?")[0])) return null;
+      const out = code.replace(
+        /new URL\((["'])(ort-wasm-simd-threaded\.(?:asyncify|jsep|jspi)\.wasm)\1\s*,\s*import\.meta\.url\)/g,
+        "new URL($1$2$1, self.location.href)",
+      );
+      return out === code ? null : { code: out, map: null };
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => {
   // Load all vars (no VITE_ prefix filter) from the repo-root .env for the dev proxy.
   const env = loadEnv(mode, repoRoot, "");
@@ -106,5 +129,10 @@ export default defineConfig(({ mode }) => {
     ],
     envDir: repoRoot,
     server: { port: 5173 },
+    // onnxruntime-web (core's benchmark worker) locates its .wasm with
+    // new URL(…, import.meta.url); dev pre-bundling moves the JS to .vite/deps
+    // without the .wasm, so serve it from node_modules unbundled.
+    optimizeDeps: { exclude: ["onnxruntime-web"] },
+    worker: { plugins: () => [ortGpuWasmExternal()] },
   };
 });

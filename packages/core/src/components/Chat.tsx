@@ -42,11 +42,11 @@ export function Chat({ model, sel }: { model: Model | null; sel: ModelLayer | nu
 
   const send = async (text: string) => {
     if (!text.trim() || ld || !model) return;
-    // Desktop with no key yet: don't fire a doomed request — prompt for the key.
+    // Desktop with no key yet: don't fire a doomed request; prompt for the key.
     if (desktop && !getUserApiKey()) {
       setMsgs((m) => [...m,
         { role: "user", content: text },
-        { role: "assistant", content: "Add your Gemini API key first — click the key icon above. Get a free one at https://aistudio.google.com/apikey (stored only on this device)." },
+        { role: "assistant", content: "Add your Gemini API key first. Click the key icon above. Get a free one at https://aistudio.google.com/apikey (stored only on this device)." },
       ]);
       setInp("");
       setShowKey(true);
@@ -63,7 +63,7 @@ export function Chat({ model, sel }: { model: Model | null; sel: ModelLayer | nu
     // dedicated, to-the-point optimization + hardware answers grounded in numbers.
     const ranked = scoreAll(model, HW);
     const topHw = ranked.slice(0, 6).map((r) =>
-      `  ${r.device.n} — ${r.overall}/100 · ~${Math.round(r.fps)} FPS · ${r.fpsPerW.toFixed(1)} FPS/W · ${r.roofline.bound}-bound`
+      `  ${r.device.n}: ${r.overall}/100 · ~${Math.round(r.fps)} FPS · ${r.fpsPerW.toFixed(1)} FPS/W · ${r.roofline.bound}-bound`
       + `${r.memory.hardFail ? " · WON'T FIT" : ""}${r.opSupport.compileFail ? " · WON'T COMPILE" : r.opSupport.conversionNeeded ? " · needs conversion" : ""}`,
     ).join("\n");
     const wontFit = ranked.filter((r) => r.memory.hardFail).map((r) => r.device.n);
@@ -77,7 +77,7 @@ export function Chat({ model, sel }: { model: Model | null; sel: ModelLayer | nu
       `Size: ${fB(model.sizeBytes)} | Input: ${model.inputShape.join("×")} | Params: ${fmt(totalP)} | FLOPs: ${fmt(totalF)}`,
       wl ? `Workload class: ${wl} | deployment precision assumed: ${ranked[0]?.precision?.toUpperCase()}` : "",
       `Layers (${model.layers.length}): ${model.layers.map((l) => l.op).join(", ")}`,
-      `Hardware fit — roofline scoring, best first (score · est. FPS · efficiency · bottleneck regime):\n${topHw}`,
+      `Hardware fit (roofline scoring), best first (score · est. FPS · efficiency · bottleneck regime):\n${topHw}`,
       wontFit.length ? `Exceeds device memory (cannot deploy without shrinking): ${wontFit.join(", ")}` : "",
       qSensitive.length ? `Most quantization-sensitive layers (INT8 accuracy risk): ${qSensitive.join(", ")}` : "",
       opIssues.length ? `Compiler / op-support issues:\n  ${opIssues.join("\n  ")}` : "",
@@ -86,7 +86,7 @@ export function Chat({ model, sel }: { model: Model | null; sel: ModelLayer | nu
     const wire: ChatMessage[] = next.map((m) => ({ role: m.role, content: m.content }));
     try {
       // Read any URLs the user pasted via the SSRF-guarded /api/scrape proxy and
-      // ground this turn on them. Failures don't block the chat — the model is
+      // ground this turn on them. Failures don't block the chat; the model is
       // told which links it couldn't read.
       let failures: ScrapeFailure[] = [];
       let turnPages: ScrapedPage[] = [];
@@ -99,7 +99,7 @@ export function Chat({ model, sel }: { model: Model | null; sel: ModelLayer | nu
         setPhase("Researching…");
       }
       const grounding = formatScrapedForPrompt(linked.current, failures);
-      // Routes through the server-side proxy — the API key never reaches the browser.
+      // Routes through the server-side proxy. The API key never reaches the browser.
       const { text: reply, sources } = await sendChat({
         messages: wire,
         modelSummary: grounding ? `${modelSummary}\n\n${grounding}` : modelSummary,
@@ -120,10 +120,10 @@ export function Chat({ model, sel }: { model: Model | null; sel: ModelLayer | nu
     <div style={{ padding: "6px 10px", borderBottom: `1px solid ${t.bdr}`, fontSize: 11, fontWeight: 600, color: t.t0, display: "flex", alignItems: "center", gap: 5 }}>
       <span style={{ width: 6, height: 6, borderRadius: "50%", background: t.suc, display: "inline-block" }} />AI Copilot
       <span style={{ marginLeft: "auto", fontSize: 8, color: t.t3, fontWeight: 400 }}>edge-ML expert · cites sources</span>
-      {desktop && <button type="button" onClick={openKeyPanel} title={hasKey ? "Gemini API key set — click to change" : "Set your Gemini API key"} style={{ marginLeft: 4, padding: "2px 6px", borderRadius: 5, border: `1px solid ${hasKey ? t.bdr : t.acc}`, background: "transparent", color: hasKey ? t.t2 : t.acc, fontSize: 9, fontWeight: 600, cursor: "pointer" }}>🔑{hasKey ? "" : " Set key"}</button>}
+      {desktop && <button type="button" onClick={openKeyPanel} title={hasKey ? "Gemini API key set. Click to change" : "Set your Gemini API key"} style={{ marginLeft: 4, padding: "2px 6px", borderRadius: 5, border: `1px solid ${hasKey ? t.bdr : t.acc}`, background: "transparent", color: hasKey ? t.t2 : t.acc, fontSize: 9, fontWeight: 600, cursor: "pointer" }}>🔑{hasKey ? "" : " Set key"}</button>}
     </div>
     {desktop && showKey && <div style={{ padding: 8, borderBottom: `1px solid ${t.bdr}`, background: t.bg1, display: "flex", flexDirection: "column", gap: 6 }}>
-      <div style={{ fontSize: 9, color: t.t2, lineHeight: 1.5 }}>Paste your own <b>Gemini API key</b> — stored only on this device, used for your chats. Free key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer noopener" style={{ color: t.acc }}>aistudio.google.com/apikey</a>.</div>
+      <div style={{ fontSize: 9, color: t.t2, lineHeight: 1.5 }}>Paste your own <b>Gemini API key</b>. It is stored only on this device and used for your chats. Free key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer noopener" style={{ color: t.acc }}>aistudio.google.com/apikey</a>.</div>
       <div style={{ display: "flex", gap: 4 }}>
         <input type="password" value={keyInput} onChange={(e) => setKeyInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && saveKey()} placeholder="AIza…" style={{ flex: 1, padding: "6px 8px", borderRadius: 5, border: `1px solid ${t.bdr}`, background: t.bg, color: t.t0, fontSize: 10, outline: "none" }} />
         <button type="button" onClick={saveKey} style={{ padding: "6px 12px", borderRadius: 5, border: "none", background: t.acc, color: "#fff", fontSize: 10, fontWeight: 600, cursor: "pointer" }}>Save</button>
@@ -131,7 +131,7 @@ export function Chat({ model, sel }: { model: Model | null; sel: ModelLayer | nu
       </div>
     </div>}
     <div style={{ flex: 1, overflow: "auto", padding: 8, display: "flex", flexDirection: "column", gap: 5 }}>
-      {msgs.length === 0 && <div style={{ color: t.t3, fontSize: 10, padding: 10, textAlign: "center" }}>{desktop && !hasKey ? "Add your Gemini API key (key icon, top-right) to start chatting." : model ? "Ask about architectures, formats, layers, hardware, quantization, deployment — ask for reference links and it will search + cite them, or paste a URL (spec sheet, op-support page, GitHub issue) and it will read it." : "Load a model."}</div>}
+      {msgs.length === 0 && <div style={{ color: t.t3, fontSize: 10, padding: 10, textAlign: "center" }}>{desktop && !hasKey ? "Add your Gemini API key (key icon, top-right) to start chatting." : model ? "Ask about architectures, formats, layers, hardware, quantization, deployment. Ask for reference links and it will search + cite them, or paste a URL (spec sheet, op-support page, GitHub issue) and it will read it." : "Load a model."}</div>}
       {msgs.map((m, i) => <div key={i} style={{ alignSelf: m.role === "user" ? "flex-end" : "flex-start", maxWidth: "90%", display: "flex", flexDirection: "column", gap: 4 }}>
         <div style={{ padding: "6px 10px", borderRadius: m.role === "user" ? "10px 10px 3px 10px" : "10px 10px 10px 3px", background: m.role === "user" ? t.acc : t.bg1, border: m.role === "user" ? "none" : `1px solid ${t.bdr}`, fontSize: 11, color: m.role === "user" ? "#fff" : t.t0, lineHeight: 1.5, whiteSpace: "pre-wrap", fontFamily: m.role === "assistant" ? "'JetBrains Mono',monospace" : "inherit" }}>{m.content}</div>
         {m.sources && m.sources.length > 0 && <div style={{ padding: "5px 8px", borderRadius: 6, background: t.acc + "0E", border: `1px solid ${t.acc}33` }}>
@@ -139,7 +139,7 @@ export function Chat({ model, sel }: { model: Model | null; sel: ModelLayer | nu
           {m.sources.map((s, j) => <a key={j} href={s.url} target="_blank" rel="noreferrer noopener" style={{ display: "block", fontSize: 10, color: t.acc, textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 1 }}>{j + 1}. {s.title}</a>)}
         </div>}
         {m.unread && m.unread.length > 0 && <div style={{ padding: "4px 8px", borderRadius: 6, background: t.wrn + "12", border: `1px solid ${t.wrn}44`, fontSize: 9, color: t.t2 }}>
-          {m.unread.map((f, j) => <div key={j} title={f.error} style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}><span style={{ color: t.wrn, fontWeight: 700 }}>Couldn't read</span> {f.url} — {f.error}</div>)}
+          {m.unread.map((f, j) => <div key={j} title={f.error} style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}><span style={{ color: t.wrn, fontWeight: 700 }}>Couldn't read</span> {f.url}: {f.error}</div>)}
         </div>}
       </div>)}
       {ld && <div style={{ alignSelf: "flex-start", padding: "6px 10px", borderRadius: 10, background: t.bg1, border: `1px solid ${t.bdr}`, fontSize: 10, color: t.t3 }}><span style={{ animation: "pulse 1.2s infinite", color: t.acc }}>●</span> {phase}</div>}

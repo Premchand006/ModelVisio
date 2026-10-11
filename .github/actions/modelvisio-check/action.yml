@@ -1,0 +1,164 @@
+name: ModelVisio check
+description: >
+  Compiler-compatibility pre-flight, size/latency budgets and a version diff
+  against a baseline ref for neural-network model files. Writes a markdown
+  report to the job summary and fails the step when a check fails.
+author: ModelVisio
+
+inputs:
+  models:
+    description: Model file paths or globs (relative to the workspace), separated by spaces or newlines. `**` is supported.
+    required: true
+  targets:
+    description: Comma-separated targets (coral, rk3588, kneron, hailo, or any device id from `modelvisio targets`).
+    default: coral,rk3588,kneron,hailo
+  device:
+    description: Device id for the latency budget. Defaults to each target's reference device.
+    default: ""
+  max-latency-ms:
+    description: Fail when the estimated (roofline) latency exceeds this many milliseconds.
+    default: ""
+  max-size-mb:
+    description: Fail when a model file is larger than this many MB.
+    default: ""
+  fail-on:
+    description: "Severity that fails the check: error (default) or warn."
+    default: error
+  baseline-ref:
+    description: >
+      Git ref to diff each model against (for example origin/main, or
+      github.event.pull_request.base.sha). Needs the ref fetched (actions/checkout
+      with fetch-depth: 0). Empty skips the diff.
+    default: ""
+  fail-on-regression:
+    description: Fail when the diff against baseline-ref finds a regression.
+    default: "false"
+  latency-tolerance:
+    description: Percent latency increase tolerated before the diff calls it a regression.
+    default: "5"
+  junit-path:
+    description: Also write a JUnit XML report to this path (for test-report actions).
+    default: ""
+  registry:
+    description: Path to a modelvisio-registry.json to add the models to as new versions. The file is only written; commit it yourself if you want it kept.
+    default: ""
+  node-version:
+    description: Node.js version used to run the CLI.
+    default: "22"
+
+outputs:
+  passed:
+    description: '"true" when every check (and the diff, if fail-on-regression) passed.'
+    value: ${{ steps.run.outputs.passed }}
+  report:
+    description: Path of the markdown report.
+    value: ${{ steps.run.outputs.report }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    # The action ships as source: build the self-contained CLI bundle from the
+    # ModelVisio checkout that GitHub downloaded with this action.
+    - name: Build ModelVisio CLI
+      shell: bash
+      env:
+        MV_ROOT: ${{ github.action_path }}/../../..
+      run: |
+        set -euo pipefail
+        cd "$MV_ROOT"
+        PNPM="npx --yes pnpm@10.29.3"
+        $PNPM install --frozen-lockfile --filter "@modelvisio/cli..." --config.confirmModulesPurge=false
+        $PNPM --filter @modelvisio/cli build
+        echo "MODELVISIO_CLI=$(pwd)/packages/cli/dist/modelvisio.cjs" >> "$GITHUB_ENV"
+
+    - name: Run ModelVisio check
+      id: run
+      shell: bash
+      env:
+        MV_MODELS: ${{ inputs.models }}
+        MV_TARGETS: ${{ inputs.targets }}
+        MV_DEVICE: ${{ inputs.device }}
+        MV_MAX_LATENCY: ${{ inputs.max-latency-ms }}
+        MV_MAX_SIZE: ${{ inputs.max-size-mb }}
+        MV_FAIL_ON: ${{ inputs.fail-on }}
+        MV_BASELINE: ${{ inputs.baseline-ref }}
+        MV_FAIL_REGRESSION: ${{ inputs.fail-on-regression }}
+        MV_LAT_TOL: ${{ inputs.latency-tolerance }}
+        MV_JUNIT: ${{ inputs.junit-path }}
+        MV_REGISTRY: ${{ inputs.registry }}
+      run: |
+        set -uo pipefail
+        shopt -s globstar nullglob
+        modelvisio() { node "$MODELVISIO_CLI" "$@"; }
+
+        # Split on whitespace without globbing, then expand each pattern on its own
+        # so an unmatched pattern can be reported. Paths with spaces aren't supported.
+        set -f; pats=( $MV_MODELS ); set +f
+        files=()
+        for pat in "${pats[@]}"; do
+          matches=( $pat )
+          if [ ${#matches[@]} -eq 0 ]; then echo "::warning::No files match '$pat'"; fi
+          files+=( "${matches[@]}" )
+        done
+        if [ ${#files[@]} -eq 0 ]; then
+          echo "::error::ModelVisio: no model files matched: $MV_MODELS"
+          exit 2
+        fi
+
+        report="$RUNNER_TEMP/modelvisio-report.md"
+        : > "$report"
+        status=0
+
+        args=( check "${files[@]}" --target "$MV_TARGETS" --fail-on "$MV_FAIL_ON" )
+        [ -n "$MV_DEVICE" ] && args+=( --device "$MV_DEVICE" )
+        [ -n "$MV_MAX_LATENCY" ] && args+=( --max-latency-ms "$MV_MAX_LATENCY" )
+        [ -n "$MV_MAX_SIZE" ] && args+=( --max-size-mb "$MV_MAX_SIZE" )
+
+        modelvisio "${args[@]}" --format text --summary "$report"
+        rc=$?
+        if [ $rc -eq 1 ]; then echo "::error::ModelVisio check failed"; status=1; elif [ $rc -ne 0 ]; then status=$rc; fi
+        if [ -n "$MV_JUNIT" ]; then
+          mkdir -p "$(dirname "$MV_JUNIT")"
+          modelvisio "${args[@]}" --format junit --output "$MV_JUNIT" || true
+        fi
+
+        if [ -n "$MV_BASELINE" ]; then
+          base_dir="$RUNNER_TEMP/modelvisio-baseline"
+          mkdir -p "$base_dir"
+          i=0
+          for f in "${files[@]}"; do
+            i=$((i + 1))
+            # Keep the new file's basename: the scorer's workload class looks at the name.
+            mkdir -p "$base_dir/$i"
+            base="$base_dir/$i/$(basename "$f")"
+            if ! git show "$MV_BASELINE:./$f" > "$base" 2>/dev/null; then
+              printf '\n_`%s` is new (not present at `%s`)._\n' "$f" "$MV_BASELINE" >> "$report"
+              continue
+            fi
+            if head -c 200 "$base" | grep -q "git-lfs.github.com/spec"; then
+              echo "::warning::$f is a Git LFS pointer at $MV_BASELINE; diff skipped (fetch LFS objects to diff)"
+              continue
+            fi
+            dargs=( diff "$base" "$f" --old-name "$f@$MV_BASELINE" --new-name "$f" --target "$MV_TARGETS" --latency-tolerance "$MV_LAT_TOL" --format text --summary "$report" )
+            [ "$MV_FAIL_REGRESSION" = "true" ] && dargs+=( --fail-on-regression )
+            modelvisio "${dargs[@]}"
+            rc=$?
+            if [ $rc -eq 1 ]; then echo "::error::ModelVisio: regression in $f vs $MV_BASELINE"; [ $status -eq 0 ] && status=1; elif [ $rc -ne 0 ]; then status=$rc; fi
+          done
+        fi
+
+        if [ -n "$MV_REGISTRY" ]; then
+          modelvisio registry add "${files[@]}" --registry "$MV_REGISTRY" --notes "${GITHUB_REF_NAME:-} ${GITHUB_SHA:-}" || status=2
+        fi
+
+        if [ $status -ne 0 ]; then
+          printf '\n**ModelVisio: failed** (see the check and diff sections above).\n' >> "$report"
+        fi
+        cat "$report" >> "$GITHUB_STEP_SUMMARY"
+        echo "report=$report" >> "$GITHUB_OUTPUT"
+        if [ $status -eq 0 ]; then echo "passed=true" >> "$GITHUB_OUTPUT"; else echo "passed=false" >> "$GITHUB_OUTPUT"; fi
+        exit $status

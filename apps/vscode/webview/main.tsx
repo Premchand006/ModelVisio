@@ -10,7 +10,7 @@ import { createSaveHandler } from "./save";
 import { post } from "./vscodeApi";
 import { installWorkerShim, prefetchWorkerScripts, workerAssets } from "./workerShim";
 
-// Platform glue only — all UI is core's App. Order matters: the fetch bridge,
+// Platform glue only. All UI is core's App. Order matters: the fetch bridge,
 // save handler and Worker shim are installed before the App mounts so core
 // never sees the unpatched globals.
 const rpc = createRpc(post);
@@ -42,7 +42,7 @@ function Root() {
         setTheme(msg.theme);
       } else if (msg.type === "model") {
         setModelError(null);
-        sink.push(msg.name, msg.bytes);
+        sink.push(msg.name, msg.bytes, msg.companions);
       } else if (msg.type === "modelError") {
         setModelError({ name: msg.name, error: msg.error });
       }
@@ -73,7 +73,7 @@ function mount() {
 
 // Prefetch the parse worker before mounting so the shim can hand core a real,
 // synchronously-constructed Worker (see workerShim.ts). import.meta.url is
-// webview.js's URL — the same base core resolves its worker URL against. The
+// webview.js's URL, the same base core resolves its worker URL against. The
 // prefetch is a local resource read (~ms); it is time-boxed, and on any
 // failure we mount anyway and core parses on the main thread as before.
 const hrefs = workerAssets().map((p) => new URL(p, import.meta.url).href);

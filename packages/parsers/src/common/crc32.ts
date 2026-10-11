@@ -1,4 +1,4 @@
-// CRC-32 (IEEE 802.3, polynomial 0xEDB88320) — required for valid ZIP entries
+// CRC-32 (IEEE 802.3, polynomial 0xEDB88320), required for valid ZIP entries
 // that real unzip tools (and the OS) will accept.
 
 let TABLE: Uint32Array | null = null;

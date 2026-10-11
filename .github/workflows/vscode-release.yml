@@ -8,7 +8,7 @@ name: VS Code Release
 #
 # The tag must match package.json's version: vsce stamps the .vsix (and the
 # Marketplace listing) from package.json, so a mismatch would ship the wrong
-# number. Marketplace versions are plain X.Y.Z — no "-beta" suffixes.
+# number. Marketplace versions are plain X.Y.Z, with no "-beta" suffixes.
 #
 # Marketplace publishing runs only when the VSCE_PAT secret is set (an Azure
 # DevOps personal access token with the Marketplace › Manage scope for the
@@ -63,7 +63,7 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "Releasing ModelVisio for VS Code $VERSION (tag $TAG)"
 
-      # No `version:` input on purpose — pnpm/action-setup@v4 reads the version
+      # No `version:` input on purpose: pnpm/action-setup@v4 reads the version
       # from the root package.json `packageManager` field (pnpm@10.29.3). Pinning
       # it here too makes the action error with ERR_PNPM_BAD_PM_VERSION.
       - uses: pnpm/action-setup@v4
@@ -105,7 +105,7 @@ jobs:
           files: ${{ steps.asset.outputs.path }}
           fail_on_unmatched_files: true
           body: |
-            ModelVisio for VS Code ${{ steps.version.outputs.version }} — open ONNX, TFLite, PyTorch, Safetensors, GGUF and 30+ other model formats as an interactive graph + inspector + compiler pre-flight, right in the editor.
+            ModelVisio for VS Code ${{ steps.version.outputs.version }}. Open ONNX, TFLite, PyTorch, Safetensors, GGUF and 30+ other model formats as an interactive graph + inspector + compiler pre-flight, right in the editor.
 
             ### Install
             - **Marketplace:** search for **ModelVisio** in the Extensions view (if this version has been published there), or
@@ -119,7 +119,7 @@ jobs:
 
             _Built automatically by the VS Code Release workflow._
 
-      # Skips cleanly (job stays green) when the secret isn't configured — e.g.
+      # Skips cleanly (job stays green) when the secret isn't configured, e.g.
       # on forks, or before a Marketplace publisher exists. vsce reads the token
       # from the VSCE_PAT environment variable, so it never appears in the
       # command line.
@@ -130,7 +130,7 @@ jobs:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
           if [ -z "$VSCE_PAT" ]; then
-            echo "::notice::VSCE_PAT secret is not set — skipping Marketplace publish. The .vsix is attached to the GitHub Release."
+            echo "::notice::VSCE_PAT secret is not set, skipping Marketplace publish. The .vsix is attached to the GitHub Release."
             exit 0
           fi
           pnpm exec vsce publish --no-dependencies --packagePath modelvisio.vsix

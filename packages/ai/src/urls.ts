@@ -1,5 +1,5 @@
 // Browser-safe helpers shared by the scrape client (index.ts) and the server
-// scraper (scrape.ts). No Node imports and no network code — index.ts imports
+// scraper (scrape.ts). No Node imports and no network code; index.ts imports
 // from here, never from scrape.ts, so the scraper stays out of the browser bundle.
 
 /** Readable result of scraping one URL (the /api/scrape response body). */
@@ -22,7 +22,7 @@ export function extractUrls(text: string): string[] {
   for (const m of text.matchAll(rx)) {
     let u = m[0];
     // Trim trailing punctuation people commonly type after a URL, and a closing
-    // paren only when it's unbalanced — keeps wiki-style ".../Foo_(bar)" intact
+    // paren only when it's unbalanced, which keeps wiki-style ".../Foo_(bar)" intact
     // while "(see https://x.io)" still loses its ")".
     for (;;) {
       const before = u;

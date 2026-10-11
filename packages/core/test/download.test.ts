@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { downloadFile, setSaveHandler } from "../src/utils/download";
 
-// Node env has no DOM — stub just enough of `document` / `URL` for the
+// Node env has no DOM, so stub just enough of `document` / `URL` for the
 // browser-download path so we can see which route downloadFile took.
 function stubBrowser() {
   const anchor = { href: "", download: "", click: vi.fn(), remove: vi.fn() };

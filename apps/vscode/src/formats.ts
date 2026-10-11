@@ -2,9 +2,9 @@
 // test/host-formats.test.ts can check these lists against both package.json's
 // `customEditors` selectors and @modelvisio/parsers' FORMAT_SUPPORT registry.
 
-/** Primary editor: claims these by default — no other tool owns the extension. */
+/** Primary editor: claims these by default because no other tool owns the extension. */
 export const VIEW_TYPE = "modelvisio.modelViewer";
-/** Secondary editor: offered in "Reopen With…" only — the extension is generic
+/** Secondary editor: offered in "Reopen With…" only, because the extension is generic
  *  (.json, .xml, .bin, …), so stealing it from the text editor would be rude. */
 export const VIEW_TYPE_OPTION = "modelvisio.modelViewerOption";
 
@@ -22,7 +22,7 @@ export const OPTION_EXTS: readonly string[] = [
   "json", "xml", "bin", "cfg", "pb", "pbtxt", "meta", "h5", "hdf5",
   "params", "param", "nb", "weights", "nn", "plan", "engine", "trt",
   "prototxt", "pkl", "pickle", "joblib", "mlir", "dnn", "om", "tm", "hn",
-  // Hailo archive — but also the far more common HTTP Archive (browser
+  // Hailo archive, but also the far more common HTTP Archive (browser
   // devtools export), which must keep opening as JSON text.
   "har",
 ];

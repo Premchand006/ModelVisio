@@ -39,12 +39,12 @@ export function HWReport({ model }: { model: Model }) {
 
   return <div style={{ display: "flex", flexDirection: "column", gap: 6, height: "100%" }}>
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-      <div style={{ fontSize: 13, fontWeight: 700, color: t.t0 }}>Hardware — {scored.length} devices</div>
+      <div style={{ fontSize: 13, fontWeight: 700, color: t.t0 }}>Hardware: {scored.length} devices</div>
       <button type="button" onClick={() => { navigator.clipboard?.writeText(report); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
         style={{ padding: "3px 10px", borderRadius: 4, border: `1px solid ${t.acc}`, background: t.acc + "18", color: t.acc, fontSize: 10, fontWeight: 600, cursor: "pointer" }}>{copied ? "✓ Copied" : "Export Report"}</button>
     </div>
 
-    {/* Why this score — methodology line */}
+    {/* Why this score: methodology line */}
     <div style={{ fontSize: 9, color: t.t2, lineHeight: 1.5, background: t.bg2, border: `1px solid ${t.bdr}`, borderRadius: 5, padding: "5px 8px" }}>
       Roofline estimate · workload classified as <b style={{ color: t.t1 }}>{wcLabel}</b> · per-layer min(compute, bandwidth×intensity) with calibrated utilization, memory-fit guard, op-support & efficiency. Scores reflect <b style={{ color: t.t1 }}>this model</b>, not fixed ratings.
     </div>
@@ -98,7 +98,7 @@ export function HWReport({ model }: { model: Model }) {
   </div>;
 }
 
-/** Stacked, weighted contribution bar — shows WHY the number is what it is. */
+/** Stacked, weighted contribution bar. Shows WHY the number is what it is. */
 function StackBar({ r }: { r: ScoreResult }) {
   const t = useT();
   const segs = [
@@ -155,10 +155,10 @@ function finite(n: number): string { return isFinite(n) ? n.toFixed(1) : "∞"; 
 
 function buildReport(model: Model, scored: ScoreResult[], profile: Profile, totalP: number, totalF: number, wcLabel: string): string {
   const line = "=".repeat(54);
-  const head = `ModelVisio — Hardware Fit Report\n${line}\nModel: ${model.name} | ${model.format} | ${fB(model.sizeBytes)}\nParams: ${fmt(totalP)} | FLOPs: ${fmt(totalF)} | Workload: ${wcLabel}\nProfile: ${PROFILE_LABELS[profile]} | Method: per-layer roofline + memory-fit + op-support + efficiency\n${line}`;
+  const head = `ModelVisio Hardware Fit Report\n${line}\nModel: ${model.name} | ${model.format} | ${fB(model.sizeBytes)}\nParams: ${fmt(totalP)} | FLOPs: ${fmt(totalF)} | Workload: ${wcLabel}\nProfile: ${PROFILE_LABELS[profile]} | Method: per-layer roofline + memory-fit + op-support + efficiency\n${line}`;
   const rows = scored.map((r, i) => {
     const flags = [r.memory.hardFail ? "WON'T FIT" : "", r.opSupport.compileFail ? "NO COMPILE" : "", r.opSupport.conversionNeeded ? "convert" : "", r.confidence === "low" ? "low-conf" : ""].filter(Boolean).join(",");
     return `${(i + 1 + ".").padEnd(4)}${r.device.n.padEnd(30)} ${String(r.overall).padStart(3)}/100  ~${fmtFps(r.fps).padStart(6)} FPS  ${String(r.fpsPerW.toFixed(1)).padStart(5)} FPS/W  ${r.roofline.bound.padEnd(7)}${flags ? "  [" + flags + "]" : ""}`;
   }).join("\n");
-  return `${head}\n${rows}\n${line}\nNote: roofline uses DENSE peak compute and calibrated per-workload utilization;\nFPS is an estimate — confidence varies by device (see 'low-conf' flag).`;
+  return `${head}\n${rows}\n${line}\nNote: roofline uses DENSE peak compute and calibrated per-workload utilization;\nFPS is an estimate; confidence varies by device (see 'low-conf' flag).`;
 }

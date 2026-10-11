@@ -26,7 +26,7 @@ export function BuildingPage({
         @keyframes mvRise{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}
       `}</style>
 
-      {/* Top bar — mirrors the app ribbon so the page feels native */}
+      {/* Top bar, mirrors the app ribbon */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "13px 24px", borderBottom: `1px solid ${t.bdr}`, background: t.bg1, flexShrink: 0 }}>
         <button type="button" onClick={onBack} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 7, border: `1px solid ${t.bdr}`, background: t.bg2, color: t.t1, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>← Back</button>
         <div style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>
@@ -50,7 +50,7 @@ export function BuildingPage({
         <div>
           <div style={{ fontSize: "clamp(34px, 8vw, 56px)", fontWeight: 800, fontFamily: "'Space Grotesk'", letterSpacing: "-0.03em", lineHeight: 1.05, color: t.t0 }}>Building</div>
           <div style={{ fontSize: "clamp(13px, 3vw, 16px)", color: t.t2, marginTop: 12, maxWidth: 460, lineHeight: 1.6 }}>
-            The <b style={{ color: t.t1 }}>{label}</b> is being built. We're still drafting the blueprints — it'll land here soon.
+            The <b style={{ color: t.t1 }}>{label}</b> is being built. We're still drafting the blueprints. It'll land here soon.
           </div>
         </div>
 
@@ -111,7 +111,7 @@ function ArchitectArt({ t }: { t: ThemePalette }) {
         <line x1={86} y1={128} x2={158} y2={128} />
       </g>
 
-      {/* Top tier — under construction (dashed wireframe, pulsing) */}
+      {/* Top tier: under construction (dashed wireframe, pulsing) */}
       <rect x={92} y={66} width={60} height={40} rx={3} fill="none" stroke={acc} strokeWidth="2.5" strokeDasharray="7 5" style={{ animation: "mvFade 2.2s ease-in-out infinite" }} />
 
       {/* Tower crane */}
@@ -144,7 +144,7 @@ function ArchitectArt({ t }: { t: ThemePalette }) {
       </g>
       {/* Counterweight */}
       <rect x={300} y={34} width={20} height={22} rx={2} fill={ink} />
-      {/* Trolley — sits over the open bay, clear of the building */}
+      {/* Trolley: sits over the open bay, clear of the building */}
       <rect x={193} y={40} width={13} height={9} rx={1.5} fill={ink} />
 
       {/* Hook + lifted block (animated descent/lift) */}
@@ -155,7 +155,7 @@ function ArchitectArt({ t }: { t: ThemePalette }) {
         <line x1={205} y1={64} x2={205} y2={73} stroke={t.bg1} strokeWidth="1.2" opacity="0.6" />
       </g>
 
-      {/* Machinery — interlocking gears (work in progress) */}
+      {/* Machinery: interlocking gears (work in progress) */}
       <Gear cx={292} cy={202} r={20} teeth={11} color={acc} hub={panel} ink={ink} spin="mvSpin 9s linear infinite" />
       <Gear cx={321} cy={216} r={13} teeth={8} color={ink} hub={panel} ink={acc} spin="mvSpinR 6s linear infinite" />
     </svg>

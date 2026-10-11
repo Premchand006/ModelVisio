@@ -38,6 +38,6 @@ export function setUserApiKey(key: string): void {
     if (k) localStorage.setItem(GEMINI_KEY_STORAGE, k);
     else localStorage.removeItem(GEMINI_KEY_STORAGE);
   } catch {
-    // ignore — storage unavailable (private mode, etc.)
+    // ignore: storage unavailable (private mode, etc.)
   }
 }

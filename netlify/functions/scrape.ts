@@ -3,11 +3,11 @@ import { handleScrapeRequest } from "@modelvisio/ai/scrape";
 // Netlify proxy for the AI copilot's URL scraper. Reached at /api/scrape via
 // the rewrite in netlify.toml (this function lives at /.netlify/functions/scrape).
 //
-// Legacy v1 `handler` export on purpose — Netlify's build here invokes functions
+// Legacy v1 `handler` export on purpose: Netlify's build here invokes functions
 // in v1 mode (looks for `.handler`); a v2-style `export default` returns an
 // opaque 502 on every call. Same reasoning as netlify/functions/chat.ts.
 //
-// Netlify free tier kills synchronous functions at 10s — the scraper's default
+// Netlify free tier kills synchronous functions at 10s, and the scraper's default
 // 8s timeout keeps it inside that budget with margin for cold start. Env knobs
 // (MODELVISIO_SCRAPE_*) are documented in apps/web/api/scrape.ts.
 

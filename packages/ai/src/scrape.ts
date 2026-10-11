@@ -2,14 +2,14 @@
 // to readable text, and returns a compact snippet the AI can ground answers on
 // (vendor op-support pages, MLPerf tables, GitHub issues, changelogs).
 //
-// Runs ONLY on a server/Node runtime — NOT imported by index.ts so no scraper
+// Runs ONLY on a server/Node runtime. It is NOT imported by index.ts so no scraper
 // code enters the browser bundle (shared browser-safe bits live in urls.ts).
 // Companion to runChatProxy: Gemini's google_search tool covers "search the
 // web"; this covers "read THIS url".
 //
 // Safeguards, in order of priority:
 //  1. SSRF: refuse non-http(s) schemes and any host that is, or RESOLVES TO, a
-//     private/loopback/link-local/CGNAT/multicast address — including IPv4
+//     private/loopback/link-local/CGNAT/multicast address, including IPv4
 //     embedded in IPv6 (::ffff:127.0.0.1, 64:ff9b::/96, 2002::/16). Redirects
 //     are followed manually so every hop is checked BEFORE it is requested.
 //     Residual risk: DNS rebinding between our lookup and fetch's own lookup;
@@ -25,7 +25,7 @@
 
 // NOTE: vite.config.ts imports this file, and Node loads it natively with
 // type-stripping (no transpile). So: erasable TS syntax only (no parameter
-// properties/enums/namespaces) and no extensionless runtime imports —
+// properties/enums/namespaces) and no extensionless runtime imports.
 // `import type` is fine because it's erased.
 import type { ScrapedPage } from "./urls";
 
@@ -50,7 +50,7 @@ export type ScrapeArgs = {
   maxRedirects?: number;
   /**
    * DNS resolver used to reject hostnames that resolve to private addresses.
-   * Default: node:dns lookup. `null` skips resolution (literal checks only) —
+   * Default: node:dns lookup. `null` skips resolution (literal checks only),
    * only for runtimes without DNS access, and for tests.
    */
   resolveHost?: HostResolver | null;
@@ -151,7 +151,7 @@ export function isPrivateHost(host: string): boolean {
   if (v4) return isPrivateIPv4(v4[0], v4[1], v4[2]);
   const v6 = parseIPv6(h);
   if (v6) return isPrivateIPv6(v6);
-  // A colon that didn't parse as IPv6 is malformed — refuse rather than guess.
+  // A colon that didn't parse as IPv6 is malformed; refuse rather than guess.
   return h.includes(":");
 }
 
@@ -207,7 +207,7 @@ async function assertSafeTarget(
 
 // ─── HTML → text ─────────────────────────────────────────────────────────────
 
-/** Extract readable text from an HTML string. Deliberately lightweight — no
+/** Extract readable text from an HTML string. Deliberately lightweight, no
  *  DOM: strips <script>/<style>/<noscript>/<template>, unwraps other tags,
  *  decodes the handful of named entities that matter, collapses whitespace. */
 export function htmlToText(html: string): { title: string; text: string } {
@@ -462,7 +462,7 @@ export function scrapeOptionsFromEnv(env: Env): Omit<ScrapeArgs, "url"> {
 }
 
 /** Validate a POST /api/scrape body, run the scraper, and return the JSON
- *  response + status. Never throws — each platform handler just relays it. */
+ *  response + status. Never throws; each platform handler just relays it. */
 export async function handleScrapeRequest(
   body: unknown,
   env: Env,

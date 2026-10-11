@@ -1,0 +1,29 @@
+{
+  "name": "@modelvisio/cli",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ModelVisio CLI: inspect, compiler-compat check, and version-diff model files in CI.",
+  "type": "module",
+  "bin": {
+    "modelvisio": "./dist/modelvisio.cjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18.17"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@modelvisio/core": "workspace:*",
+    "@modelvisio/parsers": "workspace:*",
+    "@types/node": "^20.14.0",
+    "esbuild": "^0.21.5",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
+}

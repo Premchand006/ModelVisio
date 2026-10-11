@@ -2,30 +2,30 @@
 
 Open neural-network model files right in the editor. Instead of a wall of
 binary, `.onnx`, `.tflite`, `.pt`, `.safetensors`, `.gguf` and 30+ other
-formats open as an **interactive graph** with a per-layer **inspector**, a
-**compiler pre-flight** for edge accelerators, **hardware-fit scoring**, and an
-optional **AI copilot** that answers questions about *your* model.
+formats open as an interactive graph with a per-layer inspector, a compiler
+pre-flight for edge accelerators, hardware-fit scoring, and an optional AI
+copilot that answers questions about your model.
 
 It is the same app as the [ModelVisio](https://github.com/Premchand006/ModelVisio)
 website and desktop app, running inside a VS Code custom editor.
 
-![Graph + inspector](https://raw.githubusercontent.com/Premchand006/ModelVisio/main/docs/screenshots/graph.png)
+![Graph and inspector](https://raw.githubusercontent.com/Premchand006/ModelVisio/main/docs/screenshots/graph.png)
 
 ## Features
 
-- **Graph + inspector** — Netron-style layered graph; shapes, weights, FLOPs/MACs and
-  quantization sensitivity per layer; SVG/PNG export.
-- **Compiler pre-flight** — per-target op-support and memory warnings (Coral, RKNN, Hailo,
-  Kneron, …) surfaced on the graph, with reversible auto-fixes.
-- **Hardware-fit scoring** — roofline estimates across 21 edge accelerators: FPS, FPS/W,
-  compute- vs memory-bound, and a memory-fit guard.
-- **Converter + deploy recipes** — Graph-JSON / Layers-CSV / Safetensors / NumPy exports and
-  TensorRT / HailoRT / RKNN scripts. Every export opens a native **Save** dialog.
-- **AI copilot** (optional, bring your own free Gemini key) — grounded in the model's computed
-  analysis; paste a URL and it reads the page.
-- **Live reload** — the view re-parses when the file changes on disk (e.g. re-exported from a
-  training script).
-- **Follows your theme** — light / dark switches with the VS Code color theme.
+- Netron-style layered graph with per-layer shapes, weights, FLOPs/MACs and quantization
+  sensitivity. Export to SVG or PNG.
+- Compiler pre-flight: op-support and memory warnings for each target (Coral, RKNN, Hailo,
+  Kneron and others), shown on the graph, with auto-fixes you can undo.
+- Hardware-fit scoring: roofline estimates for 21 edge accelerators, covering FPS, FPS/W,
+  compute- vs memory-bound, and whether the model fits in memory.
+- Converter and deploy scripts: Graph JSON, Layers CSV, Safetensors and NumPy exports, and
+  TensorRT, HailoRT and RKNN scripts. Every export opens a native Save dialog.
+- Optional AI copilot using your own free Gemini key. It sees the model's computed analysis,
+  and it can read a web page if you paste the URL.
+- The view re-parses the file when it changes on disk, for example when a training script
+  exports it again.
+- Light and dark mode follow your VS Code color theme.
 - Parsing runs in a background Web Worker, so large models don't freeze the editor.
 
 ## Supported formats
@@ -35,10 +35,9 @@ website and desktop app, running inside a VS Code custom editor.
 | `.onnx` `.tflite` `.lite` `.tfl` `.safetensors` `.gguf` `.ggml` `.npy` `.npz` `.pt` `.pth` `.ckpt` | ✔ | |
 | `.ort` `.ptl` `.torchscript` `.pt2` `.pte` `.mlmodel` `.keras` `.caffemodel` `.pdmodel` `.pdparams` `.mnn` `.tnnmodel` `.tnnproto` `.rknn` `.uff` `.cntk` `.mge` `.nntxt` `.mlnet` `.bigdl` `.cbm` | | ✔ |
 
-Generic extensions that other tools also use — `.json` `.xml` `.bin` `.cfg` `.pb` `.pbtxt`
-`.meta` `.h5` `.hdf5` `.params` `.param` `.nb` `.weights` `.nn` `.plan` `.engine` `.trt`
-`.prototxt` `.pkl` `.pickle` `.joblib` `.mlir` `.dnn` `.om` `.tm` `.hn` `.har` — are **not**
-taken over. Open them with right-click → **Open with ModelVisio**, or **Reopen Editor With… →
+Generic extensions that other tools also use are not taken over: `.json` `.xml` `.bin` `.cfg`
+`.pb` `.pbtxt` `.meta` `.h5` `.hdf5` `.params` `.param` `.nb` `.weights` `.nn` `.plan` `.engine`
+`.trt` `.prototxt` `.pkl` `.pickle` `.joblib` `.mlir` `.dnn` `.om` `.tm` `.hn` `.har`. Open them with right-click → **Open with ModelVisio**, or **Reopen Editor With… →
 ModelVisio**. (`.cfg` Darknet and `.bin` PyTorch files get a full graph. `.har` is opt-in
 because the extension is far more often a browser HTTP Archive than a Hailo archive.)
 
@@ -73,8 +72,8 @@ progress. Folder bundles (`.mlpackage`, `.mlmodelc`) can't be opened by a custom
    Storage (the OS keychain), not in `settings.json`.
 3. Open a model and switch to the **AI** tab.
 
-The key is looked up in this order: Secret Storage → the legacy `modelvisio.geminiApiKey`
-setting in your *user* settings → the `GEMINI_API_KEY` environment variable of the process that
+The key is looked up in this order: Secret Storage, then the legacy `modelvisio.geminiApiKey`
+setting in your *user* settings, then the `GEMINI_API_KEY` environment variable of the process that
 launched VS Code. A `modelvisio.geminiApiKey` in a workspace or folder `.vscode/settings.json` is
 never used, so a shared repository can't make you call Gemini with its key. A key found in your
 user settings is moved into Secret Storage once, on first run, and you're offered to delete the
@@ -98,7 +97,7 @@ key you kept in user settings still applies until you remove it; the command tel
 - **Untrusted workspaces:** the extension runs in Restricted Mode, but `modelvisio.geminiApiKey`,
   `modelvisio.geminiModel`, `modelvisio.webSearch`, `modelvisio.thinking` and
   `modelvisio.scrapeAllowlist` are read only from your user settings, never from the
-  workspace's `.vscode/settings.json` — a repository can't switch your key to a pricier model
+  workspace's `.vscode/settings.json`, so a repository can't switch your key to a pricier model
   or turn on billed features. (The API key setting is ignored at workspace level even in
   trusted workspaces.)
 
@@ -135,36 +134,36 @@ bridge.ts ◀── chat / scrape / save / notify ── fetchBridge (/api/chat,
 
 #### Host (`src/`)
 
-- `extension.ts` — activation; registers the editors and the commands.
-- `modelEditorProvider.ts` — one `CustomReadonlyEditorProvider` serving two view types:
+- `extension.ts`: activation; registers the editors and the commands.
+- `modelEditorProvider.ts`: one `CustomReadonlyEditorProvider` serving two view types:
   `modelvisio.modelViewer` (`priority: default`, unambiguous model extensions) and
   `modelvisio.modelViewerOption` (`priority: option`, generic extensions). It reads the
   file with `workspace.fs` (enforcing `maxFileSizeMB`), posts the bytes as a `Uint8Array`, and
   watches the file to re-send it after changes (debounced).
-- `protocol.ts` — the typed message contract in both directions; `messages.ts` validates every
+- `protocol.ts`: the typed message contract in both directions; `messages.ts` validates every
   incoming message and drops anything malformed.
-- `bridge.ts` — handles `chat` (shared `runChatProxy`; empty usage beacons are rejected, never
+- `bridge.ts`: handles `chat` (shared `runChatProxy`; empty usage beacons are rejected, never
   billed), `scrape` (shared SSRF-guarded `scrapeUrl` + `modelvisio.scrapeAllowlist`), `save`
   (native Save dialog) and `notify`.
-- `secrets.ts` / `apiKey.ts` — Secret Storage key store, lookup order, legacy-setting migration.
-- `html.ts` — webview HTML and CSP. Scripts load only with a per-render nonce. `'unsafe-eval'` is
+- `secrets.ts` / `apiKey.ts`: Secret Storage key store, lookup order, legacy-setting migration.
+- `html.ts`: webview HTML and CSP. Scripts load only with a per-render nonce. `'unsafe-eval'` is
   allowed because protobufjs (ONNX) compiles decoders with `Function()`; it does not let
   injected `<script>` tags run.
-- `formats.ts` — extension lists for both editors (tests keep them in sync with `package.json`
-  and the parser registry). `files.ts`, `config.ts` / `geminiModel.ts`, `log.ts` — helpers,
+- `formats.ts`: extension lists for both editors (tests keep them in sync with `package.json`
+  and the parser registry). `files.ts`, `config.ts` / `geminiModel.ts`, `log.ts`: helpers,
   settings, output channel.
 
 #### Webview (`webview/`)
 
-- `main.tsx` — installs the platform glue, then mounts core's `App`.
-- `rpc.ts` — id-correlated request/response over `postMessage`.
-- `fetchBridge.ts` — intercepts the copilot's `POST /api/chat` and `/api/scrape` and forwards
+- `main.tsx`: installs the platform glue, then mounts core's `App`.
+- `rpc.ts`: id-correlated request/response over `postMessage`.
+- `fetchBridge.ts`: intercepts the copilot's `POST /api/chat` and `/api/scrape` and forwards
   them to the host, so core's chat code runs unchanged.
-- `workerShim.ts` — a webview can't start a Worker from its cross-origin resource URL, so the
+- `workerShim.ts`: a webview can't start a Worker from its cross-origin resource URL, so the
   parse-worker chunk is prefetched and started from a `blob:` URL. If that fails, core parses
   on the main thread.
-- `save.ts` — routes core downloads (`setSaveHandler`) to the host's Save dialog.
-- `modelSink.ts`, `ErrorBanner.tsx`, `vscodeApi.ts` — buffering, error UI, API handle.
+- `save.ts`: routes core downloads (`setSaveHandler`) to the host's Save dialog.
+- `modelSink.ts`, `ErrorBanner.tsx`, `vscodeApi.ts`: buffering, error UI, API handle.
 
 #### Bundling
 
@@ -192,7 +191,7 @@ Extension Development Host. Open any model file there.
 ### Package and install
 
 ```bash
-pnpm --filter modelvisio-vscode package      # → apps/vscode/modelvisio.vsix
+pnpm --filter modelvisio-vscode package      # builds apps/vscode/modelvisio.vsix
 code --install-extension apps/vscode/modelvisio.vsix
 ```
 

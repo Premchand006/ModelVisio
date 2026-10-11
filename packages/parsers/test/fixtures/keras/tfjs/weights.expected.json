@@ -1,0 +1,99 @@
+{
+ "conv/kernel": {
+  "shape": [
+   3,
+   3,
+   3,
+   8
+  ],
+  "min": -0.2436,
+  "max": 0.2412,
+  "mean": -0.0012,
+  "std": 0.1345
+ },
+ "conv/bias": {
+  "shape": [
+   8
+  ],
+  "min": 0.0,
+  "max": 0.0,
+  "mean": 0.0,
+  "std": 0.0
+ },
+ "bn/gamma": {
+  "shape": [
+   8
+  ],
+  "min": 0.7698,
+  "max": 1.1745,
+  "mean": 0.987,
+  "std": 0.1322
+ },
+ "bn/beta": {
+  "shape": [
+   8
+  ],
+  "min": -0.2302,
+  "max": 0.1745,
+  "mean": -0.013,
+  "std": 0.1322
+ },
+ "bn/moving_mean": {
+  "shape": [
+   8
+  ],
+  "min": -0.2302,
+  "max": 0.1745,
+  "mean": -0.013,
+  "std": 0.1322
+ },
+ "bn/moving_variance": {
+  "shape": [
+   8
+  ],
+  "min": 0.7698,
+  "max": 1.1745,
+  "mean": 0.987,
+  "std": 0.1322
+ },
+ "dw/depthwise_kernel": {
+  "shape": [
+   3,
+   3,
+   8,
+   1
+  ],
+  "min": -0.2722,
+  "max": 0.2461,
+  "mean": -0.0383,
+  "std": 0.1521
+ },
+ "dw/bias": {
+  "shape": [
+   8
+  ],
+  "min": 0.0,
+  "max": 0.0,
+  "mean": 0.0,
+  "std": 0.0
+ },
+ "fc/kernel": {
+  "shape": [
+   8,
+   10
+  ],
+  "min": -0.5615,
+  "max": 0.5625,
+  "mean": 0.0573,
+  "std": 0.3225
+ },
+ "fc/bias": {
+  "shape": [
+   10
+  ],
+  "min": 0.0,
+  "max": 0.0,
+  "mean": 0.0,
+  "std": 0.0
+ }
+}

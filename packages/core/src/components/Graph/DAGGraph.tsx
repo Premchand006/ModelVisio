@@ -4,6 +4,8 @@ import { useT } from "../../theme/ThemeContext";
 import { GC } from "../../theme/theme";
 import { computeGraph, edgePath, type LayoutOpts, type NodeLine } from "./dagreLayout";
 import { exportPng, exportSvg } from "./export";
+import { useStreamingSnapshot } from "./useStreamingSnapshot";
+import { textOn } from "./colorBy";
 
 const HEADER = 22;
 
@@ -17,15 +19,19 @@ type Props = LayoutOpts & {
   model: Model;
   selected: ModelLayer | null;
   onSelect: (l: ModelLayer) => void;
-  qHeatmap: boolean;
+  qHeatmap?: boolean;
+  /** "Color by" overlay: layer id → solid color (see colorBy.ts). Overrides category hues. */
+  nodeColors?: Map<number, string> | null;
   zoom: number;
   onZoomChange: (z: number) => void;
   query: string;
+  /** The model is still streaming in: rate-limit re-layout (see useStreamingSnapshot). */
+  streaming?: boolean;
 };
 
 // Netron-style category hues (the colored node header). The body fill is derived
-// per-theme from this hue so nodes read clearly on BOTH the dark and light canvas
-// — the old fixed dark-navy fills looked like black boxes in light mode.
+// per-theme from this hue so nodes read clearly on BOTH the dark and light canvas.
+// The old fixed dark-navy fills looked like black boxes in light mode.
 const CAT_DEFS: { re: RegExp; hue: string }[] = [
   { re: /conv/, hue: "#2563EB" },
   { re: /gemm|matmul|linear|fullyconnected|dense/, hue: "#7C3AED" },
@@ -57,17 +63,24 @@ function lineColor(kind: NodeLine["kind"], t: ReturnType<typeof useT>): string {
 }
 
 export const DAGGraph = forwardRef<DAGGraphHandle, Props>(function DAGGraph(
-  { model, selected, onSelect, direction, showWeights, showNames, showMetrics, qHeatmap, zoom, onZoomChange, query },
+  { model, selected, onSelect, direction, showWeights, showNames, showMetrics, qHeatmap, nodeColors, zoom, onZoomChange, query, streaming = false },
   ref,
 ) {
   const t = useT();
   const scroller = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
-  const layout = useMemo(
-    () => computeGraph(model, { direction, showWeights, showNames, showMetrics }),
-    [model, direction, showWeights, showNames, showMetrics],
-  );
+  // While a large model streams in, lay out a throttled snapshot of it: at most
+  // one dagre pass per max(400ms, 3x the last pass), so layout never hogs the
+  // main thread. Zoom/scroll live outside the layout, so the viewport holds.
+  const layoutCost = useRef(0);
+  const layoutModel = useStreamingSnapshot(model, streaming, () => Math.max(400, layoutCost.current * 3));
+  const layout = useMemo(() => {
+    const t0 = Date.now();
+    const l = computeGraph(layoutModel, { direction, showWeights, showNames, showMetrics });
+    layoutCost.current = Date.now() - t0;
+    return l;
+  }, [layoutModel, direction, showWeights, showNames, showMetrics]);
 
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -79,7 +92,7 @@ export const DAGGraph = forwardRef<DAGGraphHandle, Props>(function DAGGraph(
     const c = scroller.current;
     if (!c || !layout.width) return;
     // Fit to WIDTH only: scale so the graph fills the available width and the
-    // user scrolls vertically — instead of shrinking it to cram the full height
+    // user scrolls vertically, instead of shrinking it to cram the full height
     // (which makes a tall, Netron-style vertical graph tiny).
     const z = c.clientWidth / (layout.width + 20);
     onZoomChange(Math.max(0.1, Math.min(1.5, z)));
@@ -173,13 +186,15 @@ export const DAGGraph = forwardRef<DAGGraphHandle, Props>(function DAGGraph(
           const matched = matches.has(l.id);
           const gc = t[GC[l.group]] || t.t3;
           const qc = qHeatmap && l.qSens > 0 ? (l.qSens > 0.12 ? "#EF4444" : l.qSens > 0.06 ? "#F59E0B" : "#22C55E") : null;
-          const body = qc ? mix(qc, t.bg1, light ? 0.14 : 0.16) : mix(hue, t.bg1, light ? 0.10 : 0.20);
-          const stroke = sel ? t.acc : matched ? t.wrn : qc || hue + (light ? "66" : "88");
+          const nc = nodeColors?.get(l.id) ?? null;
+          const head = nc ?? hue;
+          const body = nc ? mix(nc, t.bg1, light ? 0.18 : 0.22) : qc ? mix(qc, t.bg1, light ? 0.14 : 0.16) : mix(hue, t.bg1, light ? 0.10 : 0.20);
+          const stroke = sel ? t.acc : matched ? t.wrn : nc || qc || hue + (light ? "66" : "88");
           return (
             <g key={l.id} data-node transform={`translate(${x},${y})`} style={{ cursor: "pointer" }} filter={sel ? "url(#emsel)" : undefined} onClick={() => onSelect(l)}>
               <rect width={n.w} height={n.h} rx={7} fill={body} stroke={stroke} strokeWidth={sel || matched ? 2 : 1.25} />
-              <path d={`M0,7 a7,7 0 0 1 7,-7 h${n.w - 14} a7,7 0 0 1 7,7 v13 h-${n.w} z`} fill={hue} />
-              <text x={9} y={15} fontSize={11.5} fontWeight={700} fill="#fff" fontFamily="'JetBrains Mono',monospace">{l.op}</text>
+              <path d={`M0,7 a7,7 0 0 1 7,-7 h${n.w - 14} a7,7 0 0 1 7,7 v13 h-${n.w} z`} fill={head} />
+              <text x={9} y={15} fontSize={11.5} fontWeight={700} fill={nc ? textOn(nc) : "#fff"} fontFamily="'JetBrains Mono',monospace">{l.op}</text>
               {(l.compIssues?.length ?? 0) > 0 && <circle cx={n.w - 9} cy={10} r={3.5} fill={t.err} />}
               {n.lines.map((ln, i) => (
                 <text key={i} x={9} y={HEADER + 14 + i * 15} fontSize={10} fill={lineColor(ln.kind, t)} fontFamily="'JetBrains Mono',monospace">{ln.text}</text>

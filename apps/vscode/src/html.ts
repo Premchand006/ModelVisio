@@ -1,5 +1,5 @@
 // WebView HTML + Content-Security-Policy. Pure (no `vscode` import) so the exact
-// policy — which the WebView bundle depends on — is pinned by a unit test.
+// policy (which the WebView bundle depends on) is pinned by a unit test.
 
 import { randomBytes } from "node:crypto";
 
@@ -20,12 +20,16 @@ export function makeNonce(): string {
  *    with Function(); a blob: worker inherits this policy, so without it ONNX
  *    fails to parse both in the worker and on the main-thread fallback. Script
  *    *loading* stays nonce-only, so this does not admit injected <script>s.
+ *  - script-src 'wasm-unsafe-eval': core's live benchmark compiles
+ *    onnxruntime's WebAssembly in a blob: worker. 'unsafe-eval' already covers
+ *    it in Chromium; the explicit keyword keeps it working if 'unsafe-eval' is
+ *    ever dropped. The .wasm is fetched from media/assets/ (connect-src cspSource).
  */
 export function buildCsp(cspSource: string, nonce: string): string {
   return [
     `default-src 'none'`,
     `img-src ${cspSource} data: blob:`,
-    `script-src 'nonce-${nonce}' 'unsafe-eval'`,
+    `script-src 'nonce-${nonce}' 'unsafe-eval' 'wasm-unsafe-eval'`,
     `style-src ${cspSource} 'unsafe-inline' https://fonts.googleapis.com`,
     `font-src ${cspSource} https://fonts.gstatic.com data:`,
     `connect-src ${cspSource} https:`,

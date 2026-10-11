@@ -73,9 +73,9 @@ export function Inspector({ layer, model }: { layer: ModelLayer | null; model: M
         <R l="MACs" v={fmt(layer.macs || 0)} /><R l="Activation memory" v={fB(layer.mem || 0)} />
         {layer.params > 0 && <><R l="Weight mem (FP32)" v={fB(layer.params * 4)} /><R l="Weight mem (INT8)" v={fB(layer.params)} c={t.suc} /></>}
         <div style={{ fontSize: 9, fontWeight: 700, color: t.t3, textTransform: "uppercase", letterSpacing: 1, marginTop: 8, marginBottom: 4 }}>Est. Layer Latency</div>
-        <R l="Jetson Orin Nano (FP16)" v={layer.flops > 0 ? `~${(layer.flops / 40e9 * 1000).toFixed(2)}ms` : "—"} />
-        <R l="Hailo-8 (INT8)" v={layer.flops > 0 ? `~${(layer.flops / 26e9 * 1000).toFixed(2)}ms` : "—"} />
-        <R l="Coral TPU (INT8)" v={layer.flops > 0 ? `~${(layer.flops / 4e9 * 1000).toFixed(2)}ms` : "—"} />
+        <R l="Jetson Orin Nano (FP16)" v={layer.flops > 0 ? `~${(layer.flops / 40e9 * 1000).toFixed(2)}ms` : "-"} />
+        <R l="Hailo-8 (INT8)" v={layer.flops > 0 ? `~${(layer.flops / 26e9 * 1000).toFixed(2)}ms` : "-"} />
+        <R l="Coral TPU (INT8)" v={layer.flops > 0 ? `~${(layer.flops / 4e9 * 1000).toFixed(2)}ms` : "-"} />
         <div style={{ fontSize: 9, fontWeight: 700, color: t.t3, textTransform: "uppercase", letterSpacing: 1, marginTop: 8, marginBottom: 4 }}>Quantization Sensitivity</div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{ flex: 1, height: 6, background: t.bg3, borderRadius: 3, overflow: "hidden" }}>

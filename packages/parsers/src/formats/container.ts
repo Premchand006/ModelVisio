@@ -4,7 +4,7 @@ import { weightsToModel, type TensorInfo } from "../common/weights";
 
 // Honest handling for formats whose deep graph parsing isn't implemented yet
 // (PyTorch pickle/zip, Core ML / TF / Caffe / Paddle protobuf, OpenVINO XML,
-// RKNN/ncnn/MNN binaries, …). We DETECT the format and surface real metadata —
+// RKNN/ncnn/MNN binaries, …). We DETECT the format and surface real metadata,
 // never a fabricated graph.
 
 const LABELS: Record<string, { format: string; framework: string }> = {
@@ -95,7 +95,7 @@ export function parseContainer(input: ArrayBuffer | Uint8Array, name: string): M
         framework: label.framework,
         sizeBytes: buf.byteLength,
         note: isTorch
-          ? "PyTorch zip archive — tensor storages listed. Full graph needs unpickling (not yet implemented)."
+          ? "PyTorch zip archive. Tensor storages listed. Full graph needs unpickling (not yet implemented)."
           : "Archive members listed. Full graph parsing not yet implemented.",
       },
       tensors,
@@ -110,7 +110,7 @@ export function parseContainer(input: ArrayBuffer | Uint8Array, name: string): M
     type: label.format,
     op: "Detected",
     shape: "?",
-    dt: "—",
+    dt: "-",
     params: 0,
     flops: 0,
     macs: 0,
@@ -121,7 +121,7 @@ export function parseContainer(input: ArrayBuffer | Uint8Array, name: string): M
     attr: { format: label.format, sizeBytes: buf.byteLength, magic },
     w: null,
     math: `Magic bytes: ${magic}`,
-    insight: `Detected ${label.format}. Full graph parsing for this format is incremental — ONNX, TFLite, PyTorch, Safetensors, GGUF, NumPy and Darknet render a complete graph today; everything else is recognized with real metadata. Tip: export to ONNX for the richest analysis.`,
+    insight: `Detected ${label.format}. Full graph parsing for this format is incremental. ONNX, TFLite, PyTorch, Safetensors, GGUF, NumPy, Darknet, Core ML, OpenVINO, TensorFlow, Keras, Caffe, PaddlePaddle, ncnn, MNN, RKNN, MLIR and scikit-learn render a complete graph today; everything else is recognized with real metadata. Tip: export to ONNX for the richest analysis.`,
     qSens: 0,
     compIssues: [],
   };

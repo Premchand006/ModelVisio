@@ -1,6 +1,7 @@
 import type { Model } from "../types";
 import { Reader } from "../common/reader";
 import { weightsToModel, type TensorInfo } from "../common/weights";
+import { sliceModel, type ModelStream } from "../common/chunks";
 
 // GGUF (llama.cpp): magic "GGUF", version, tensor & metadata counts, typed
 // metadata KV pairs, then tensor infos (name, dims, ggml type, offset).
@@ -97,6 +98,18 @@ export function parseGguf(input: ArrayBuffer | Uint8Array, name = "model.gguf"):
     },
     tensors,
   );
+}
+
+/**
+ * Streaming form of parseGguf. Everything GGUF exposes is in its header (the
+ * weights are never read), so the work is the header decode; the resulting
+ * tensor layers are then streamed in `batchSize` slices so a large model
+ * renders progressively. Returns exactly what parseGguf returns.
+ */
+export function* ggufStream(input: ArrayBuffer | Uint8Array, name = "model.gguf", batchSize = 256): ModelStream {
+  const model = parseGguf(input, name);
+  yield* sliceModel(model, batchSize);
+  return model;
 }
 
 /** Export GGUF metadata + tensor manifest as pretty JSON. */
