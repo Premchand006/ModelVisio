@@ -1,16 +1,18 @@
 import * as vscode from "vscode";
 import { lookup } from "node:dns/promises";
 import { runChatProxy } from "@modelvisio/ai/proxy";
+import { runGrokChat } from "@modelvisio/ai/grok";
+import { chatWithWebResearch, freeSearchApplies } from "@modelvisio/ai/search";
 import { scrapeUrl, type HostResolver } from "@modelvisio/ai/scrape";
 import type { HostToWebview, WebviewToHost } from "./protocol";
 import { settings } from "./config";
 import { safeFilename, saveFilters } from "./files";
 import { messageId, saveBytes, scrapeFailure } from "./messages";
-import { MISSING_KEY_MESSAGE } from "./apiKey";
-import { notifyMissingKey, type ApiKeyStore } from "./secrets";
+import { missingKeyMessage } from "./apiKey";
+import { notifyMissingKey, type ApiKeys } from "./secrets";
 import { errMsg, log } from "./log";
 
-/** Not serverless, so no hard platform limit — but a hung Gemini request
+/** Not serverless, so no hard platform limit — but a hung model request
  *  must still end so the chat UI can recover. */
 const CHAT_TIME_BUDGET_MS = 60_000;
 
@@ -21,7 +23,7 @@ const resolveHost: HostResolver = async (host) =>
 
 export type BridgeContext = {
   post: (msg: HostToWebview) => void;
-  keys: ApiKeyStore;
+  keys: ApiKeys;
   /** The model file this editor shows; the save dialog defaults next to it. */
   modelUri: vscode.Uri;
 };
@@ -57,36 +59,50 @@ export function rejectMalformed(raw: unknown, post: BridgeContext["post"]): void
 
 async function handleChat(msg: Extract<WebviewToHost, { type: "chat" }>, ctx: BridgeContext): Promise<void> {
   // Usage beacons (logUpload) arrive as chat calls with no messages; they must
-  // never become a billed Gemini request.
+  // never become a billed model request.
   if (msg.messages.length === 0) {
     log.debug(`Ignored empty chat request #${msg.id}.`);
     ctx.post({ type: "chatError", id: msg.id, error: "Empty chat request — nothing to send." });
     return;
   }
-  const found = await ctx.keys.resolve();
+  const s = settings();
+  const store = ctx.keys[s.provider];
+  const found = await store.resolve();
   if (!found) {
-    log.warn("Chat request without a Gemini API key.");
-    ctx.post({ type: "chatError", id: msg.id, error: MISSING_KEY_MESSAGE });
-    notifyMissingKey();
+    log.warn(`Chat request without a ${store.label} API key.`);
+    ctx.post({ type: "chatError", id: msg.id, error: missingKeyMessage(s.provider) });
+    notifyMissingKey(s.provider);
     return;
   }
-  const s = settings();
+  const { key } = found;
+  const model = s.provider === "grok" ? s.grokModel : s.geminiModel;
+  const run = (system: string, timeBudgetMs: number) =>
+    s.provider === "grok"
+      ? runGrokChat({ key, system, messages: msg.messages, model, thinking: s.thinking, timeBudgetMs })
+      : runChatProxy({
+          key, system, messages: msg.messages, model, webSearch: s.webSearch, thinking: s.thinking, timeBudgetMs,
+        });
   const started = Date.now();
   try {
-    const out = await runChatProxy({
-      key: found.key,
-      system: msg.system,
-      messages: msg.messages,
-      model: s.geminiModel,
-      webSearch: s.webSearch,
-      thinking: s.thinking,
-      timeBudgetMs: CHAT_TIME_BUDGET_MS,
-    });
-    log.info(`Chat #${msg.id}: ${s.geminiModel} answered in ${Date.now() - started} ms (key from ${found.source}).`);
+    // Free web research (search + read top results) when the provider isn't
+    // already searching natively — Grok, or Gemini with grounding off.
+    const out = freeSearchApplies(s.provider, s.webSearch, s.freeWebSearch)
+      ? await chatWithWebResearch({
+          system: msg.system,
+          messages: msg.messages,
+          mode: s.freeWebSearch,
+          timeBudgetMs: CHAT_TIME_BUDGET_MS,
+          read: (url, limits) => scrapeUrl({
+            url, allowlist: s.scrapeAllowlist.length ? s.scrapeAllowlist : undefined, resolveHost, ...limits,
+          }),
+          onError: (m) => log.warn(m),
+        }, run)
+      : await run(msg.system, CHAT_TIME_BUDGET_MS);
+    log.info(`Chat #${msg.id}: ${model} answered in ${Date.now() - started} ms (key from ${found.source}).`);
     ctx.post({ type: "chatResult", id: msg.id, text: out.text, sources: out.sources });
   } catch (e) {
     const error =
-      errMsg(e) === "TIMEOUT" ? `Gemini did not answer within ${CHAT_TIME_BUDGET_MS / 1000}s — try again.` : errMsg(e);
+      errMsg(e) === "TIMEOUT" ? `${store.label} did not answer within ${CHAT_TIME_BUDGET_MS / 1000}s — try again.` : errMsg(e);
     log.error(`Chat #${msg.id} failed: ${error}`);
     ctx.post({ type: "chatError", id: msg.id, error });
   }

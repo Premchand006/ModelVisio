@@ -10,7 +10,7 @@ This is a **pnpm monorepo**. One engine, three shells — never duplicate UI log
 packages/
   core/      React component library — ALL app UI lives here (graph, inspector, compiler checker, converters, hardware report, AI chat). This is the product.
   parsers/   Real model-format parsing → normalized graph objects. Pure TS, no React.
-  ai/        Gemini API prompt templates + client. Used by core's Chat.
+  ai/        Copilot prompt templates + client (used by core's Chat), plus server-only modules: Gemini proxy (proxy.ts), xAI Grok (grok.ts), provider selection (providers.ts), free keyless web search (search.ts), SSRF-guarded URL scraper (scrape.ts).
 apps/
   web/       Vite + React + TS. Imports core. Deploys to Vercel/Netlify.
   desktop/   Tauri 2. Wraps the web build in a native WebView.
@@ -27,7 +27,7 @@ apps/
 - Language: **TypeScript** everywhere
 - Styling: Tailwind + the existing theme-context system (dark/light)
 - ONNX parsing: `onnxruntime-web` + `protobufjs`
-- AI: Google Gemini API via a **server-side proxy** (see Security). Free key from Google AI Studio.
+- AI: Google Gemini (default; free key from Google AI Studio) or xAI Grok via a **server-side proxy** (see Security). Live grounding from Google Search (Gemini) or a free, keyless web search (DuckDuckGo / self-hosted SearXNG) read through the guarded scraper.
 
 ## Normalized model object
 
@@ -64,7 +64,8 @@ Build ONNX fully end-to-end before starting others. Each parser needs tests agai
 
 ## Security (non-negotiable)
 
-- **Never ship the Gemini API key to the browser.** The web app calls a serverless proxy (`api/chat` on Vercel, `netlify/functions/chat` on Netlify) that holds `GEMINI_API_KEY` as an env var. Locally, a dev-only Vite middleware (`apps/web/vite.config.ts`) serves `/api/chat` from the repo-root `.env`. The desktop app proxies through Tauri's Rust side. The VS Code extension proxies through the extension host. Shared call logic: `@modelvisio/ai/proxy`.
+- **Never ship the AI provider key to the browser.** The web app calls a serverless proxy (`api/chat` on Vercel, `netlify/functions/chat` on Netlify) that holds `GEMINI_API_KEY` — or `XAI_API_KEY` for Grok, handled the same way (`MODELVISIO_PROVIDER` picks) — as an env var. Locally, a dev-only Vite middleware (`apps/web/vite.config.ts`) serves `/api/chat` from the repo-root `.env`. The desktop app proxies through Tauri's Rust side. The VS Code extension proxies through the extension host (keys in Secret Storage). Shared call logic: `@modelvisio/ai/proxy` (Gemini), `@modelvisio/ai/grok`, `@modelvisio/ai/providers`. These server modules are never re-exported from the browser entry (`index.ts`).
+- **Crawled text is untrusted.** Pasted URLs and free-web-search result pages (`@modelvisio/ai/search`; only the fixed search endpoint itself is fetched directly) are read only through `@modelvisio/ai/scrape` (blocks private/loopback/metadata hosts incl. DNS results and redirects; size/time caps; `MODELVISIO_SCRAPE_ALLOWLIST`) and fenced in the prompt as data, never instructions.
 - Parse uploaded files in a **Web Worker** — never block the main thread. Large models (100MB+) must stream nodes into the graph progressively.
 
 ## Build order

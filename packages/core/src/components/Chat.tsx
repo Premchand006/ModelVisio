@@ -8,9 +8,15 @@ import { useT } from "../theme/ThemeContext";
 import { fmt, fB } from "../utils/format";
 import { scoreAll } from "../scoring";
 import { HW } from "../data/hardware";
-import { isDesktop, getUserApiKey, setUserApiKey } from "../utils/apiKey";
+import { isDesktop, getAiProvider, setAiProvider, getUserApiKey, setUserApiKey, type AiProvider } from "../utils/apiKey";
 
 type UiMsg = { role: "user" | "assistant"; content: string; sources?: Source[]; unread?: ScrapeFailure[] };
+
+/** Desktop key-panel copy per provider (bring-your-own-key). */
+const PROVIDERS: Record<AiProvider, { name: string; placeholder: string; keyUrl: string; keyLabel: string; free: boolean }> = {
+  gemini: { name: "Gemini", placeholder: "AIza…", keyUrl: "https://aistudio.google.com/apikey", keyLabel: "aistudio.google.com/apikey", free: true },
+  grok: { name: "Grok", placeholder: "xai-…", keyUrl: "https://console.x.ai", keyLabel: "console.x.ai", free: false },
+};
 
 /** Linked pages kept as grounding across follow-up turns (most recent wins). */
 const MAX_LINKED_PAGES = 4;
@@ -27,26 +33,30 @@ export function Chat({ model, sel }: { model: Model | null; sel: ModelLayer | nu
   const end = useRef<HTMLDivElement>(null);
   useEffect(() => { end.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
 
-  // Bring-your-own-key (desktop only): the user pastes their own Gemini key,
-  // stored locally; the desktop proxy passes it to the Rust chat command. On
-  // the web build the hosted proxy holds the key, so this UI stays hidden.
+  // Bring-your-own-key (desktop only): the user picks Gemini or Grok and pastes
+  // their own key for it, stored locally; the desktop proxy passes both to the
+  // Rust chat command. On the web build the hosted proxy holds the keys, so
+  // this UI stays hidden.
   const desktop = isDesktop();
+  const [prov, setProv] = useState<AiProvider>(getAiProvider);
+  const P = PROVIDERS[prov];
   const [showKey, setShowKey] = useState(false);
   const [keyInput, setKeyInput] = useState("");
-  const [hasKey, setHasKey] = useState(() => !!getUserApiKey());
-  const openKeyPanel = () => { setKeyInput(getUserApiKey()); setShowKey((s) => !s); };
-  const saveKey = () => { setUserApiKey(keyInput); setHasKey(!!keyInput.trim()); setShowKey(false); };
-  const clearKey = () => { setUserApiKey(""); setHasKey(false); setKeyInput(""); };
+  const [hasKey, setHasKey] = useState(() => !!getUserApiKey(prov));
+  const openKeyPanel = () => { setKeyInput(getUserApiKey(prov)); setShowKey((s) => !s); };
+  const pickProvider = (p: AiProvider) => { setAiProvider(p); setProv(p); setKeyInput(getUserApiKey(p)); setHasKey(!!getUserApiKey(p)); };
+  const saveKey = () => { setUserApiKey(keyInput, prov); setHasKey(!!keyInput.trim()); setShowKey(false); };
+  const clearKey = () => { setUserApiKey("", prov); setHasKey(false); setKeyInput(""); };
 
   const QP = model ? ["Explain this architecture", "TensorRT conversion + reference docs", "Deploy on Jetson Orin", "Quantization plan", "INT8 vs FP16 tradeoffs", "Best runtime for Hailo-8"] : [];
 
   const send = async (text: string) => {
     if (!text.trim() || ld || !model) return;
     // Desktop with no key yet: don't fire a doomed request — prompt for the key.
-    if (desktop && !getUserApiKey()) {
+    if (desktop && !getUserApiKey(prov)) {
       setMsgs((m) => [...m,
         { role: "user", content: text },
-        { role: "assistant", content: "Add your Gemini API key first — click the key icon above. Get a free one at https://aistudio.google.com/apikey (stored only on this device)." },
+        { role: "assistant", content: `Add your ${P.name} API key first — click the key icon above. Get ${P.free ? "a free one" : "one"} at ${P.keyUrl} (stored only on this device).` },
       ]);
       setInp("");
       setShowKey(true);
@@ -120,18 +130,22 @@ export function Chat({ model, sel }: { model: Model | null; sel: ModelLayer | nu
     <div style={{ padding: "6px 10px", borderBottom: `1px solid ${t.bdr}`, fontSize: 11, fontWeight: 600, color: t.t0, display: "flex", alignItems: "center", gap: 5 }}>
       <span style={{ width: 6, height: 6, borderRadius: "50%", background: t.suc, display: "inline-block" }} />AI Copilot
       <span style={{ marginLeft: "auto", fontSize: 8, color: t.t3, fontWeight: 400 }}>edge-ML expert · cites sources</span>
-      {desktop && <button type="button" onClick={openKeyPanel} title={hasKey ? "Gemini API key set — click to change" : "Set your Gemini API key"} style={{ marginLeft: 4, padding: "2px 6px", borderRadius: 5, border: `1px solid ${hasKey ? t.bdr : t.acc}`, background: "transparent", color: hasKey ? t.t2 : t.acc, fontSize: 9, fontWeight: 600, cursor: "pointer" }}>🔑{hasKey ? "" : " Set key"}</button>}
+      {desktop && <button type="button" onClick={openKeyPanel} title={hasKey ? `${P.name} API key set — click to change` : `Set your ${P.name} API key`} style={{ marginLeft: 4, padding: "2px 6px", borderRadius: 5, border: `1px solid ${hasKey ? t.bdr : t.acc}`, background: "transparent", color: hasKey ? t.t2 : t.acc, fontSize: 9, fontWeight: 600, cursor: "pointer" }}>🔑{hasKey ? "" : " Set key"}</button>}
     </div>
     {desktop && showKey && <div style={{ padding: 8, borderBottom: `1px solid ${t.bdr}`, background: t.bg1, display: "flex", flexDirection: "column", gap: 6 }}>
-      <div style={{ fontSize: 9, color: t.t2, lineHeight: 1.5 }}>Paste your own <b>Gemini API key</b> — stored only on this device, used for your chats. Free key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer noopener" style={{ color: t.acc }}>aistudio.google.com/apikey</a>.</div>
+      <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+        <span style={{ fontSize: 9, color: t.t3 }}>Provider</span>
+        {(["gemini", "grok"] as const).map((p) => <button key={p} type="button" onClick={() => pickProvider(p)} aria-pressed={prov === p} style={{ padding: "2px 8px", borderRadius: 5, border: `1px solid ${prov === p ? t.acc : t.bdr}`, background: prov === p ? t.acc : "transparent", color: prov === p ? "#fff" : t.t2, fontSize: 9, fontWeight: 600, cursor: "pointer" }}>{PROVIDERS[p].name}</button>)}
+      </div>
+      <div style={{ fontSize: 9, color: t.t2, lineHeight: 1.5 }}>Paste your own <b>{P.name} API key</b> — stored only on this device, used for your chats. {P.free ? "Free key" : "Get a key"} at <a href={P.keyUrl} target="_blank" rel="noreferrer noopener" style={{ color: t.acc }}>{P.keyLabel}</a>.</div>
       <div style={{ display: "flex", gap: 4 }}>
-        <input type="password" value={keyInput} onChange={(e) => setKeyInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && saveKey()} placeholder="AIza…" style={{ flex: 1, padding: "6px 8px", borderRadius: 5, border: `1px solid ${t.bdr}`, background: t.bg, color: t.t0, fontSize: 10, outline: "none" }} />
+        <input type="password" value={keyInput} onChange={(e) => setKeyInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && saveKey()} placeholder={P.placeholder} style={{ flex: 1, padding: "6px 8px", borderRadius: 5, border: `1px solid ${t.bdr}`, background: t.bg, color: t.t0, fontSize: 10, outline: "none" }} />
         <button type="button" onClick={saveKey} style={{ padding: "6px 12px", borderRadius: 5, border: "none", background: t.acc, color: "#fff", fontSize: 10, fontWeight: 600, cursor: "pointer" }}>Save</button>
         {hasKey && <button type="button" onClick={clearKey} style={{ padding: "6px 10px", borderRadius: 5, border: `1px solid ${t.bdr}`, background: "transparent", color: t.t2, fontSize: 10, cursor: "pointer" }}>Clear</button>}
       </div>
     </div>}
     <div style={{ flex: 1, overflow: "auto", padding: 8, display: "flex", flexDirection: "column", gap: 5 }}>
-      {msgs.length === 0 && <div style={{ color: t.t3, fontSize: 10, padding: 10, textAlign: "center" }}>{desktop && !hasKey ? "Add your Gemini API key (key icon, top-right) to start chatting." : model ? "Ask about architectures, formats, layers, hardware, quantization, deployment — ask for reference links and it will search + cite them, or paste a URL (spec sheet, op-support page, GitHub issue) and it will read it." : "Load a model."}</div>}
+      {msgs.length === 0 && <div style={{ color: t.t3, fontSize: 10, padding: 10, textAlign: "center" }}>{desktop && !hasKey ? `Add your ${P.name} API key (key icon, top-right) to start chatting.` : model ? "Ask about architectures, formats, layers, hardware, quantization, deployment — ask for reference links and it will search + cite them, or paste a URL (spec sheet, op-support page, GitHub issue) and it will read it." : "Load a model."}</div>}
       {msgs.map((m, i) => <div key={i} style={{ alignSelf: m.role === "user" ? "flex-end" : "flex-start", maxWidth: "90%", display: "flex", flexDirection: "column", gap: 4 }}>
         <div style={{ padding: "6px 10px", borderRadius: m.role === "user" ? "10px 10px 3px 10px" : "10px 10px 10px 3px", background: m.role === "user" ? t.acc : t.bg1, border: m.role === "user" ? "none" : `1px solid ${t.bdr}`, fontSize: 11, color: m.role === "user" ? "#fff" : t.t0, lineHeight: 1.5, whiteSpace: "pre-wrap", fontFamily: m.role === "assistant" ? "'JetBrains Mono',monospace" : "inherit" }}>{m.content}</div>
         {m.sources && m.sources.length > 0 && <div style={{ padding: "5px 8px", borderRadius: 6, background: t.acc + "0E", border: `1px solid ${t.acc}33` }}>

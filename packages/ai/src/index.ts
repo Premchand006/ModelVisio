@@ -1,8 +1,8 @@
-// @modelvisio/ai — Gemini API prompt templates + client.
+// @modelvisio/ai — copilot prompt templates + client (Gemini or Grok behind the proxy).
 // Pure functions, no React. The API key NEVER lives here or in the browser;
 // this calls the per-shell server-side proxy (see Security in ARCHITECTURE.md).
 
-/** Endpoint of the server-side proxy that holds GEMINI_API_KEY. */
+/** Endpoint of the server-side proxy that holds the provider key (Gemini or xAI). */
 export const DEFAULT_CHAT_ENDPOINT = "/api/chat";
 
 /** Endpoint of the server-side scrape proxy (SSRF-guarded, size-capped). */
@@ -59,9 +59,10 @@ export function buildSystemPrompt(modelSummary: string): string {
     "   model's actual bottleneck layers and quantization-sensitive layers — don't give advice",
     "   that ignores the computed analysis.",
     "4. When the user asks for references, links, docs, papers, or current/version-specific",
-    "   facts (latest releases, benchmarks, op support), rely on Google Search grounding",
-    "   (enabled) and cite the real sources it returns. Never invent a URL. Without grounded",
-    "   results, only cite canonical stable docs you are certain exist.",
+    "   facts (latest releases, benchmarks, op support), rely on web search grounding (Google",
+    "   Search, or LIVE WEB SEARCH results below when present) and cite the real sources it",
+    "   returns. Never invent a URL. Without grounded results, only cite canonical stable docs",
+    "   you are certain exist.",
     "",
     "MODEL + COMPUTED ANALYSIS (ground every answer in this):",
     modelSummary,

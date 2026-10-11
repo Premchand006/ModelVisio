@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { resolveApiKey, shouldMigrate, userSettingKey, validateApiKeyInput } from "../src/apiKey";
+import {
+  MISSING_KEY_MESSAGE, PROVIDERS, missingKeyMessage, resolveApiKey, shouldMigrate, userSettingKey, validateApiKeyInput,
+} from "../src/apiKey";
 
 describe("resolveApiKey", () => {
   it("prefers SecretStorage, then the legacy setting, then the environment", () => {
@@ -50,5 +52,32 @@ describe("validateApiKeyInput", () => {
     expect(validateApiKeyInput("   ")).not.toBeNull();
     expect(validateApiKeyInput("AIza abc")).not.toBeNull();
     expect(validateApiKeyInput(" AIzaSyabc ")).toBeNull();
+  });
+});
+
+describe("providers", () => {
+  it("keeps Gemini and Grok keys in separate secret slots and env vars", () => {
+    expect(PROVIDERS.gemini.secretId).not.toBe(PROVIDERS.grok.secretId);
+    expect(PROVIDERS.gemini.envVar).toBe("GEMINI_API_KEY");
+    expect(PROVIDERS.grok.envVar).toBe("XAI_API_KEY");
+  });
+
+  it("names the provider, its command and env var in the missing-key message", () => {
+    expect(MISSING_KEY_MESSAGE).toBe(missingKeyMessage("gemini"));
+    expect(missingKeyMessage("gemini")).toMatch(/No Gemini API key.*Set Gemini API Key.*GEMINI_API_KEY/);
+    const grok = missingKeyMessage("grok");
+    expect(grok).toMatch(/No Grok \(xAI\) API key.*Set Grok \(xAI\) API Key.*console\.x\.ai.*XAI_API_KEY/);
+  });
+
+  it("points each provider at a command the manifest contributes", async () => {
+    const { readFileSync } = await import("node:fs");
+    const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as {
+      contributes: { commands: { command: string; title: string }[] };
+    };
+    for (const p of Object.values(PROVIDERS)) {
+      const cmd = pkg.contributes.commands.find((c) => c.command === p.setCommand);
+      expect(cmd, p.setCommand).toBeDefined();
+      expect(p.setTitle).toBe(`ModelVisio: ${cmd!.title}`);
+    }
   });
 });
