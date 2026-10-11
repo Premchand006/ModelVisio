@@ -2,16 +2,61 @@
   "name": "modelvisio-vscode",
   "displayName": "ModelVisio",
   "description": "Open neural-network model files (ONNX, TFLite, PyTorch, …) as an interactive graph + inspector + compiler pre-flight.",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "publisher": "modelvisio",
+  "license": "MIT",
   "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Premchand006/ModelVisio",
+    "directory": "apps/vscode"
+  },
+  "homepage": "https://github.com/Premchand006/ModelVisio/tree/main/apps/vscode#readme",
+  "bugs": {
+    "url": "https://github.com/Premchand006/ModelVisio/issues"
+  },
+  "keywords": [
+    "onnx",
+    "tflite",
+    "pytorch",
+    "safetensors",
+    "gguf",
+    "neural network",
+    "model viewer",
+    "netron",
+    "edge ai",
+    "tensorrt",
+    "quantization"
+  ],
+  "galleryBanner": {
+    "color": "#0b1020",
+    "theme": "dark"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },
-  "categories": ["Visualization", "Data Science", "Machine Learning"],
+  "categories": [
+    "Visualization",
+    "Data Science",
+    "Machine Learning"
+  ],
   "main": "./out/extension.js",
   "activationEvents": [],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "In untrusted workspaces, the Gemini API key, model, web-search and thinking options and the scrape allowlist are only read from user settings, never from the workspace.",
+      "restrictedConfigurations": [
+        "modelvisio.geminiApiKey",
+        "modelvisio.geminiModel",
+        "modelvisio.webSearch",
+        "modelvisio.thinking",
+        "modelvisio.scrapeAllowlist"
+      ]
+    },
+    "virtualWorkspaces": true
+  },
   "contributes": {
     "customEditors": [
       {
@@ -19,59 +64,193 @@
         "displayName": "ModelVisio",
         "selector": [
           { "filenamePattern": "*.onnx" },
+          { "filenamePattern": "*.ort" },
           { "filenamePattern": "*.tflite" },
+          { "filenamePattern": "*.lite" },
+          { "filenamePattern": "*.tfl" },
+          { "filenamePattern": "*.safetensors" },
+          { "filenamePattern": "*.gguf" },
+          { "filenamePattern": "*.ggml" },
+          { "filenamePattern": "*.npy" },
+          { "filenamePattern": "*.npz" },
           { "filenamePattern": "*.pt" },
           { "filenamePattern": "*.pth" },
+          { "filenamePattern": "*.ckpt" },
+          { "filenamePattern": "*.ptl" },
+          { "filenamePattern": "*.torchscript" },
+          { "filenamePattern": "*.pt2" },
+          { "filenamePattern": "*.pte" },
           { "filenamePattern": "*.mlmodel" },
-          { "filenamePattern": "*.mlpackage" },
-          { "filenamePattern": "*.gguf" },
-          { "filenamePattern": "*.safetensors" }
+          { "filenamePattern": "*.keras" },
+          { "filenamePattern": "*.caffemodel" },
+          { "filenamePattern": "*.pdmodel" },
+          { "filenamePattern": "*.pdparams" },
+          { "filenamePattern": "*.mnn" },
+          { "filenamePattern": "*.tnnmodel" },
+          { "filenamePattern": "*.tnnproto" },
+          { "filenamePattern": "*.rknn" },
+          { "filenamePattern": "*.uff" },
+          { "filenamePattern": "*.cntk" },
+          { "filenamePattern": "*.mge" },
+          { "filenamePattern": "*.nntxt" },
+          { "filenamePattern": "*.mlnet" },
+          { "filenamePattern": "*.bigdl" },
+          { "filenamePattern": "*.cbm" }
         ],
         "priority": "default"
+      },
+      {
+        "viewType": "modelvisio.modelViewerOption",
+        "displayName": "ModelVisio",
+        "selector": [
+          { "filenamePattern": "*.json" },
+          { "filenamePattern": "*.xml" },
+          { "filenamePattern": "*.bin" },
+          { "filenamePattern": "*.cfg" },
+          { "filenamePattern": "*.pb" },
+          { "filenamePattern": "*.pbtxt" },
+          { "filenamePattern": "*.meta" },
+          { "filenamePattern": "*.h5" },
+          { "filenamePattern": "*.hdf5" },
+          { "filenamePattern": "*.params" },
+          { "filenamePattern": "*.param" },
+          { "filenamePattern": "*.nb" },
+          { "filenamePattern": "*.weights" },
+          { "filenamePattern": "*.nn" },
+          { "filenamePattern": "*.plan" },
+          { "filenamePattern": "*.engine" },
+          { "filenamePattern": "*.trt" },
+          { "filenamePattern": "*.prototxt" },
+          { "filenamePattern": "*.pkl" },
+          { "filenamePattern": "*.pickle" },
+          { "filenamePattern": "*.joblib" },
+          { "filenamePattern": "*.mlir" },
+          { "filenamePattern": "*.dnn" },
+          { "filenamePattern": "*.om" },
+          { "filenamePattern": "*.tm" },
+          { "filenamePattern": "*.hn" },
+          { "filenamePattern": "*.har" }
+        ],
+        "priority": "option"
       }
     ],
+    "commands": [
+      {
+        "command": "modelvisio.openModel",
+        "title": "Open Model File…",
+        "category": "ModelVisio"
+      },
+      {
+        "command": "modelvisio.openWith",
+        "title": "Open with ModelVisio",
+        "category": "ModelVisio"
+      },
+      {
+        "command": "modelvisio.setApiKey",
+        "title": "Set Gemini API Key",
+        "category": "ModelVisio"
+      },
+      {
+        "command": "modelvisio.clearApiKey",
+        "title": "Clear Gemini API Key",
+        "category": "ModelVisio"
+      },
+      {
+        "command": "modelvisio.showLogs",
+        "title": "Show Logs",
+        "category": "ModelVisio"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "modelvisio.openWith",
+          "when": "!explorerResourceIsFolder",
+          "group": "navigation@90"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "modelvisio.openWith",
+          "when": "resourceScheme != untitled",
+          "group": "1_open@90"
+        }
+      ]
+    },
     "configuration": {
       "title": "ModelVisio",
       "properties": {
         "modelvisio.geminiApiKey": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Google Gemini API key for the AI copilot. Get a free key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey). Stored in your VS Code settings and used only by the extension host to call Google's API — never exposed to the webview."
+          "markdownDescription": "Legacy plain-text Gemini API key. Use the **ModelVisio: Set Gemini API Key** command instead, which keeps the key in VS Code's encrypted Secret Storage.",
+          "markdownDeprecationMessage": "Stored in plain text. Run **ModelVisio: Set Gemini API Key** to move the key into encrypted Secret Storage, then clear this setting.",
+          "deprecationMessage": "Stored in plain text. Run \"ModelVisio: Set Gemini API Key\" to move the key into encrypted Secret Storage, then clear this setting."
         },
         "modelvisio.geminiModel": {
           "type": "string",
           "default": "gemini-2.5-flash",
-          "enum": ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-2.0-flash-lite"],
+          "enum": [
+            "gemini-2.5-flash",
+            "gemini-2.5-flash-lite",
+            "gemini-2.0-flash",
+            "gemini-2.0-flash-lite"
+          ],
           "description": "Gemini model used by the AI copilot."
         },
         "modelvisio.webSearch": {
           "type": "boolean",
           "default": false,
           "description": "Enable Google Search grounding so the copilot can cite live links. Requires a paid-tier key — leave off for free keys."
+        },
+        "modelvisio.thinking": {
+          "type": "boolean",
+          "default": false,
+          "description": "Let gemini-2.5 models think before answering. Slower, sometimes better on hard questions. Ignored by other models."
+        },
+        "modelvisio.scrapeAllowlist": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "Host suffixes the copilot may read when you paste a URL (e.g. `docs.nvidia.com`, `github.com`). Empty = any public host. Private and loopback addresses are always refused."
+        },
+        "modelvisio.maxFileSizeMB": {
+          "type": "number",
+          "default": 2048,
+          "minimum": 1,
+          "description": "Largest model file (in MB) ModelVisio will load into the viewer. Very large files can exhaust the editor's memory."
         }
       }
     }
   },
   "scripts": {
     "build:webview": "vite build -c vite.webview.config.ts",
-    "build:ext": "tsc -p tsconfig.ext.json",
+    "build:ext": "node esbuild.mjs",
+    "watch:ext": "node esbuild.mjs --watch",
     "build": "pnpm build:webview && pnpm build:ext",
     "typecheck": "tsc -p tsconfig.ext.json --noEmit && tsc -p tsconfig.webview.json --noEmit",
-    "package": "pnpm build && vsce package --no-dependencies --allow-missing-repository -o modelvisio.vsix"
+    "test": "vitest run",
+    "package": "pnpm build && vsce package --no-dependencies -o modelvisio.vsix"
   },
   "dependencies": {
+    "@modelvisio/ai": "workspace:*",
     "@modelvisio/core": "workspace:*"
   },
   "devDependencies": {
+    "@modelvisio/parsers": "workspace:*",
     "@types/node": "^20.14.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@types/vscode": "^1.85.0",
     "@vitejs/plugin-react": "^4.3.4",
     "@vscode/vsce": "^3.2.1",
+    "esbuild": "^0.21.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "typescript": "^5.6.3",
-    "vite": "^5.4.11"
+    "vite": "^5.4.11",
+    "vitest": "^2.1.8"
   }
 }

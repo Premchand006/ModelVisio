@@ -1,95 +1,83 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
-import { App, type AppApi, type ThemeName } from "@modelvisio/core";
+import { App, setSaveHandler, type AppApi, type ThemeName } from "@modelvisio/core";
+import type { HostToWebview } from "../src/protocol";
+import { ErrorBanner } from "./ErrorBanner";
+import { installFetchBridge } from "./fetchBridge";
+import { createModelSink } from "./modelSink";
+import { createRpc } from "./rpc";
+import { createSaveHandler } from "./save";
+import { post } from "./vscodeApi";
+import { installWorkerShim, prefetchWorkerScripts, workerAssets } from "./workerShim";
 
-// Minimal VS Code WebView API surface we use.
-type VsCodeApi = { postMessage: (msg: unknown) => void };
-declare function acquireVsCodeApi(): VsCodeApi;
-const vscode = acquireVsCodeApi();
+// Platform glue only — all UI is core's App. Order matters: the fetch bridge,
+// save handler and Worker shim are installed before the App mounts so core
+// never sees the unpatched globals.
+const rpc = createRpc(post);
+const realFetch = installFetchBridge(window, rpc);
+setSaveHandler(createSaveHandler(rpc, post));
+window.addEventListener("message", (e: MessageEvent) => rpc.handle(e.data));
 
-// --- AI copilot bridge ----------------------------------------------------
-// The copilot POSTs to /api/chat, which doesn't exist inside a webview. We
-// intercept just that request and forward it to the extension host (which holds
-// the Gemini key from VS Code settings and makes the real API call). Everything
-// else uses the genuine fetch. This keeps core's Chat/sendChat unchanged.
-type ChatReply = { text?: string; sources?: { title: string; url: string }[]; error?: string };
-let chatSeq = 0;
-const chatPending = new Map<number, (r: ChatReply) => void>();
-const realFetch = window.fetch.bind(window);
-window.fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-  const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-  const method = (init?.method || (typeof input === "object" && "method" in input ? input.method : "GET") || "GET").toUpperCase();
-  if (url && /\/api\/chat$/.test(url) && method === "POST") {
-    let body: { system?: string; messages?: unknown[] } = {};
-    try { body = JSON.parse((init?.body as string) || "{}"); } catch { /* ignore */ }
-    const id = ++chatSeq;
-    return new Promise<ChatReply>((resolve) => {
-      chatPending.set(id, resolve);
-      vscode.postMessage({ type: "chat", id, system: body.system, messages: body.messages });
-    }).then((reply) => new Response(JSON.stringify(reply), {
-      status: reply.error ? 500 : 200,
-      headers: { "content-type": "application/json" },
-    }));
-  }
-  // The URL scraper isn't bridged to the extension host yet: answer with a clear
-  // message so the chat shows "Couldn't read <url>" and still replies.
-  if (url && /\/api\/scrape$/.test(url) && method === "POST") {
-    return Promise.resolve(new Response(JSON.stringify({ error: "Reading linked pages isn't available in the VS Code extension yet." }), {
-      status: 501,
-      headers: { "content-type": "application/json" },
-    }));
-  }
-  return realFetch(input, init);
-};
+const sink = createModelSink();
 
-function b64ToBuffer(b64: string): ArrayBuffer {
-  const bin = atob(b64);
-  const buf = new ArrayBuffer(bin.length);
-  const view = new Uint8Array(buf);
-  for (let i = 0; i < bin.length; i++) view[i] = bin.charCodeAt(i);
-  return buf;
-}
+// VS Code tags <body> with its theme kind; use it so the first paint matches.
+const initialTheme: ThemeName = /\bvscode-(high-contrast-)?light\b/.test(document.body.className) ? "light" : "dark";
 
 function Root() {
-  const [theme, setTheme] = useState<ThemeName>("dark");
-  const apiRef = useRef<AppApi | null>(null);
-  const pending = useRef<{ name: string; b64: string } | null>(null);
+  const [theme, setTheme] = useState<ThemeName>(initialTheme);
+  const [modelError, setModelError] = useState<{ name: string; error: string } | null>(null);
 
-  const open = (name: string, b64: string) =>
-    apiRef.current?.openFile(new File([b64ToBuffer(b64)], name));
+  const onReady = useCallback((a: AppApi) => sink.setApi(a), []);
 
-  const onReady = useCallback((a: AppApi) => {
-    apiRef.current = a;
-    if (pending.current) {
-      const { name, b64 } = pending.current;
-      pending.current = null;
-      a.openFile(new File([b64ToBuffer(b64)], name));
-    }
-  }, []);
+  // Native form controls / scrollbars follow the app theme.
+  useEffect(() => {
+    document.documentElement.style.colorScheme = theme;
+  }, [theme]);
 
   useEffect(() => {
     const onMessage = (e: MessageEvent) => {
-      const msg = e.data as { type?: string; name?: string; b64?: string; theme?: ThemeName; id?: number; text?: string; sources?: { title: string; url: string }[]; error?: string };
-      if (msg.type === "theme" && msg.theme) {
+      const msg = e.data as HostToWebview;
+      if (!msg || typeof msg !== "object") return;
+      if (msg.type === "theme") {
         setTheme(msg.theme);
-      } else if (msg.type === "model" && msg.name && msg.b64) {
-        // The model may arrive before the app calls onReady — buffer it.
-        if (apiRef.current) open(msg.name, msg.b64);
-        else pending.current = { name: msg.name, b64: msg.b64 };
-      } else if ((msg.type === "chatResult" || msg.type === "chatError") && msg.id != null) {
-        const resolve = chatPending.get(msg.id);
-        if (resolve) {
-          chatPending.delete(msg.id);
-          resolve(msg.type === "chatError" ? { error: msg.error } : { text: msg.text, sources: msg.sources });
-        }
+      } else if (msg.type === "model") {
+        setModelError(null);
+        sink.push(msg.name, msg.bytes);
+      } else if (msg.type === "modelError") {
+        setModelError({ name: msg.name, error: msg.error });
       }
     };
     window.addEventListener("message", onMessage);
-    vscode.postMessage({ type: "ready" });
+    post({ type: "ready" });
     return () => window.removeEventListener("message", onMessage);
   }, []);
 
-  return <App onReady={onReady} themeOverride={theme} initialTheme={theme} />;
+  return (
+    <>
+      <App onReady={onReady} themeOverride={theme} initialTheme={initialTheme} />
+      {modelError && (
+        <ErrorBanner
+          theme={theme}
+          title={`Couldn't open ${modelError.name}`}
+          message={modelError.error}
+          onDismiss={() => setModelError(null)}
+        />
+      )}
+    </>
+  );
 }
 
-ReactDOM.createRoot(document.getElementById("root")!).render(<Root />);
+function mount() {
+  ReactDOM.createRoot(document.getElementById("root")!).render(<Root />);
+}
+
+// Prefetch the parse worker before mounting so the shim can hand core a real,
+// synchronously-constructed Worker (see workerShim.ts). import.meta.url is
+// webview.js's URL — the same base core resolves its worker URL against. The
+// prefetch is a local resource read (~ms); it is time-boxed, and on any
+// failure we mount anyway and core parses on the main thread as before.
+const hrefs = workerAssets().map((p) => new URL(p, import.meta.url).href);
+prefetchWorkerScripts(hrefs, realFetch)
+  .then((scripts) => installWorkerShim(window, scripts))
+  .catch(() => {})
+  .finally(mount);

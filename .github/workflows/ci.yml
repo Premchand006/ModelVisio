@@ -1,6 +1,7 @@
 name: CI
 
-# Typecheck every workspace package and run the unit tests (parsers, core, ai).
+# Typecheck every workspace package and run the unit tests (parsers, core, ai,
+# vscode), build the web app, and package the VS Code extension.
 # Fast (~1 min) and needs no secrets, so it runs on every push and PR — including
 # PRs from forks.
 on:
@@ -33,3 +34,16 @@ jobs:
 
       - name: Build web app
         run: pnpm build
+
+      # Builds the host (esbuild) + webview (vite) and runs vsce package. Catches
+      # .vscodeignore / manifest mistakes that typecheck and tests can't see.
+      - name: Build + package VS Code extension
+        run: pnpm --filter modelvisio-vscode package
+
+      - name: Upload VS Code extension (.vsix)
+        uses: actions/upload-artifact@v4
+        with:
+          name: modelvisio-vsix
+          path: apps/vscode/modelvisio.vsix
+          if-no-files-found: error
+          retention-days: 14

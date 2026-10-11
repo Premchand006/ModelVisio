@@ -4,5 +4,5 @@
     "types": ["vite/client"],
     "noEmit": true
   },
-  "include": ["webview"]
+  "include": ["webview", "src/protocol.ts"]
 }

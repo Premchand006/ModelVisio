@@ -1,12 +1,13 @@
 {
+  // Open apps/vscode as the workspace folder, then press F5.
   "version": "0.2.0",
   "configurations": [
     {
       "name": "Run Extension",
       "type": "extensionHost",
       "request": "launch",
-      "args": ["--extensionDevelopmentPath=${workspaceFolder}/apps/vscode"],
-      "outFiles": ["${workspaceFolder}/apps/vscode/out/**/*.js"],
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+      "outFiles": ["${workspaceFolder}/out/**/*.js"],
       "preLaunchTask": "build-vscode-extension"
     }
   ]

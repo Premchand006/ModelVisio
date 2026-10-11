@@ -1,13 +1,6 @@
 // Export the graph SVG as a downloadable .svg or rasterized .png.
-
-function download(url: string, filename: string) {
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-}
+// Both go through downloadFile so shell save handlers (VS Code, Tauri) apply.
+import { downloadFile } from "../../utils/download";
 
 function serialize(svg: SVGSVGElement): string {
   const clone = svg.cloneNode(true) as SVGSVGElement;
@@ -16,10 +9,7 @@ function serialize(svg: SVGSVGElement): string {
 }
 
 export function exportSvg(svg: SVGSVGElement, name: string): void {
-  const blob = new Blob([serialize(svg)], { type: "image/svg+xml;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  download(url, `${name}.svg`);
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  downloadFile(serialize(svg), `${name}.svg`, "image/svg+xml;charset=utf-8");
 }
 
 export async function exportPng(svg: SVGSVGElement, name: string, bg: string, scale = 2): Promise<void> {
@@ -41,10 +31,7 @@ export async function exportPng(svg: SVGSVGElement, name: string, bg: string, sc
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-  canvas.toBlob((blob) => {
-    if (!blob) return;
-    const out = URL.createObjectURL(blob);
-    download(out, `${name}.png`);
-    setTimeout(() => URL.revokeObjectURL(out), 2000);
-  }, "image/png");
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+  if (!blob) return;
+  downloadFile(new Uint8Array(await blob.arrayBuffer()), `${name}.png`, "image/png");
 }

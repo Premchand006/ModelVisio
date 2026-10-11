@@ -20,6 +20,20 @@ describe("component render smoke (offline, no DOM)", () => {
     expect(html).toContain("Drop your model file");
   });
 
+  it("App landing hides the download buttons inside the VS Code WebView, keeps GitHub", () => {
+    const g = globalThis as { acquireVsCodeApi?: unknown };
+    expect(renderToStaticMarkup(h(App))).toContain("Download Desktop App");
+    g.acquireVsCodeApi = () => ({});
+    try {
+      const html = renderToStaticMarkup(h(App));
+      expect(html).not.toContain("Download Desktop App");
+      expect(html).not.toContain("VS Code Extension");
+      expect(html).toContain("GitHub");
+    } finally {
+      delete g.acquireVsCodeApi;
+    }
+  });
+
   it("CompilerChecker renders the working auto-fix engine for the demo model", () => {
     const html = renderToStaticMarkup(themed(h(CompilerChecker, { model: demoModel })));
     expect(html).toContain("Auto-Fix Engine");

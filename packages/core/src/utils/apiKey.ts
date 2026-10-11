@@ -15,6 +15,13 @@ export function isDesktop(): boolean {
   return typeof window !== "undefined" && "__TAURI__" in window;
 }
 
+/** True when running inside the VS Code extension's WebView. VS Code defines
+ *  the global `acquireVsCodeApi` before any page script runs (the extension
+ *  calls it lazily), so this works from first render. */
+export function isVsCodeWebview(): boolean {
+  return typeof (globalThis as { acquireVsCodeApi?: unknown }).acquireVsCodeApi === "function";
+}
+
 /** The user's stored Gemini key, or "" if none set. Never throws. */
 export function getUserApiKey(): string {
   try {
