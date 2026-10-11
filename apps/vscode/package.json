@@ -46,11 +46,14 @@
   "capabilities": {
     "untrustedWorkspaces": {
       "supported": "limited",
-      "description": "In untrusted workspaces, the Gemini API key, model, web-search and thinking options and the scrape allowlist are only read from user settings, never from the workspace.",
+      "description": "In untrusted workspaces, the AI provider, the Gemini API key, the Gemini and Grok models, the web-search and thinking options and the scrape allowlist are only read from user settings, never from the workspace.",
       "restrictedConfigurations": [
+        "modelvisio.provider",
         "modelvisio.geminiApiKey",
         "modelvisio.geminiModel",
+        "modelvisio.grokModel",
         "modelvisio.webSearch",
+        "modelvisio.freeWebSearch",
         "modelvisio.thinking",
         "modelvisio.scrapeAllowlist"
       ]
@@ -156,6 +159,21 @@
         "category": "ModelVisio"
       },
       {
+        "command": "modelvisio.setGrokApiKey",
+        "title": "Set Grok (xAI) API Key",
+        "category": "ModelVisio"
+      },
+      {
+        "command": "modelvisio.clearGrokApiKey",
+        "title": "Clear Grok (xAI) API Key",
+        "category": "ModelVisio"
+      },
+      {
+        "command": "modelvisio.selectProvider",
+        "title": "Select AI Provider (Gemini / Grok)",
+        "category": "ModelVisio"
+      },
+      {
         "command": "modelvisio.showLogs",
         "title": "Show Logs",
         "category": "ModelVisio"
@@ -180,6 +198,19 @@
     "configuration": {
       "title": "ModelVisio",
       "properties": {
+        "modelvisio.provider": {
+          "type": "string",
+          "default": "gemini",
+          "enum": [
+            "gemini",
+            "grok"
+          ],
+          "enumDescriptions": [
+            "Google Gemini. Key: ModelVisio: Set Gemini API Key (free at aistudio.google.com).",
+            "xAI Grok. Key: ModelVisio: Set Grok (xAI) API Key (console.x.ai)."
+          ],
+          "markdownDescription": "Which model answers in the AI copilot. Switch quickly with **ModelVisio: Select AI Provider**."
+        },
         "modelvisio.geminiApiKey": {
           "type": "string",
           "default": "",
@@ -198,15 +229,35 @@
           ],
           "description": "Gemini model used by the AI copilot."
         },
+        "modelvisio.grokModel": {
+          "type": "string",
+          "default": "grok-4.7",
+          "markdownDescription": "xAI Grok model used when `#modelvisio.provider#` is `grok`, e.g. `grok-4.7`."
+        },
         "modelvisio.webSearch": {
           "type": "boolean",
           "default": false,
-          "description": "Enable Google Search grounding so the copilot can cite live links. Requires a paid-tier key — leave off for free keys."
+          "markdownDescription": "Gemini only: enable Google Search grounding so the copilot can cite live links. Requires a paid-tier key — leave off for free keys; the free web search (`#modelvisio.freeWebSearch#`) covers live answers instead."
+        },
+        "modelvisio.freeWebSearch": {
+          "type": "string",
+          "default": "auto",
+          "enum": [
+            "auto",
+            "always",
+            "off"
+          ],
+          "enumDescriptions": [
+            "Search when the question asks for something live: docs, links, versions, releases, benchmarks, op support.",
+            "Search on every question (slower).",
+            "Never search."
+          ],
+          "markdownDescription": "Free, keyless web search for the copilot: searches DuckDuckGo, reads the top results through the same guarded reader as pasted URLs (honouring `#modelvisio.scrapeAllowlist#`), and cites them. Used with Grok, and with Gemini when `#modelvisio.webSearch#` is off."
         },
         "modelvisio.thinking": {
           "type": "boolean",
           "default": false,
-          "description": "Let gemini-2.5 models think before answering. Slower, sometimes better on hard questions. Ignored by other models."
+          "description": "Let the model think before answering (gemini-2.5 thinking, or Grok's default reasoning effort instead of low). Slower, sometimes better on hard questions."
         },
         "modelvisio.scrapeAllowlist": {
           "type": "array",

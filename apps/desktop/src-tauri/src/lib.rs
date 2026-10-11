@@ -41,31 +41,48 @@ struct ChatResponse {
     sources: Vec<Source>,
 }
 
-/// AI copilot proxy for the desktop app. Holds GEMINI_API_KEY on the Rust side
-/// (read from the environment that launched the app) so it never reaches the
-/// WebView, and calls the Gemini API — the desktop mirror of the web /api/chat
-/// serverless function. The frontend (apps/web/src/tauri.ts) routes its
-/// /api/chat POST here via `invoke("chat", ...)`.
+/// AI copilot proxy for the desktop app — the desktop mirror of the web
+/// /api/chat serverless function. The frontend (apps/web/src/tauri.ts) routes
+/// its /api/chat POST here via `invoke("chat", ...)`, naming the provider the
+/// user picked in the AI Copilot ("gemini" or "grok"; absent means Gemini, so
+/// older frontends keep working). Keys stay on the Rust side of each call and
+/// are never bundled with the app.
 #[tauri::command]
-async fn chat(api_key: String, system: String, messages: Vec<ChatMsg>) -> Result<ChatResponse, String> {
-    // Bring-your-own-key: the user's own Gemini key is entered in the app's AI
-    // settings, stored locally in the WebView, and passed in here per call. No
-    // key is bundled in the app. The environment is only a convenience fallback
-    // for local dev (a maintainer running with GEMINI_API_KEY set).
-    let key = {
-        let k = api_key.trim();
-        if !k.is_empty() {
-            k.to_string()
-        } else {
-            std::env::var("GEMINI_API_KEY")
-                .or_else(|_| std::env::var("GOOGLE_API_KEY"))
-                .map_err(|_| {
-                    "No Gemini API key set. Click the key icon in the AI Copilot and paste \
-                     your free key from https://aistudio.google.com/apikey."
-                        .to_string()
-                })?
-        }
-    };
+async fn chat(
+    provider: Option<String>,
+    api_key: String,
+    system: String,
+    messages: Vec<ChatMsg>,
+) -> Result<ChatResponse, String> {
+    match provider.as_deref() {
+        Some("grok") => grok_chat(&api_key, &system, &messages).await,
+        _ => gemini_chat(&api_key, &system, &messages).await,
+    }
+}
+
+/// Bring-your-own-key: the user's own key is entered in the app's AI settings,
+/// stored locally in the WebView, and passed in per call. The environment is
+/// only a convenience fallback for local dev (a maintainer running with the
+/// provider's key variable set).
+fn resolve_key(api_key: &str, env_vars: &[&str], missing: &str) -> Result<String, String> {
+    let k = api_key.trim();
+    if !k.is_empty() {
+        return Ok(k.to_string());
+    }
+    env_vars
+        .iter()
+        .find_map(|v| std::env::var(v).ok().filter(|s| !s.trim().is_empty()))
+        .ok_or_else(|| missing.to_string())
+}
+
+/// Google Gemini (generateContent), with Google Search grounding when enabled.
+async fn gemini_chat(api_key: &str, system: &str, messages: &[ChatMsg]) -> Result<ChatResponse, String> {
+    let key = resolve_key(
+        api_key,
+        &["GEMINI_API_KEY", "GOOGLE_API_KEY"],
+        "No Gemini API key set. Click the key icon in the AI Copilot and paste \
+         your free key from https://aistudio.google.com/apikey.",
+    )?;
     let model = std::env::var("MODELVISIO_MODEL").unwrap_or_else(|_| "gemini-2.5-flash".to_string());
     // Grounding ON unless MODELVISIO_WEB_SEARCH=off, matching the web/VS Code
     // shells; the call falls back to ungrounded if grounding is unavailable.
@@ -161,6 +178,108 @@ async fn chat(api_key: String, system: String, messages: Vec<ChatMsg>) -> Result
         });
     }
     Err(last_err)
+}
+
+/// xAI's OpenAI-compatible chat-completions endpoint. Keys: https://console.x.ai .
+const XAI_CHAT_URL: &str = "https://api.x.ai/v1/chat/completions";
+
+/// Models that accept `reasoning_effort`: the grok-4.x line and *-reasoning ids
+/// (mirrors `supportsReasoningEffort` in packages/ai/src/grok.ts).
+fn grok_supports_reasoning_effort(model: &str) -> bool {
+    let m = model.to_ascii_lowercase();
+    let grok_4x = m
+        .strip_prefix("grok-4.")
+        .is_some_and(|rest| rest.starts_with(|c: char| c.is_ascii_digit()));
+    grok_4x || (m.contains("reasoning") && !m.contains("non-reasoning"))
+}
+
+/// xAI answers errors as `{ code, error: "msg" }`; OpenAI-style
+/// `{ error: { message } }` is also seen.
+fn grok_error_text(data: &serde_json::Value) -> String {
+    data["error"]
+        .as_str()
+        .or_else(|| data["error"]["message"].as_str())
+        .map(str::to_string)
+        .unwrap_or_else(|| data.to_string())
+}
+
+/// xAI Grok — the desktop mirror of `runGrokChat` (packages/ai/src/grok.ts).
+/// Grok's chat-completions endpoint has no free built-in web search and returns
+/// no citations for plain calls, so `sources` is always empty here (the web
+/// shell's free crawler is not ported to desktop).
+async fn grok_chat(api_key: &str, system: &str, messages: &[ChatMsg]) -> Result<ChatResponse, String> {
+    let key = resolve_key(
+        api_key,
+        &["XAI_API_KEY"],
+        "No Grok (xAI) API key set. Click the key icon in the AI Copilot and paste \
+         your key from https://console.x.ai.",
+    )?;
+    let model = std::env::var("MODELVISIO_GROK_MODEL").unwrap_or_else(|_| "grok-4.7".to_string());
+
+    // OpenAI-style messages with the system prompt first.
+    let mut wire: Vec<serde_json::Value> = Vec::new();
+    if !system.is_empty() {
+        wire.push(serde_json::json!({ "role": "system", "content": system }));
+    }
+    wire.extend(messages.iter().filter(|m| !m.content.is_empty()).map(|m| {
+        serde_json::json!({
+            "role": if m.role == "assistant" { "assistant" } else { "user" },
+            "content": m.content,
+        })
+    }));
+
+    let mut payload = serde_json::json!({
+        "model": model,
+        "messages": wire,
+        "temperature": 0.4,
+        "stream": false,
+        "max_tokens": 4096,
+    });
+    // Low reasoning effort keeps answers fast on models that think by default.
+    if grok_supports_reasoning_effort(&model) {
+        payload["reasoning_effort"] = serde_json::json!("low");
+    }
+
+    let client = reqwest::Client::new();
+    loop {
+        let resp = client
+            .post(XAI_CHAT_URL)
+            .bearer_auth(&key)
+            .json(&payload)
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+        let status = resp.status().as_u16();
+        let data: serde_json::Value = resp.json().await.unwrap_or(serde_json::Value::Null);
+        if (200..300).contains(&status) {
+            let text = data["choices"][0]["message"]["content"].as_str().unwrap_or("");
+            return Ok(ChatResponse {
+                text: if text.is_empty() {
+                    "(empty response)".to_string()
+                } else {
+                    text.to_string()
+                },
+                sources: vec![],
+            });
+        }
+        let msg = grok_error_text(&data);
+        // A model that rejects reasoning_effort: drop it once and resend at once.
+        if status == 400 && msg.to_ascii_lowercase().contains("reasoning") {
+            if let Some(obj) = payload.as_object_mut() {
+                if obj.remove("reasoning_effort").is_some() {
+                    continue;
+                }
+            }
+        }
+        return Err(match status {
+            401 | 403 => format!(
+                "Grok API key rejected ({status}). Check your key at https://console.x.ai. Original: {msg}"
+            ),
+            404 => format!("Grok model \"{model}\" is not available to this key (404): {msg}"),
+            429 => format!("Grok rate limit (429) on \"{model}\": {msg}"),
+            _ => format!("Grok API error {status}: {msg}"),
+        });
+    }
 }
 
 /// Check the configured updater endpoint (the GitHub Release `latest.json`) and,

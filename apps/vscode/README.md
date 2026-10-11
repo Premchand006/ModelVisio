@@ -21,8 +21,9 @@ website and desktop app, running inside a VS Code custom editor.
   compute- vs memory-bound, and a memory-fit guard.
 - **Converter + deploy recipes** — Graph-JSON / Layers-CSV / Safetensors / NumPy exports and
   TensorRT / HailoRT / RKNN scripts. Every export opens a native **Save** dialog.
-- **AI copilot** (optional, bring your own free Gemini key) — grounded in the model's computed
-  analysis; paste a URL and it reads the page.
+- **AI copilot** (optional, bring your own Gemini or xAI Grok key) — grounded in the model's
+  computed analysis; paste a URL and it reads the page, and a free, keyless web search cites live
+  sources when you ask about docs, versions, benchmarks or op support.
 - **Live reload** — the view re-parses when the file changes on disk (e.g. re-exported from a
   training script).
 - **Follows your theme** — light / dark switches with the VS Code color theme.
@@ -53,6 +54,9 @@ progress. Folder bundles (`.mlpackage`, `.mlmodelc`) can't be opened by a custom
 | **ModelVisio: Open with ModelVisio** | Command Palette, Explorer and editor-tab context menus | Open the selected file(s), or the active tab, in ModelVisio |
 | **ModelVisio: Set Gemini API Key** | Command Palette | Store your key in VS Code's encrypted Secret Storage |
 | **ModelVisio: Clear Gemini API Key** | Command Palette | Remove the stored key |
+| **ModelVisio: Set Grok (xAI) API Key** | Command Palette | Store your xAI key in Secret Storage |
+| **ModelVisio: Clear Grok (xAI) API Key** | Command Palette | Remove the stored xAI key |
+| **ModelVisio: Select AI Provider (Gemini / Grok)** | Command Palette | Switch the copilot's provider (user setting); offers to add a key if the choice has none |
 | **ModelVisio: Show Logs** | Command Palette | Open the **ModelVisio** output channel |
 
 ## Settings
@@ -60,20 +64,27 @@ progress. Folder bundles (`.mlpackage`, `.mlmodelc`) can't be opened by a custom
 | Setting | Default | Description |
 | --- | --- | --- |
 | `modelvisio.maxFileSizeMB` | `2048` | Largest file the viewer will load. Bigger files show an error with a link to this setting. |
+| `modelvisio.provider` | `gemini` | Which model answers in the copilot: `gemini` or `grok`. |
 | `modelvisio.geminiModel` | `gemini-2.5-flash` | Gemini model used by the copilot (`gemini-2.5-flash`, `gemini-2.5-flash-lite`, `gemini-2.0-flash`, `gemini-2.0-flash-lite`). A value that isn't a plain model id (letters, digits, `.`, `-`) falls back to `gemini-2.5-flash`. |
-| `modelvisio.webSearch` | `false` | Google Search grounding, so answers cite live links. Needs a paid-tier key. |
-| `modelvisio.thinking` | `false` | Let `gemini-2.5` models think before answering (slower, sometimes better). |
-| `modelvisio.scrapeAllowlist` | `[]` | Host suffixes the copilot may read when you paste a URL (e.g. `docs.nvidia.com`). Empty = any public host. |
-| `modelvisio.geminiApiKey` | `""` | **Deprecated** plain-text key. Use **Set Gemini API Key** instead. |
+| `modelvisio.grokModel` | `grok-4.7` | xAI Grok model used when the provider is `grok`. Same plain-id rule; anything else falls back to `grok-4.7`. |
+| `modelvisio.webSearch` | `false` | Gemini only: Google Search grounding, so answers cite live links. Needs a paid-tier key; with it off, the free web search below covers live answers. |
+| `modelvisio.freeWebSearch` | `auto` | Free, keyless web search (DuckDuckGo): reads the top results through the same guarded reader as pasted URLs and cites them. `auto` searches only when the question asks for something live (docs, links, versions, releases, benchmarks, op support); `always` every question; `off` never. Used with Grok, and with Gemini when `webSearch` is off. |
+| `modelvisio.thinking` | `false` | Let the model think before answering — `gemini-2.5` thinking, or Grok at its default reasoning effort instead of low (slower, sometimes better). |
+| `modelvisio.scrapeAllowlist` | `[]` | Host suffixes the copilot may read — pasted URLs and free web search results (e.g. `docs.nvidia.com`). Empty = any public host. |
+| `modelvisio.geminiApiKey` | `""` | **Deprecated** plain-text Gemini key. Use **Set Gemini API Key** instead. (Grok has no plain-text setting.) |
 
 ## AI copilot setup
 
-1. Get a free key at <https://aistudio.google.com/apikey>.
-2. Run **ModelVisio: Set Gemini API Key** and paste it. It is stored in VS Code's Secret
-   Storage (the OS keychain), not in `settings.json`.
-3. Open a model and switch to the **AI** tab.
+1. Get a free Gemini key at <https://aistudio.google.com/apikey>, or an xAI Grok key at
+   <https://console.x.ai>.
+2. Run **ModelVisio: Set Gemini API Key** (or **Set Grok (xAI) API Key**) and paste it. It is
+   stored in VS Code's Secret Storage (the OS keychain), not in `settings.json`.
+3. For Grok, run **ModelVisio: Select AI Provider** and pick **Grok (xAI)** (or set
+   `modelvisio.provider` to `grok`).
+4. Open a model and switch to the **AI** tab.
 
-The key is looked up in this order: Secret Storage → the legacy `modelvisio.geminiApiKey`
+The Grok key is looked up in Secret Storage, then the `XAI_API_KEY` environment variable of the
+process that launched VS Code. The Gemini key is looked up in this order: Secret Storage → the legacy `modelvisio.geminiApiKey`
 setting in your *user* settings → the `GEMINI_API_KEY` environment variable of the process that
 launched VS Code. A `modelvisio.geminiApiKey` in a workspace or folder `.vscode/settings.json` is
 never used, so a shared repository can't make you call Gemini with its key. A key found in your
@@ -84,22 +95,28 @@ key you kept in user settings still applies until you remove it; the command tel
 ## Privacy
 
 - Model files are read and parsed **locally**. Nothing is uploaded to open or analyze a model.
-- The Gemini key stays in the extension host. The view never sees it; the host calls the Gemini
-  API directly.
-- The copilot sends a request only when you send a chat message. That request goes to Google's
-  Gemini API and contains your messages and a summary of the model's computed analysis (layer
-  stats, hardware scores, compiler issues), not the model file. The usage beacon the website
+- API keys stay in the extension host. The view never sees them; the host calls the Gemini or
+  xAI API directly.
+- The copilot sends a request only when you send a chat message. That request goes to the
+  provider you picked (Google's Gemini API or xAI's Grok API) and contains your messages and a
+  summary of the model's computed analysis (layer stats, hardware scores, compiler issues), not
+  the model file.
+- With `modelvisio.freeWebSearch` on (`auto` by default), a question that asks for something
+  live also sends a search query — your latest message, with URLs removed — to DuckDuckGo, and
+  the host reads the top results like pasted URLs. Set it to `off` to never search. The usage beacon the website
   logs on each upload (model name, format, size) is answered inside the extension and never
   sent anywhere.
-- Pasted URLs are fetched by the extension host. Private, loopback and cloud-metadata addresses
-  are always refused, including hostnames that resolve to them and redirects to them.
-  `modelvisio.scrapeAllowlist` narrows reading to the hosts you list.
+- Pasted URLs and search results are fetched by the extension host. Private, loopback and
+  cloud-metadata addresses are always refused, including hostnames that resolve to them and
+  redirects to them. `modelvisio.scrapeAllowlist` narrows reading to the hosts you list. Page
+  text is passed to the model as untrusted data, never as instructions.
 - The view loads its fonts from Google Fonts.
-- **Untrusted workspaces:** the extension runs in Restricted Mode, but `modelvisio.geminiApiKey`,
-  `modelvisio.geminiModel`, `modelvisio.webSearch`, `modelvisio.thinking` and
+- **Untrusted workspaces:** the extension runs in Restricted Mode, but `modelvisio.provider`,
+  `modelvisio.geminiApiKey`, `modelvisio.geminiModel`, `modelvisio.grokModel`,
+  `modelvisio.webSearch`, `modelvisio.freeWebSearch`, `modelvisio.thinking` and
   `modelvisio.scrapeAllowlist` are read only from your user settings, never from the
-  workspace's `.vscode/settings.json` — a repository can't switch your key to a pricier model
-  or turn on billed features. (The API key setting is ignored at workspace level even in
+  workspace's `.vscode/settings.json` — a repository can't switch your key to another provider
+  or a pricier model, or turn on billed features or web search. (The API key setting is ignored at workspace level even in
   trusted workspaces.)
 
 ## Troubleshooting
@@ -107,7 +124,12 @@ key you kept in user settings still applies until you remove it; the command tel
 - **Nothing happens / blank view:** run **ModelVisio: Show Logs** and check the output.
 - **"over the … MB limit":** raise `modelvisio.maxFileSizeMB`. Very large models can use a lot of
   memory.
-- **"No Gemini API key configured":** run **ModelVisio: Set Gemini API Key**.
+- **"No Gemini API key configured"** / **"No Grok (xAI) API key configured":** run **ModelVisio:
+  Set Gemini API Key** / **Set Grok (xAI) API Key**, or **Select AI Provider** to switch to the
+  provider you have a key for.
+- **Answers say live results were unavailable:** the free web search failed (often DuckDuckGo
+  rate-limiting); the reason is in **Show Logs**. The copilot still answers from the model's
+  own knowledge.
 - Report issues at <https://github.com/Premchand006/ModelVisio/issues>.
 
 ---
@@ -129,6 +151,8 @@ ModelEditorProvider ── model bytes ──────────▶ modelSi
   theme on open / on change ── theme ────────▶ themeOverride
 bridge.ts ◀── chat / scrape / save / notify ── fetchBridge (/api/chat, /api/scrape)
   runChatProxy (@modelvisio/ai/proxy)          save.ts (core setSaveHandler)
+   or runGrokChat (@modelvisio/ai/grok)
+   in chatWithWebResearch (@modelvisio/ai/search)
   scrapeUrl    (@modelvisio/ai/scrape)
   showSaveDialog + workspace.fs.writeFile
 ```
@@ -143,16 +167,19 @@ bridge.ts ◀── chat / scrape / save / notify ── fetchBridge (/api/chat,
   watches the file to re-send it after changes (debounced).
 - `protocol.ts` — the typed message contract in both directions; `messages.ts` validates every
   incoming message and drops anything malformed.
-- `bridge.ts` — handles `chat` (shared `runChatProxy`; empty usage beacons are rejected, never
-  billed), `scrape` (shared SSRF-guarded `scrapeUrl` + `modelvisio.scrapeAllowlist`), `save`
-  (native Save dialog) and `notify`.
-- `secrets.ts` / `apiKey.ts` — Secret Storage key store, lookup order, legacy-setting migration.
+- `bridge.ts` — handles `chat` (dispatches to the shared `runChatProxy` for Gemini or
+  `runGrokChat` for Grok per `modelvisio.provider`, wrapped in `chatWithWebResearch` when the
+  free web search applies — Grok, or Gemini with `webSearch` off; empty usage beacons are
+  rejected, never billed), `scrape` (shared SSRF-guarded `scrapeUrl` +
+  `modelvisio.scrapeAllowlist`), `save` (native Save dialog) and `notify`.
+- `secrets.ts` / `apiKey.ts` — one Secret Storage key store per provider (`modelvisio.geminiApiKey`,
+  `modelvisio.grokApiKey`), lookup order, legacy Gemini-setting migration, the provider picker.
 - `html.ts` — webview HTML and CSP. Scripts load only with a per-render nonce. `'unsafe-eval'` is
   allowed because protobufjs (ONNX) compiles decoders with `Function()`; it does not let
   injected `<script>` tags run.
 - `formats.ts` — extension lists for both editors (tests keep them in sync with `package.json`
-  and the parser registry). `files.ts`, `config.ts` / `geminiModel.ts`, `log.ts` — helpers,
-  settings, output channel.
+  and the parser registry). `files.ts`, `config.ts` / `geminiModel.ts` (Gemini and Grok model-id
+  sanitizing), `log.ts` — helpers, settings, output channel.
 
 #### Webview (`webview/`)
 

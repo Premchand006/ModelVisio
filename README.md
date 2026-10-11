@@ -17,7 +17,7 @@
   <img src="https://img.shields.io/badge/Vite_5-646CFF?logo=vite&logoColor=white" alt="Vite 5" />
   <img src="https://img.shields.io/badge/Tauri_2-FFC131?logo=tauri&logoColor=black" alt="Tauri 2" />
   <img src="https://img.shields.io/badge/pnpm-workspaces-F69220?logo=pnpm&logoColor=white" alt="pnpm workspaces" />
-  <img src="https://img.shields.io/badge/tests-113_passing-34D399" alt="113 tests passing" />
+  <img src="https://img.shields.io/badge/tests-Vitest-34D399" alt="Tested with Vitest" />
 </p>
 
 ---
@@ -56,7 +56,7 @@ guesswork into an analysis. Drop in a model and it gives you, in the browser:
 | 📊 **Hardware-fit scoring** | Roofline model across **21 edge accelerators**: estimated FPS, FPS/W, compute- vs memory-bound regime, a **memory-fit hard-fail guard**, and op-support coverage — with calibrated/estimated confidence |
 | 🔄 **Converter** | In-browser Graph-JSON / Layers-CSV / Safetensors / NumPy exports + runnable conversion kits |
 | 🚀 **Deploy recipes** | One-click TensorRT / HailoRT / RKNN deployment scripts |
-| 🤖 **AI copilot** | Google Gemini, fed your model's computed analysis, with Google-Search-grounded citations — key never touches the browser |
+| 🤖 **AI copilot** | Google Gemini or xAI Grok, fed your model's computed analysis, with cited live sources (Google Search grounding or a free, keyless web search) — key never touches the browser |
 
 ## Architecture
 
@@ -65,7 +65,7 @@ flowchart TB
   subgraph ENGINE["packages/ — the shared engine"]
     parsers["parsers<br/>model files → normalized graph<br/>(pure TS, no React)"]
     core["core<br/>ALL UI: graph · inspector · compiler ·<br/>scoring · converter · chat"]
-    ai["ai<br/>Gemini prompt templates + client"]
+    ai["ai<br/>prompt templates + client ·<br/>Gemini / Grok proxies · web search"]
   end
   subgraph SHELLS["apps/ — three thin shells"]
     web["web<br/>Vite + React → Vercel / Netlify"]
@@ -131,17 +131,38 @@ layers, compiler issues) so answers are specific and to-the-point.
 
 ```mermaid
 flowchart LR
-  chat["Chat UI · POST /api/chat<br/>(model analysis injected)"] --> PROXY{"Per-shell proxy<br/>holds GEMINI_API_KEY"}
+  chat["Chat UI · POST /api/chat<br/>(model analysis injected)"] --> PROXY{"Per-shell proxy<br/>holds the provider key<br/>GEMINI_API_KEY or XAI_API_KEY"}
   PROXY -->|web prod| V["Vercel / Netlify function"]
   PROXY -->|web dev| MW["Vite dev middleware"]
   PROXY -->|VS Code| EH["Extension host"]
   PROXY -->|desktop| RS["Tauri Rust command"]
-  V --> GEM["Gemini API + Google Search grounding"]
-  MW --> GEM
-  EH --> GEM
-  RS --> GEM
+  V & MW & EH --> WS["Free web search, when the turn needs live facts<br/>DuckDuckGo / SearXNG → read top 3 results<br/>via the SSRF-guarded scraper"]
+  WS --> PICK{"Provider"}
+  RS --> PICK
+  PICK -->|gemini| GEM["Gemini API<br/>(+ Google Search grounding)"]
+  PICK -->|grok| GROK["xAI Grok API"]
   GEM --> OUT["text + cited sources"]
+  GROK --> OUT
 ```
+
+**Gemini or Grok.** Each proxy talks to Google **Gemini** (default; free key at
+<https://aistudio.google.com/apikey>) or xAI **Grok** (key at <https://console.x.ai>, default model
+`grok-4.7`). Web proxies pick from `MODELVISIO_PROVIDER` (`gemini` | `grok`; unset → Gemini if a
+Gemini key is set, else Grok if `XAI_API_KEY` is). VS Code uses the `modelvisio.provider` setting /
+**ModelVisio: Select AI Provider**; the desktop app has a Gemini/Grok toggle in the copilot key panel.
+The chat request, UI, and time-budget behavior are the same for both.
+
+**Free web search.** For live facts (docs, links, versions, releases, benchmarks, op support,
+comparisons…) the proxy searches the web **without an API key** — DuckDuckGo's no-JS HTML endpoint,
+or your own SearXNG instance via `MODELVISIO_SEARXNG_URL` — reads the top 3 results through the same
+guarded scraper as pasted URLs, and injects them as fenced, untrusted text the model cites as
+`[Web n]`; they come back as the answer's sources. It runs for Grok, and for Gemini when Google Search
+grounding (`MODELVISIO_WEB_SEARCH`) is off. `MODELVISIO_FREE_SEARCH=auto|always|off` — `auto` (the
+default on Vercel and in `pnpm dev`) searches only when the question asks for something live; Netlify
+defaults to `off` (10s free-tier limit). Research is capped at ~9s / 40% of the turn's budget, and if
+the search fails (e.g. DuckDuckGo rate-limits a data-centre IP — use SearXNG there) the copilot still
+answers and says live results were unavailable. Web and VS Code only (VS Code: DuckDuckGo, set by
+`modelvisio.freeWebSearch`); not on desktop yet.
 
 **Paste a URL and the copilot reads it.** Links in a chat message (vendor op-support pages, spec
 sheets, GitHub issues, changelogs) are fetched by the server-side `/api/scrape` proxy, reduced to
@@ -164,12 +185,17 @@ Click **Load Demo · YOLO26n** to explore without a file, or drop in your own mo
 
 ### Enable the AI copilot (free)
 
-1. Get a **free** Gemini key at <https://aistudio.google.com/apikey> (no billing required).
+1. Get a **free** Gemini key at <https://aistudio.google.com/apikey> (no billing required) — or an
+   xAI Grok key at <https://console.x.ai>.
 2. Copy `.env.example` → `.env` at the repo root and set it:
    ```bash
    GEMINI_API_KEY=your-key-here
+   # or, for Grok:
+   # MODELVISIO_PROVIDER=grok
+   # XAI_API_KEY=your-xai-key-here
    ```
-3. Restart `pnpm dev` and open the **AI** tab. (Optional: `MODELVISIO_MODEL`, `MODELVISIO_WEB_SEARCH`.)
+3. Restart `pnpm dev` and open the **AI** tab. (Optional: `MODELVISIO_MODEL`, `MODELVISIO_GROK_MODEL`,
+   `MODELVISIO_WEB_SEARCH`, `MODELVISIO_FREE_SEARCH`, `MODELVISIO_SEARXNG_URL` — see `.env.example`.)
 
 The key stays server-side — see [Security](#security).
 
@@ -177,7 +203,7 @@ The key stays server-side — see [Security](#security).
 
 | Shell | Develop | Build / ship |
 |---|---|---|
-| **Web** | `pnpm dev` | `pnpm --filter @modelvisio/web build` → deploy to **Vercel** (Root Directory `apps/web`, set `GEMINI_API_KEY`) or **Netlify** (`netlify.toml` included) |
+| **Web** | `pnpm dev` | `pnpm --filter @modelvisio/web build` → deploy to **Vercel** (Root Directory `apps/web`, set `GEMINI_API_KEY` or `XAI_API_KEY` + `MODELVISIO_PROVIDER=grok`) or **Netlify** (`netlify.toml` included) |
 | **Desktop** (Tauri 2) | `pnpm --filter @modelvisio/desktop dev` | `pnpm --filter @modelvisio/desktop build` — requires the [Rust toolchain](https://rustup.rs); push a `desktop-v*` tag to build installers via GitHub Actions |
 | **VS Code** | open `apps/vscode` as the workspace folder, press **F5** | `pnpm package:vscode` → `apps/vscode/modelvisio.vsix`; push a `vscode-v*` tag to attach it to a GitHub Release (and publish to the Marketplace when `VSCE_PAT` is set) |
 
@@ -188,7 +214,8 @@ Opens model files in a custom editor running the same core app. Unambiguous mode
 (`.json`, `.bin`, `.xml`, `.pb`, `.h5`, …) stay with their usual editor and are offered via
 right-click → **Open with ModelVisio**. Parsing runs in a Web Worker, the view live-reloads when the
 file changes, and exports open a native Save dialog. For the AI copilot, run **ModelVisio: Set Gemini
-API Key**. The key goes into VS Code's encrypted Secret Storage and never reaches the WebView.
+API Key** (or **Set Grok (xAI) API Key**, then **Select AI Provider**). Keys go into VS Code's
+encrypted Secret Storage and never reach the WebView.
 
 ```bash
 pnpm build:vscode                         # out/extension.js (esbuild) + media/ (vite)
@@ -213,7 +240,7 @@ ONNX is the priority target and is built end-to-end (`onnxruntime-web` + `protob
 ## Testing
 
 ```bash
-pnpm -r --if-present test     # 113 tests (parsers + core scoring/transforms/render + ai scrape/client)
+pnpm -r --if-present test     # every suite (parsers + core scoring/transforms/render + ai providers/search/scrape/client)
 pnpm -r typecheck             # all packages
 ```
 
@@ -226,7 +253,7 @@ component render paths all have coverage.
 packages/
   core/      React component library — the product (graph, inspector, scoring, converter, chat, fixes)
   parsers/   real model-format parsing → normalized Model (pure TS)
-  ai/        Gemini prompt templates + client + server proxy
+  ai/        prompt templates + client; server-only Gemini/Grok proxies, free web search, URL scraper
 apps/
   web/       Vite + React; serverless /api/chat proxy; deploys to Vercel/Netlify
   desktop/   Tauri 2 native shell (Rust glue: native menu, file dialog, AI command)
@@ -235,8 +262,12 @@ apps/
 
 ## Security
 
-- **The Gemini API key is never shipped to the client.** It lives only in the server-side proxy for
-  each shell (serverless function / Vite dev middleware / VS Code extension host / Tauri Rust).
+- **The AI provider key (Gemini or xAI Grok) is never shipped to the client.** It lives only in the
+  server-side proxy for each shell (serverless function / Vite dev middleware / VS Code extension
+  host / Tauri Rust).
+- **Crawled text is untrusted.** Pasted URLs and free-web-search result pages are read through the
+  SSRF-guarded scraper (no private/loopback/metadata hosts, size/time caps, optional allowlist) and
+  fenced in the prompt as data the model must not take instructions from.
 - Models are parsed **locally in a Web Worker** — your files are not uploaded anywhere.
 
 ## Roadmap
@@ -249,7 +280,7 @@ apps/
 ## Tech stack
 
 **TypeScript** everywhere · **React 18** · **Vite 5** · **Tailwind** + a shared theme context ·
-**pnpm** workspaces · **Tauri 2** (Rust) · **Google Gemini** API · **dagre** graph layout ·
+**pnpm** workspaces · **Tauri 2** (Rust) · **Google Gemini** / **xAI Grok** APIs · **dagre** graph layout ·
 **Vitest** · `onnxruntime-web` + `protobufjs`.
 
 ## Contributing
@@ -270,6 +301,7 @@ logic in `packages/`, and the web, desktop, and VS Code apps pick it up automati
 | 🧩 Add a **model-format parser** | `packages/parsers` — see [Add-ons](#add-ons--extending-modelvisio) |
 | 🖥️ Add an **edge accelerator** to hardware scoring | `packages/core/src/data/hardware.ts` |
 | 🛠️ Add a **compiler auto-fix** | `packages/core/src/fixes/transforms.ts` |
+| 🤖 Add an **AI provider** | `packages/ai` — see [Add-ons](#add-ons--extending-modelvisio) |
 | 🎨 Improve UI / a component | `packages/core/src/components` |
 | 📖 Improve docs | this README / `apps/*/README.md` |
 | 💬 Ask a question / share an idea | [Discussions](https://github.com/Premchand006/ModelVisio/discussions) |
@@ -290,7 +322,7 @@ Then `pnpm dev`, click **Load Demo · YOLO26n**, and poke around.
 
 ### Add-ons — extending ModelVisio
 
-The engine is built to grow along three axes; each is a self-contained, pure-TS addition with a test.
+The engine is built to grow along four axes; each is a self-contained, pure-TS addition with a test.
 
 - **New format parser** (`packages/parsers`) — the highest-impact contribution. A parser takes raw
   file bytes and emits the normalized `Model` shape (`{ layers, edges, stats… }`) that the whole app
@@ -305,6 +337,19 @@ The engine is built to grow along three axes; each is a self-contained, pure-TS 
   such; an honest estimate is fine too — just mark it.
 - **New auto-fix** (`transforms.ts`) — a pure, **reversible** graph transform plus its applicability
   check, so the compiler pre-flight can offer and undo it live.
+- **New AI provider** (`packages/ai`) — follow `src/grok.ts`: a standalone, server-only module (not
+  re-exported from `index.ts`, so its key never enters the browser bundle) that takes the
+  Anthropic-style `{ system, messages }` and returns `{ text, sources }`.
+  1. Honor the time-budget contract: abort at `timeBudgetMs` with `Error("TIMEOUT")`, and only wait
+     out a 429/5xx retry if it still fits the budget.
+  2. No runtime relative imports — `apps/web/vite.config.ts` loads these files with Node's
+     type-stripping, so use erasable TS syntax and `import type` for sibling modules.
+  3. Add a `package.json` export, then register the provider + its key/model env vars in
+     `src/providers.ts`.
+  4. Wire it into the proxies (`apps/web/api/chat.ts`, `netlify/functions/chat.ts`, the dev
+     middleware in `vite.config.ts`), the VS Code bridge (`apps/vscode/src/bridge.ts` + a key slot
+     in `apiKey.ts`), and the desktop Rust `chat` command.
+  5. **Ship a test with a mocked `fetch`** (`packages/ai/test`) — no real network calls or keys.
 
 ### Reporting issues
 

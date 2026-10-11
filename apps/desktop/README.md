@@ -101,12 +101,20 @@ the old key can no longer auto-update; users must reinstall once.
 
 The copilot is wired through Tauri's Rust side. The frontend's `/api/chat` POST
 is intercepted (`apps/web/src/tauri.ts` → `installTauriChatProxy`) and forwarded
-to the `chat` command in `src-tauri/src/lib.rs`, which calls the Gemini API.
+to the `chat` command in `src-tauri/src/lib.rs`, which calls the Gemini API or
+xAI's Grok API.
 
-Bring-your-own-key: click the key icon in the AI Copilot and paste a free key
-from <https://aistudio.google.com/apikey>. It is stored only on this device and
-no key ships in the app. For local dev, `GEMINI_API_KEY` in the launching
-environment is used as a fallback. Optional: `MODELVISIO_MODEL`
-(default `gemini-2.5-flash`), `MODELVISIO_WEB_SEARCH` (Google Search grounding is
-on by default; set to `off` to disable — the call degrades to ungrounded if
-grounding isn't available on your key).
+Bring-your-own-key: click the key icon in the AI Copilot, choose **Gemini** or
+**Grok**, and paste a key — a free Gemini key from
+<https://aistudio.google.com/apikey>, or an xAI key from <https://console.x.ai>.
+It is stored only on this device and no key ships in the app. For local dev,
+`GEMINI_API_KEY` / `XAI_API_KEY` in the launching environment are used as
+fallbacks. Optional: `MODELVISIO_MODEL` (Gemini, default `gemini-2.5-flash`),
+`MODELVISIO_GROK_MODEL` (Grok, default `grok-4.7`), `MODELVISIO_WEB_SEARCH`
+(Gemini's Google Search grounding is on by default; set to `off` to disable —
+the call degrades to ungrounded if grounding isn't available on your key).
+
+Not on desktop yet: the free, keyless web search and pasted-URL reading (both
+need the TypeScript scraper, which has no Rust port). A pasted URL gets a "not
+available yet" note and the copilot still answers; with Grok (or Gemini with
+grounding off) answers come from the model alone, without live sources.
