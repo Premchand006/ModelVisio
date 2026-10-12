@@ -6,6 +6,7 @@ follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+<<<<<<< HEAD
 ### Changed
 
 - Weight files next to a model (OpenVINO `.bin`, ncnn `.bin`, Paddle `.pdiparams`, TF.js shards,
@@ -15,6 +16,30 @@ follow [Semantic Versioning](https://semver.org/).
   on first use and verifies its SHA-256.
 - Compiler pre-flight reports rule-based findings for real models, not only the demo.
 - ONNX FLOPs no longer collapse when a model has no intermediate `value_info`.
+=======
+### Added
+
+- xAI **Grok** as a second AI copilot provider next to Gemini, through the shared
+  `@modelvisio/ai/grok` client (OpenAI-compatible chat completions, low reasoning effort unless
+  `modelvisio.thinking` is on).
+- Settings: `modelvisio.provider` (`gemini` | `grok`, default `gemini`) and
+  `modelvisio.grokModel` (default `grok-4.7`; only plain model ids, anything else falls back to
+  the default).
+- Commands: **Set Grok (xAI) API Key**, **Clear Grok (xAI) API Key**, **Select AI Provider
+  (Gemini / Grok)**. The Grok key is kept in Secret Storage (`modelvisio.grokApiKey`), with the
+  `XAI_API_KEY` environment variable as fallback.
+- Free, keyless web search for the copilot (`modelvisio.freeWebSearch`: `auto` | `always` |
+  `off`, default `auto`): searches DuckDuckGo, reads the top results through the SSRF-guarded
+  scraper (honoring `modelvisio.scrapeAllowlist`) and cites them. Runs with Grok, and with Gemini
+  when `modelvisio.webSearch` is off. A failed search never fails the chat.
+
+### Changed
+
+- `modelvisio.thinking` now also applies to Grok (default reasoning effort instead of low).
+- `modelvisio.webSearch` is documented as Gemini only.
+- Untrusted workspaces: `modelvisio.provider`, `modelvisio.grokModel` and
+  `modelvisio.freeWebSearch` are also read only from user settings.
+>>>>>>> origin/main
 
 ## [0.1.0]
 
@@ -64,4 +89,5 @@ First Marketplace release.
   still requires the nonce.
 - The packaged extension no longer depends on `node_modules`: the host is bundled with esbuild.
 
+[Unreleased]: https://github.com/Premchand006/ModelVisio/compare/vscode-v0.1.0...HEAD
 [0.1.0]: https://github.com/Premchand006/ModelVisio/releases/tag/vscode-v0.1.0
