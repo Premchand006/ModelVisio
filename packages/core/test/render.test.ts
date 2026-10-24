@@ -18,7 +18,9 @@ const themed = (node: ReactElement) => h(ThemeCtx.Provider, { value: TH.dark }, 
 describe("component render smoke (offline, no DOM)", () => {
   it("App renders the landing screen without throwing", () => {
     const html = renderToStaticMarkup(h(App));
-    expect(html).toContain("Drop your model file");
+    expect(html).toContain("Drop a model file here");
+    expect(html).toContain("Analyze");
+    expect(html).toContain("Ship");
   });
 
   it("App landing hides the download buttons inside the VS Code WebView, keeps GitHub", () => {
