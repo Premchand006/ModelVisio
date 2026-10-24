@@ -35,6 +35,8 @@ follow [Semantic Versioning](https://semver.org/).
   on first use and verifies its SHA-256.
 - Compiler pre-flight reports rule-based findings for real models, not only the demo.
 - ONNX FLOPs no longer collapse when a model has no intermediate `value_info`.
+- The model editor's tools are grouped by stage (Analyze, Optimize, Ship, Copilot), and a
+  **Search** button in its header opens a command palette that jumps to any tool or layer.
 
 ## [0.1.0]
 

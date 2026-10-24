@@ -3,6 +3,24 @@
 Release notes for the ModelVisio website and desktop app. The VS Code extension has its own
 [CHANGELOG](apps/vscode/CHANGELOG.md).
 
+## [1.2.0] - unreleased
+
+### Changed
+
+- **Tools grouped by stage.** The 14 analysis tools no longer share one wrapping tab strip. The
+  sidebar has four stages (Analyze, Optimize, Ship, Copilot), each with its own tabs. On narrow
+  screens the stage switcher sits at the bottom of the screen.
+- **New landing page.** The headline and downloads sit beside the drop zone, with an overview of
+  the three stages. The full list of supported formats folds away under "and 29 more".
+- The stats strip is one compact row. When the compiler pre-flight finds problems, a button in it
+  opens the Compiler panel.
+- The header shows the app version.
+
+### Added
+
+- **Command palette** (Ctrl+K, or ⌘K on macOS, or the Search button): jump to any tool or layer,
+  open a model file, load the demo, switch theme or close the model.
+
 ## [1.1.0] - unreleased
 
 ### Added
@@ -43,5 +61,6 @@ First release: graph and inspector, compiler pre-flight, auto-fixes, hardware-fi
 accelerators, converters, deploy scripts and the Gemini copilot, on the web and as a desktop app
 for Windows, macOS and Linux.
 
+[1.2.0]: https://github.com/Premchand006/ModelVisio/compare/desktop-v1.0.0...main
 [1.1.0]: https://github.com/Premchand006/ModelVisio/compare/desktop-v1.0.0...main
 [1.0.0]: https://github.com/Premchand006/ModelVisio/releases/tag/desktop-v1.0.0
