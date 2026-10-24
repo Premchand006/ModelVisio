@@ -1,6 +1,6 @@
 {
   "name": "modelvisio",
-  "version": "0.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Neural-network model analyzer for edge deployment, for the web, desktop and VS Code.",
   "type": "module",
