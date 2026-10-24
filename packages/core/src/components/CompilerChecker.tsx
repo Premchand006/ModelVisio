@@ -8,7 +8,7 @@ import { FIXES, applicableLayers, type FixId } from "../fixes/transforms";
  * Compiler compatibility pre-flight + working auto-fix engine. The "Apply" button
  * runs a real transform over the in-memory model graph (see fixes/transforms.ts):
  * the graph, stats, and the issue list below all update live, and the fix is
- * reversible. Fixes edit the analysis model — export via Convert/Deploy to apply
+ * reversible. Fixes edit the analysis model. Export via Convert/Deploy to apply
  * to the original file.
  */
 export function CompilerChecker({
@@ -50,7 +50,7 @@ export function CompilerChecker({
 
     {undoDepth > 0 && (
       <div style={{ fontSize: 9.5, color: t.acc3, background: t.acc3 + "12", border: `1px solid ${t.acc3}33`, borderRadius: 5, padding: "5px 8px", lineHeight: 1.5 }}>
-        ✓ {undoDepth} fix{undoDepth > 1 ? "es" : ""} applied to the analysis model — graph, stats, compatibility & the Convert tab's Graph JSON / Layers CSV now reflect them. The original model file is unchanged (rewriting the binary is an export-pipeline step). Undo above.
+        ✓ {undoDepth} fix{undoDepth > 1 ? "es" : ""} applied to the analysis model. Graph, stats, compatibility & the Convert tab's Graph JSON / Layers CSV now reflect them. The original model file is unchanged (rewriting the binary is an export-pipeline step). Undo above.
       </div>
     )}
 
@@ -59,7 +59,10 @@ export function CompilerChecker({
     </div>
 
     <div style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column", gap: 6 }}>
-      {filtered.length === 0 && <div style={{ padding: 20, textAlign: "center", color: t.suc, fontSize: 12 }}>✓ No issues detected for this target</div>}
+      <div style={{ fontSize: 9.5, color: t.t3, lineHeight: 1.5 }}>
+        Rule-based: checks each op against the vendors' documented supported-op lists and shape limits. It flags known problems only; the vendor compiler has the final word.
+      </div>
+      {filtered.length === 0 && <div style={{ padding: 20, textAlign: "center", color: t.suc, fontSize: 12 }}>✓ No known incompatibilities for this target</div>}
       {filtered.map((ci, i) => <div key={i} style={{ background: ci.severity === "error" ? t.err + "10" : t.wrn + "10", border: `1px solid ${ci.severity === "error" ? t.err : t.wrn}30`, borderRadius: 6, padding: 10 }}>
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
           <span style={{ fontSize: 11, fontWeight: 600, color: t.t0 }}>{ci.layer} <span style={{ color: t.t3 }}>({ci.layerType})</span></span>
@@ -68,7 +71,7 @@ export function CompilerChecker({
         <div style={{ fontSize: 11, color: t.t1 }}>{ci.msg}</div>
       </div>)}
 
-      <div style={{ fontSize: 12, fontWeight: 700, color: t.acc3, marginTop: 8 }}>✦ Auto-Fix Engine</div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: t.acc3, marginTop: 8 }}>Auto-Fix Engine</div>
       {fixes.length === 0 && <div style={{ fontSize: 10, color: t.t3 }}>No applicable transforms for this model.</div>}
       {fixes.map(({ def, layers }) => <div key={def.id} style={{ background: t.acc3 + "08", border: `1px solid ${t.acc3}25`, borderRadius: 6, padding: 10 }}>
         <div style={{ fontSize: 11, fontWeight: 600, color: t.t0, marginBottom: 2 }}>{def.title} <span style={{ color: t.t3, fontWeight: 400 }}>· {layers.length} layer{layers.length > 1 ? "s" : ""}</span></div>

@@ -3,15 +3,17 @@ import { useT } from "../theme/ThemeContext";
 export type Tab = { id: string; label: string; icon?: string };
 
 export function Tabs({
-  tabs, active, onChange,
+  tabs, active, onChange, wrap = false,
 }: {
   tabs: Tab[];
   active: string;
   onChange: (id: string) => void;
+  /** Wrap onto multiple rows instead of scrolling horizontally. */
+  wrap?: boolean;
 }) {
   const t = useT();
   return (
-    <div style={{ display: "flex", gap: 1, padding: 3, background: t.bg + "88", borderRadius: 6, backdropFilter: "blur(8px)", maxWidth: "100%", overflowX: "auto" }}>
+    <div style={{ display: "flex", gap: 1, padding: 3, background: t.bg + "88", borderRadius: 6, backdropFilter: "blur(8px)", maxWidth: "100%", overflowX: wrap ? "visible" : "auto", flexWrap: wrap ? "wrap" : "nowrap" }}>
       {tabs.map((tb) => (
         <button
           key={tb.id}

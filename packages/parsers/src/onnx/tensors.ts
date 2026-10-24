@@ -13,7 +13,7 @@ function i64ToBig(v: I64): bigint {
 
 // Serialize a typed-data array to little-endian bytes (ONNX raw_data is already LE).
 // Sub-32-bit dtypes (FLOAT16/BFLOAT16/UINT8/INT8/UINT16/INT16/BOOL) are packed into
-// int32_data one value per slot — they must be written at their true width.
+// int32_data one value per slot, so they must be written at their true width.
 function typedToBytes(t: RawTensor): Uint8Array | null {
   const dt = t.data_type ?? 0;
   const set = (count: number, bpe: number, fn: (v: DataView, off: number, i: number) => void) => {

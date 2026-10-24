@@ -1,4 +1,5 @@
 import type { Model, ModelLayer } from "../types";
+import { ChunkBuffer, drain, type ModelStream } from "../common/chunks";
 
 // TFLite models are FlatBuffers. Rather than vendor the full generated schema,
 // we read the tables we need with a minimal FlatBuffer reader. Field indices
@@ -85,7 +86,17 @@ function group(op: string, isOutput: boolean): ModelLayer["group"] {
 }
 
 export function parseTflite(input: ArrayBuffer | Uint8Array, name = "model.tflite"): Model {
+  return drain(tfliteStream(input, name, 0));
+}
+
+/**
+ * Streaming form of parseTflite: header once the tensor table is read, then
+ * operator layers (+ their incoming edges) every `batchSize` operators, then a
+ * final chunk. Returns exactly what parseTflite returns. batchSize 0 yields nothing.
+ */
+export function* tfliteStream(input: ArrayBuffer | Uint8Array, name = "model.tflite", batchSize = 256): ModelStream {
   const buf = input instanceof Uint8Array ? input : new Uint8Array(input);
+  const chunks = new ChunkBuffer(batchSize);
   // Optional file identifier "TFL3" sits at bytes 4..8.
   const fb = new FB(buf);
   const model = fb.root();
@@ -125,6 +136,18 @@ export function parseTflite(input: ArrayBuffer | Uint8Array, name = "model.tflit
   const inputs = fb.intVec(sg, 1);
   const outputs = fb.intVec(sg, 2);
   const outputSet = new Set(outputs);
+  const firstIn = inputs[0];
+  const firstOut = outputs[0];
+  const header = {
+    name, format: "TFLite", framework: "TensorFlow Lite", opset: 3,
+    sizeBytes: buf.byteLength,
+    inputShape: firstIn != null ? tensorShapes[firstIn] ?? [] : [],
+    outputShape: firstOut != null ? tensorShapes[firstOut] ?? [] : [],
+  };
+  if (chunks.enabled) {
+    chunks.setHeader(header);
+    yield chunks.take(0);
+  }
 
   const layers: ModelLayer[] = [];
   const producer = new Map<number, number>(); // tensor index → layer id
@@ -135,6 +158,7 @@ export function parseTflite(input: ArrayBuffer | Uint8Array, name = "model.tflit
     const lid = id++;
     producer.set(ti, lid);
     layers.push(mkLayer(lid, tensorNames[ti], "Input", "Input", tensorShapes[ti], tensorTypes[ti], "input", [], [ti], tensorNames, tensorShapes));
+    chunks.layer(layers[layers.length - 1]);
   }
 
   // One layer per operator.
@@ -149,12 +173,23 @@ export function parseTflite(input: ArrayBuffer | Uint8Array, name = "model.tflit
       ops.push({ opName: opCodes[opcodeIndex] ?? `OP_${opcodeIndex}`, ins: fb.intVec(op, 1), outs: fb.intVec(op, 2) });
     }
   }
-  for (const op of ops) {
+  for (let oi = 0; oi < ops.length; oi++) {
+    const op = ops[oi];
     const lid = id++;
     const outTi = op.outs[0];
     const isOut = op.outs.some((t) => outputSet.has(t));
     for (const t of op.outs) producer.set(t, lid);
     layers.push(mkLayer(lid, tensorNames[outTi] ?? op.opName, op.opName, op.opName, tensorShapes[outTi] ?? [], tensorTypes[outTi] ?? "float32", group(op.opName, isOut), op.ins, op.outs, tensorNames, tensorShapes));
+    if (chunks.enabled) {
+      // Operators are stored in execution order, so producers are already
+      // known; the edge pass below stays authoritative (see finish()).
+      chunks.layer(layers[layers.length - 1]);
+      for (const ti of op.ins) {
+        const from = producer.get(ti);
+        if (from != null && from !== lid) chunks.edge(from, lid);
+      }
+      if (chunks.full) yield chunks.take((oi + 1) / (ops.length + 1));
+    }
   }
   // Edges from data flow (skip weight tensors with no producer).
   const seen = new Set<string>();
@@ -172,15 +207,9 @@ export function parseTflite(input: ArrayBuffer | Uint8Array, name = "model.tflit
     }
   }
 
-  const firstIn = inputs[0];
-  const firstOut = outputs[0];
-  return {
-    name, format: "TFLite", framework: "TensorFlow Lite", opset: 3,
-    sizeBytes: buf.byteLength,
-    inputShape: firstIn != null ? tensorShapes[firstIn] ?? [] : [],
-    outputShape: firstOut != null ? tensorShapes[firstOut] ?? [] : [],
-    layers, edges,
-  };
+  const result: Model = { ...header, layers, edges };
+  if (chunks.enabled) yield chunks.finish(result);
+  return result;
 }
 
 function mkLayer(

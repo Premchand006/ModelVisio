@@ -1,6 +1,6 @@
 // Edge-AI accelerator catalog used by the Hardware report.
 //
-// This is a SOURCED, roofline-ready device database — not a list of hand-tuned
+// This is a SOURCED, roofline-ready device database, not a list of hand-tuned
 // "suitability" numbers. The 0-100 score is COMPUTED per loaded model by
 // packages/core/src/scoring (roofline + memory-fit + op-support + efficiency),
 // so every field below feeds a defensible calculation rather than a guess.
@@ -148,7 +148,7 @@ export const HW: DeviceSpec[] = [
     quant: { int8Only: false, perChannel: true, mixedPrecision: true },
     cpuFallback: "graceful", dispatchMs: 0.4, util: U_STD,
     formFactor: "SoM/board", hostDependency: false, conf: "V",
-    notes: "QRB5165 (Snapdragon 865-class). Achieved benchmarks not published — peak TOPS [V], bandwidth estimated.",
+    notes: "QRB5165 (Snapdragon 865-class). Achieved benchmarks not published. Peak TOPS [V], bandwidth estimated.",
     src: ["Qualcomm RB5 datasheet (15 TOPS AI Engine)"],
   },
   {
@@ -208,7 +208,7 @@ export const HW: DeviceSpec[] = [
   //    Weights are resident on-chip → per-frame traffic is activations only, so
   //    these parts are effectively compute-bound when the model fits. ──────────
   {
-    id: "hailo8", n: "Hailo-8", v: "Hailo",
+    id: "hailo8", n: "Hailo-8", v: "Hailo", compatId: "hailo",
     peak: { int8: 26 },
     ramGB: 0, memType: "onchip", bandwidthGBs: 1000, bwConf: "?", sramMB: 32, externalMem: false,
     power: { typ: 2.5, max: 3.5 }, priceUSD: 90,
@@ -221,7 +221,7 @@ export const HW: DeviceSpec[] = [
     src: ["Hailo AI SW Suite v2024-10 benchmark table; HailoRT log (1371.26 fps, 3.39 ms, 3.96 W)"],
   },
   {
-    id: "hailo8l", n: "Hailo-8L (RPi AI Kit)", v: "Hailo",
+    id: "hailo8l", n: "Hailo-8L (RPi AI Kit)", v: "Hailo", compatId: "hailo",
     peak: { int8: 13 },
     ramGB: 0, memType: "onchip", bandwidthGBs: 1000, bwConf: "?", sramMB: 16, externalMem: false,
     power: { typ: 1.5, max: 2.5 }, priceUSD: 70,
@@ -285,7 +285,7 @@ export const HW: DeviceSpec[] = [
     quant: { int8Only: true, perChannel: true, mixedPrecision: false },
     cpuFallback: "graceful", dispatchMs: 0.4, util: U_SMALL,
     formFactor: "M.2/PCIe", hostDependency: true, conf: "?",
-    notes: "Peak TOPS [V]; bandwidth & achieved throughput not sourced — low-confidence.",
+    notes: "Peak TOPS [V]; bandwidth & achieved throughput not sourced; low-confidence.",
     src: ["Mobilint MA35D product brief"],
   },
   {
@@ -297,7 +297,7 @@ export const HW: DeviceSpec[] = [
     quant: { int8Only: true, perChannel: false, mixedPrecision: false },
     cpuFallback: "graceful", dispatchMs: 1.0, util: U_SMALL,
     formFactor: "USB/M.2", hostDependency: true, conf: "?",
-    notes: "~0.9-1.4 TOPS class; bandwidth not sourced — low-confidence.",
+    notes: "~0.9-1.4 TOPS class; bandwidth not sourced; low-confidence.",
     src: ["Kneron KL720 product page"],
   },
   {
@@ -309,7 +309,7 @@ export const HW: DeviceSpec[] = [
     quant: { int8Only: false, perChannel: true, mixedPrecision: true },
     cpuFallback: "graceful", dispatchMs: 0.4, util: U_SMALL,
     formFactor: "SoM", hostDependency: false, conf: "?",
-    notes: "~16 TOPS class; key specs incompletely sourced — low-confidence.",
+    notes: "~16 TOPS class; key specs incompletely sourced; low-confidence.",
     src: ["Blaize Pathfinder P1600 brief"],
   },
   {
@@ -357,7 +357,7 @@ export const HW: DeviceSpec[] = [
     quant: { int8Only: false, perChannel: true, mixedPrecision: true },
     cpuFallback: "graceful", dispatchMs: 0.5, util: U_SMALL,
     formFactor: "SMARC SoM", hostDependency: false, conf: "?",
-    notes: "~4.8 TOPS APU. MediaTek does not disclose its TOPS methodology — low-confidence.",
+    notes: "~4.8 TOPS APU. MediaTek does not disclose its TOPS methodology; low-confidence.",
     src: ["MediaTek Genio 1200 (MT8395) brief"],
   },
 ];

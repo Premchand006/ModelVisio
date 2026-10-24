@@ -1,7 +1,7 @@
 import { TH, type ThemeName } from "@modelvisio/core";
 
 // Shown when the host couldn't read the model file. Floats over the app (which
-// stays usable — e.g. drag-and-drop another file) and can be dismissed.
+// stays usable, e.g. drag-and-drop another file) and can be dismissed.
 export function ErrorBanner({ theme, title, message, onDismiss }: { theme: ThemeName; title: string; message: string; onDismiss: () => void }) {
   const T = TH[theme];
   return (

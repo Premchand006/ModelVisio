@@ -1,7 +1,7 @@
 {
   "name": "ModelVisio",
   "short_name": "ModelVisio",
-  "description": "AI-native neural-network model analyzer for edge deployment.",
+  "description": "Neural-network model analyzer for edge deployment.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#05070E",

@@ -28,6 +28,13 @@ follow [Semantic Versioning](https://semver.org/).
 - `modelvisio.webSearch` is documented as Gemini only.
 - Untrusted workspaces: `modelvisio.provider`, `modelvisio.grokModel` and
   `modelvisio.freeWebSearch` are also read only from user settings.
+- Weight files next to a model (OpenVINO `.bin`, ncnn `.bin`, Paddle `.pdiparams`, TF.js shards,
+  SavedModel `variables/`) are read from the same folder, so weight statistics are complete.
+- The package no longer includes ONNX Runtime's 27 MB WebGPU/WebNN binary. CPU benchmarks use
+  the bundled 14 MB WebAssembly build; WebGPU/WebNN downloads the GPU build from a pinned CDN URL
+  on first use and verifies its SHA-256.
+- Compiler pre-flight reports rule-based findings for real models, not only the demo.
+- ONNX FLOPs no longer collapse when a model has no intermediate `value_info`.
 
 ## [0.1.0]
 
@@ -46,8 +53,8 @@ First Marketplace release.
 - Commands: **Open Model File…**, **Open with ModelVisio** (Explorer and editor-tab context
   menus), **Set Gemini API Key**, **Clear Gemini API Key**, **Show Logs**.
 - AI copilot through the extension host using the shared `@modelvisio/ai` chat proxy. The
-  Gemini key is kept in VS Code Secret Storage. Lookup order: Secret Storage → legacy
-  `modelvisio.geminiApiKey` *user* setting (workspace values are never used) →
+  Gemini key is kept in VS Code Secret Storage. Lookup order: Secret Storage, then the legacy
+  `modelvisio.geminiApiKey` user setting (workspace values are never used), then
   `GEMINI_API_KEY`. A key in user settings is migrated to Secret Storage once; clearing the
   stored key afterwards is not undone by a later migration.
 - `modelvisio.geminiModel` accepts only plain model ids; anything else falls back to

@@ -110,7 +110,7 @@ function readSource(buf: Uint8Array, format: string, name: string): OutTensor[] 
     if (onnx.length === 0) {
       throw new Error(
         skippedExternal > 0
-          ? `All ${skippedExternal} weights use external data (stored outside the file) — can't repack in-browser.`
+          ? `All ${skippedExternal} weights use external data (stored outside the file), so they can't be repacked in-browser.`
           : "No weight initializers found in this ONNX model.",
       );
     }
@@ -138,7 +138,7 @@ function validate(tensors: OutTensor[]): void {
 
 /**
  * Convert a source model's WEIGHTS to safetensors or NumPy .npz, optionally
- * recasting precision. Sources: ONNX, Safetensors, NumPy. Pure function — safe
+ * recasting precision. Sources: ONNX, Safetensors, NumPy. Pure function, safe
  * to call from a Worker.
  */
 export function convertWeights(
@@ -156,7 +156,7 @@ export function convertWeights(
   const suffix = precision === "f16" ? ".fp16" : precision === "f32" ? ".fp32" : "";
 
   if (target === "npz") {
-    // NumPy has no bf16/f8 — upcast those to f32 so the .npz is loadable.
+    // NumPy has no bf16/f8, so upcast those to f32 so the .npz is loadable.
     tensors = tensors.map((t) =>
       t.dtype === "BF16" ? { ...t, dtype: "F32", data: bf16ToF32(t.data) } : t,
     );

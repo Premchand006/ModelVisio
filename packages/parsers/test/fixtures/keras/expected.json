@@ -1,0 +1,335 @@
+{
+ "tf": "2.21.0",
+ "keras": "3.12.4",
+ "tiny_functional": {
+  "params": 974,
+  "layers": [
+   "image",
+   "stem_conv",
+   "stem_bn",
+   "stem_relu",
+   "dw",
+   "pw",
+   "residual",
+   "pool",
+   "strided",
+   "up",
+   "sep",
+   "zpad",
+   "concat",
+   "gap",
+   "drop",
+   "logits"
+  ],
+  "per_layer": {
+   "image": 0,
+   "stem_conv": 224,
+   "stem_bn": 32,
+   "stem_relu": 0,
+   "dw": 80,
+   "pw": 72,
+   "residual": 0,
+   "pool": 0,
+   "strided": 292,
+   "up": 0,
+   "sep": 144,
+   "zpad": 0,
+   "concat": 0,
+   "gap": 0,
+   "drop": 0,
+   "logits": 130
+  },
+  "output_shapes": {
+   "image": [
+    null,
+    32,
+    32,
+    3
+   ],
+   "stem_conv": [
+    null,
+    32,
+    32,
+    8
+   ],
+   "stem_bn": [
+    null,
+    32,
+    32,
+    8
+   ],
+   "stem_relu": [
+    null,
+    32,
+    32,
+    8
+   ],
+   "dw": [
+    null,
+    32,
+    32,
+    8
+   ],
+   "pw": [
+    null,
+    32,
+    32,
+    8
+   ],
+   "residual": [
+    null,
+    32,
+    32,
+    8
+   ],
+   "pool": [
+    null,
+    16,
+    16,
+    8
+   ],
+   "strided": [
+    null,
+    7,
+    7,
+    4
+   ],
+   "up": [
+    null,
+    14,
+    14,
+    4
+   ],
+   "sep": [
+    null,
+    16,
+    16,
+    8
+   ],
+   "zpad": [
+    null,
+    16,
+    16,
+    4
+   ],
+   "concat": [
+    null,
+    16,
+    16,
+    12
+   ],
+   "gap": [
+    null,
+    12
+   ],
+   "drop": [
+    null,
+    12
+   ],
+   "logits": [
+    null,
+    10
+   ]
+  }
+ },
+ "tiny_sequential": {
+  "params": 2763,
+  "per_layer": {
+   "emb": 1600,
+   "lstm": 800,
+   "bigru": 336,
+   "out": 27
+  },
+  "output_shapes": {
+   "emb": [
+    null,
+    12,
+    16
+   ],
+   "lstm": [
+    null,
+    12,
+    8
+   ],
+   "bigru": [
+    null,
+    8
+   ],
+   "out": [
+    null,
+    3
+   ]
+  }
+ },
+ "tiny_frozen": {
+  "ops": [
+   "Placeholder",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Const",
+   "Identity",
+   "Conv2D",
+   "Identity",
+   "Reshape",
+   "Squeeze",
+   "BiasAdd",
+   "Identity",
+   "AddV2",
+   "Rsqrt",
+   "Identity",
+   "Mul",
+   "Mul",
+   "Identity",
+   "Identity",
+   "Mul",
+   "Sub",
+   "AddV2",
+   "Relu",
+   "Identity",
+   "DepthwiseConv2dNative",
+   "Identity",
+   "Reshape",
+   "Squeeze",
+   "BiasAdd",
+   "Identity",
+   "Conv2D",
+   "Identity",
+   "Reshape",
+   "Squeeze",
+   "BiasAdd",
+   "Relu",
+   "AddV2",
+   "MaxPool",
+   "Identity",
+   "DepthwiseConv2dNative",
+   "Identity",
+   "Conv2D",
+   "Identity",
+   "Reshape",
+   "Squeeze",
+   "BiasAdd",
+   "Identity",
+   "Conv2D",
+   "Identity",
+   "Reshape",
+   "Squeeze",
+   "BiasAdd",
+   "ExpandDims",
+   "Cast",
+   "Reshape",
+   "Pack",
+   "Tile",
+   "StridedSlice",
+   "StridedSlice",
+   "Mul",
+   "Pack",
+   "StridedSlice",
+   "ConcatV2",
+   "Reshape",
+   "ExpandDims",
+   "Cast",
+   "Reshape",
+   "Pack",
+   "Tile",
+   "StridedSlice",
+   "StridedSlice",
+   "Mul",
+   "Pack",
+   "StridedSlice",
+   "ConcatV2",
+   "Reshape",
+   "Pad",
+   "ConcatV2",
+   "Mean",
+   "Identity",
+   "MatMul",
+   "Identity",
+   "BiasAdd",
+   "Softmax",
+   "NoOp",
+   "Identity"
+  ],
+  "params": 974,
+  "output": "Identity:0",
+  "output_shape": [
+   1,
+   10
+  ]
+ },
+ "saved_model": {
+  "params": 132
+ },
+ "tiny_k2": {
+  "params": 1810,
+  "keras": "2.21.0",
+  "per_layer": {
+   "inp": 0,
+   "c1": 40,
+   "bn": 16,
+   "flat": 0,
+   "d1": 870,
+   "d2": 870,
+   "sum": 0,
+   "head": 14
+  }
+ }
+}

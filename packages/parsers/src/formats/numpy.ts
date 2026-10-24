@@ -54,7 +54,7 @@ export function parseNumpy(input: ArrayBuffer | Uint8Array, name = "array.npy"):
         const h = parseNpyHeader(member);
         tensors.push({ name: arrName, shape: h.shape, dtype: h.dtype, bytes: h.bytes });
       } else {
-        // Compressed (np.savez_compressed) — list it without a decoded header.
+        // Compressed (np.savez_compressed): list it without a decoded header.
         tensors.push({ name: arrName, shape: [], dtype: "compressed", bytes: e.size });
       }
     }

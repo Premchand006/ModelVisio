@@ -237,7 +237,7 @@
         "modelvisio.webSearch": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "Gemini only: enable Google Search grounding so the copilot can cite live links. Requires a paid-tier key — leave off for free keys; the free web search (`#modelvisio.freeWebSearch#`) covers live answers instead."
+          "markdownDescription": "Gemini only: enable Google Search grounding so the copilot can cite live links. Requires a paid-tier key. Leave off for free keys; the free web search (`#modelvisio.freeWebSearch#`) covers live answers instead."
         },
         "modelvisio.freeWebSearch": {
           "type": "string",

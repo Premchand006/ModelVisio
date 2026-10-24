@@ -29,7 +29,7 @@ export function deactivate() {
   // no-op: everything is disposed through context.subscriptions
 }
 
-/** "ModelVisio: Open Model File…" — pick a file, open it in our editor. */
+/** "ModelVisio: Open Model File…": pick a file, open it in our editor. */
 async function openModel(): Promise<void> {
   const picked = await vscode.window.showOpenDialog({
     canSelectMany: false,

@@ -1,0 +1,5 @@
+{
+  "total_params": 650,
+  "trainable_params": 634,
+  "paddle": "3.3.1"
+}

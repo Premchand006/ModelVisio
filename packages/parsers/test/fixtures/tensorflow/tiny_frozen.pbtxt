@@ -1,0 +1,3429 @@
+node {
+  name: "image"
+  op: "Placeholder"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 1
+        }
+        dim {
+          size: 32
+        }
+        dim {
+          size: 32
+        }
+        dim {
+          size: 3
+        }
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/stem_conv_1/convolution/ReadVariableOp/resource"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 3
+          }
+          dim {
+            size: 3
+          }
+          dim {
+            size: 3
+          }
+          dim {
+            size: 8
+          }
+        }
+        tensor_content: "\200\014\375;\010\211\300\275\250\336*>6XF\276\314\345S\2750\364\035\276\000\010\360\271\342fu>p\331\332<XC\374\274\340\246\r>\250\005\036=\000\274\223; \037_\274\300-3\276 \255\221= \260\357\273\364\"k>k\341\023\276\210\033;\276\034\253\361=\350?\311=\370\273\275=\232y;>\360/(=LJn>\334\345\002\276\332\334\216\275\240\243\207\274\224;\377=F\225K>\310\225\323\274\000w\037\276\330\271\306\274\216\376a\2760\334\024>(_W>\010,I>\3502\361=\200\0002>\376_\006>[]W\276$\214\376=Xl\020>,7\303=\366\342\360\275\266\3377>\320\217k>\304UA\276`\302\002=\230\313E>\240\t0>\250\240\333\275\232\217_>\'\372!\276\362\247 >\360\377\361\274\343\345h\276\324\226\363\275\316\375_>\240|\211\275\360\215C=|Hi>*B >q\2507\276\240\243\007= \007$=\315/\n\276\224\321\342=^p#>@\275\200\274N}O>@\202\014;\000\226\024\274d\352\035\275|\237V\275+\340Z\276x\351}\275\000n\345=\200k0\274\236h\323\275\370\255\234\274\006<\003>\334[\366\275\3341U\276\372\314\210\275\322\026\343\275\2210s\276>\272\022>(\3614>\337\021p\276$!T\275\262G\006>\332\262\"\276\340\"6=h\341\027=X\331\245\274\000\007\221<\320#\320=`1\036<4:E>\202{\002\276\272R-\276&O$>\332\216`>X0>\275 yM=\036\306\273\275T[\t\276\370=\030\2750\204\320=P,\">\340V\200=\000=\376:\\\212\207=\nvp>R&\261\275\236\036e\276\350\211\256\275\350M\026>}\331!\276h2\200\274T\221\026>\352\241\032\276\334\002\216=\250\300B=\312\035\"\276P\315\024\275@\270\003\273vD\316\275@Ap=\000`2\272\200,\251<vf\237\275\010x\344\274p\260\274<\036\026\220\2758q}=>\342\272\275B\351g>PK\362\275N\352A\276\372\352\314\275C\271P\276\374\324W\276\342\r7\276\304U\275=\360\204\030=\300\327\311=\2705\365\274 \346\030\274\264h\263=\026\003\010>\316\315\315\275\224FF\276\332_s\276\252\337O\276\226\345\234\275\220v\023\2754\271J\276>L\030\276dr\256\275-\354\017\2760\337\300\274\316&\035>\352t+>\235\3138\276@c\020\276\250jg\276\240\312\\\275\240\275\202=\030HL\275\200u,\273\224\004w>\000\253\313<0\261\005\276\222q@\276\3540\324=\304\350\315=\330\356\341\275\306\022\203\275l\271U\275\270Q\003>\234\241\335=0\357U\276\232a\224\275\262\312o>\356\364Y>`\257\366=\340x\000>\220tp\274\266t0>T\030\346=\362\307\035>\260g\030\275\265RV\276\200g\247:\240l\250\274.\205\223\2750d2\276\340\245B\274\220\207O>\257\251a\276\220\300]\276\264\352\303=\310q\346=\016d*\276\357\0250\276L|y\276\250\257r\275x2)=P\023\317=\310\326\031>\320@\365<\244S\271=\200\002S;"
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/stem_conv_1/Reshape/ReadVariableOp/resource"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 8
+          }
+        }
+        tensor_content: "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/stem_conv_1/Reshape/shape"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 4
+          }
+        }
+        tensor_content: "\001\000\000\000\001\000\000\000\001\000\000\000\010\000\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/stem_bn_1/Cast_1/ReadVariableOp/resource"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 8
+          }
+        }
+        tensor_content: "\000\000\200?\000\000\200?\000\000\200?\000\000\200?\000\000\200?\000\000\200?\000\000\200?\000\000\200?"
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/stem_bn_1/batchnorm/add/y"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+        }
+        float_val: 0.001
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/stem_bn_1/Cast_2/ReadVariableOp/resource"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 8
+          }
+        }
+        tensor_content: "\000\000\200?\000\000\200?\000\000\200?\000\000\200?\000\000\200?\000\000\200?\000\000\200?\000\000\200?"
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/stem_bn_1/Cast_3/ReadVariableOp/resource"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 8
+          }
+        }
+        tensor_content: "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/stem_bn_1/Cast/ReadVariableOp/resource"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 8
+          }
+        }
+        tensor_content: "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/dw_1/depthwise/ReadVariableOp/resource"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 3
+          }
+          dim {
+            size: 3
+          }
+          dim {
+            size: 8
+          }
+          dim {
+            size: 1
+          }
+        }
+        tensor_content: "\276\217\305\275\005()\276P=\365\275<l\314=x\202\263=\302M\261\275.h\300\275 \377\306\274:\341\035\276\030q\306\275F\242a>\200\317v\276\n\334\002\276e\352X\276\233\221A\276\226{T> 7p\276L\251\374=\242L?\276\206\023J>\326\307\356\275\036\375]>N\326\330\275faM\276\376\230\327\275\2009\002<V\036\354\275H\003w=\"\224O\276$f\357=\360w$\275\n\221#>\032Q\005>\311W\213\276\350\007S=\010\252q=\276@\'>z\177\205\276X\3641\276\362\316\334\275u\335\t\276\216\330\257\275\370\002X>\326\261R\2768R\376\274\305\'\017\276\206\010\'>),\210\276\216\034\177\276\252\225C\276\302!,>0\033v=\244z\255=\274\203\250=0\276I=L\335@\276\320\337\222=X\226\374\275\000\'\210:\350\205\321\275[\273c\276(Vp\275\222b\366\275^\234%\276\240\224\212\276\3004D<\354\353o>,\016|>\240\230\362<h\035D>@\210\035>P\023\n\276"
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/dw_1/Reshape/ReadVariableOp/resource"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 8
+          }
+        }
+        tensor_content: "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/dw_1/Reshape/shape"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 4
+          }
+        }
+        tensor_content: "\001\000\000\000\001\000\000\000\001\000\000\000\010\000\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/pw_1/convolution/ReadVariableOp/resource"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 1
+          }
+          dim {
+            size: 1
+          }
+          dim {
+            size: 8
+          }
+          dim {
+            size: 8
+          }
+        }
+        tensor_content: "\360\257G>`\032\003\277M\007\003?%\363\026?\250\344B>\226\201Z\276\232\265\305>\310_\030\277\376\310\'\276\340!\310<\250\234\253=\264G\r\277=\360\017?\342+\354>\340\250\022\275\212u\030\277\227\363\n?\250\357\275>\200Y\204\273\365\225\t?\244\031!>\243n\215\276\000\343k\273,V\306>Xm\311=\256\t\276>\340\003\320\274\002M\257>x6\213=*\361\341>^:\030\277\030\034\330=\330\310\r>\216\026\221>p\334\354\2750\332c\275\316\n\204>Ts\233>\000[V\275\030\221L>f;O\276<\342\000\277\t\216\314\276\3009\274>x9\235\275\212\307\331\276\256(\245>\354\345\235\276\206lt\276\n,\013\277\\4~>P\235\020\277\310P\221>H\366\213=PMb>\330H\036>\324Y5\276\214\253\230>\226\306\365>\000z\001\276\314\r\364\276,2\373\276\240~\237>ZY\333>"
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/pw_1/Reshape/ReadVariableOp/resource"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 8
+          }
+        }
+        tensor_content: "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/pw_1/Reshape/shape"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 4
+          }
+        }
+        tensor_content: "\001\000\000\000\001\000\000\000\001\000\000\000\010\000\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/sep_1/separable_conv2d/ReadVariableOp/resource"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 3
+          }
+          dim {
+            size: 3
+          }
+          dim {
+            size: 8
+          }
+          dim {
+            size: 1
+          }
+        }
+        tensor_content: "\364\322\253\275\374\r\004>\024\317\031\275\030/E\2754\367\204=\"\225\201\276\346i\023>\\\037\224\275\036\210Y>\230\005\\\276\000VV\276(f\350\274\371\2441\276\252\031\323\275\230{\246=\204\341D><Z;\276\370`\325\274\206\003`\276\366g\246\275\204\020q\276\034\037\315=\236\241\211>\350\334\242=\314\235X\276\030A\336=\310\376Z\276\000}\246<\270\370K=X\220l><\214\203=V\336\205\276\336\254O\276\312\200K\276\340K\252\274\324\277\214=\332d5\2766:\017>\246z]\276X\370\356=\212*\035\276\317\343\212\276\216\313d>\000\016z>H\210\261=\256oI\276|\272\017>\210\232L\275$\031?\2750\3563\275\340o\036\276L?\362\275\362] \2768\\\001>\352\'\366\275\342\3603>\356F_>0z\301<\260\215\216=4\373I>\262\334\233\275\222\010&>\230\251:=\2001\252\274\240\313)\276\230\233v>\342\222\345\275\220\246\276\275\204\213\363=,\310\370=\324?\351=P\313\206\274"
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/sep_1/separable_conv2d/ReadVariableOp_1/resource"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 1
+          }
+          dim {
+            size: 1
+          }
+          dim {
+            size: 8
+          }
+          dim {
+            size: 8
+          }
+        }
+        tensor_content: "0\375i\275#>\302\276\000^\236>Iw\267\276ts\005\276\010\317\202>V\016\374>`\177Y=8?\266>m\303\003\277`\351\331\275\200dg\274D\354\372\275\000\265l=J\224\023\277\216\310\031\277N\325\225>\270\253;>e\035\261\276\350\324 >\023\203\023?\304Ao>\240\274\341\274iC\371\276\363\222\030?\352\355\273\276A\210\032?@\035\374<mn\010?Z\036\341\276\255\027\372\276\"\227\223\276l\300m>z\365\305>\364H\213>\320\237\027=\370\246\355\275,\362\276>\375\037\021?(\240\310\276)\311\010\277\027\231\245\276\264\377\270>Y\225\032?\001\327\002\277\223\323\224\276r\025E\276\226\230Z\276\026\353\270>\300|\220>\224Sy>\366\356\020\2768\177\220>\002~\210>xi\005\276:O\205>]Q\034?\005\034\006\277\362\362\361\2760\177n\275F\340\325>\354\344*>\266\334\223>^\340\313>"
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/sep_1/Reshape/ReadVariableOp/resource"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 8
+          }
+        }
+        tensor_content: "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/sep_1/Reshape/shape"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 4
+          }
+        }
+        tensor_content: "\001\000\000\000\001\000\000\000\001\000\000\000\010\000\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/strided_1/convolution/ReadVariableOp/resource"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 3
+          }
+          dim {
+            size: 3
+          }
+          dim {
+            size: 8
+          }
+          dim {
+            size: 4
+          }
+        }
+        tensor_content: "\224=\267\275\020\242\005\276\277\376\002>?p\006>\373\240B>v$\217=L\t8=\320n\337\274\315\332d>v\324F\276\316\356\341=\002Q\313\275o\3749>T\365#=\302\340\330=\314\315}\275\234\2108\276=\301j>\200\335\225\274\345\272,>\017>q\276\232h\310=\365\267+>\220\277\027\275b\336\373=\003\027\024>\354\3628=\306S\223=$km=\351\315H>\t0k>\000\376\002\272j\"\322\275\273=g>\035\271\005>8q\273\274n\210\313\275O\200P>\025)\377\275\242[\317=\311S2>Z%\350=2<\006\276\207.\006>\2270!>jH3\276\342\010\237=\030\031\225\275\023B0\276+\251T>\367\374;\276\2354\010>A\247\016>A!9>\354\201\010=H.\362<h\314\025\275\310\203\264<4\306C=\261\211l>\321\014\005>D;X\275zP\237\275d\312V\276\346i2\2768\230\003\276\n\343O\276\207\277\033\276\236W\260=\214\030>\276f\231^\276\227\260\033>\233\3602>\245\331\013>\006%\260\275\244\235=\275:\r\366=\005\017j\276(W\310<\313;\030>\003\231\\>\023\336X>9a\020>\222#8\276\264L\036\276/\310m>\264\034F=\224\267P=\000Y\215\273O=d\276\020\030\316\274\362\376\343=Z\240\201=\346l\217=\362\002\354\275\242\252\202=\246\033\307=?\001[\276S\007L>\2610\005>\230\324\323<\177\324:>\223\006g>\006K\325\275\260T3\276\334\302\n=\365\324\005>\000\\\242\275b1\032\276\362\335\377=tm\264\275\224#\204\275\220\314\302\275\200\\Z\275^cL\276\321\016e>\270D\260\274\332\343\203\2752\304\355=V\243U\276\310\237\357\275\246\222\031\276\315\3112>\274\316\301\275F\212#\276\364\214\213\275\356\357\243=\202[c\276\232\312\361=\314Um\276\3566H\276\367\315@>\\\300\026=\240\240\202\274\006\276\257=K\270g\276JCd\276\370\360\030\275\210W\210\275\0078#>f\024\324=\005\2033>\227\365\014>\204\205<\275\217\006 >\334\256\002\276\315\376c>i`%>)\330K>\227\224d>\244+a\276!\004\033>\363\337/>\001\202_\276:\023\256=h\r\251\274>`\273\275n\007\342\2755!W>\246\352\357=\320\251:\275\274d\267\275\300\232l\274d\3329\275\020AW\274\200\307*\274\334\345\010\275\22132>\200\201\273\275|\007g=\024\354\206\275\331\354U>a-*>\2502\266<\302=\355=\356B\313=\246`\310=\325Xa>V\317\326=l\314\n=\003\025M>c\013R>05\305\275X\313\263\274\255`\035\276O\377Q>\337{9>J[C\276,R6=>\325\333\275\301\331c\276@S\023;\244$!\276F\231\036\276\304g\213\275U&;>\336\024\355=.7&\276v\225\250=h\341\206\275]\276b>\311\264!\276\\\210\233\275\360IJ<\220\376\032\274!QD>\220\317}<\275\323\033\276\250\362\351\274L\232\177=|w\000\275\027\370H>\355r6>`_\305\2748v!\275\030\246\257\274n\236\017\276\002\274\214\275a\010\361\275\300\352$\275\n\355\255=\200\300 \275{\002\016>^P\364=\314JN\275\325nV>%S\"><\312\246\275\333\242\031>R\214(\276\324\336\030\275\214\020x\2758ZK\276\233\242\030>`\024\037\274\200\376b\274\270\275\016\276(3\037\275\367\021+> \000\376;A\026\343\275\301#\006>)\007B>X\317\n\276\251m;>$\2036\275HH\215<\205\254J\276\302\271\277\275jol\276\342\240\242\275\004\267U\276\006\023\317=\372\316\231=6\213\265=\000\023\007\275\002\322\233=c\355>>\257\323M\276aw\003>r\002\214\275/\220T\276\000\033u\275\324\021K\276\244\003v=\340\3628\275t\334\037\275v\017\000\276\306\351Q\276\200$\336\272!\324V>C/6\276\322L\356=;v:>\224Q?\275$Mb\276\310\372\330<\330\256\374<e\324V\276>\t\371=\350\341\272\274D\235\006\275B\225\263\275\246+\345\275O\226\034>bh\035\276t]\244\275f;\266\275"
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/strided_1/Reshape/ReadVariableOp/resource"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 4
+          }
+        }
+        tensor_content: "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/strided_1/Reshape/shape"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 4
+          }
+        }
+        tensor_content: "\001\000\000\000\001\000\000\000\001\000\000\000\004\000\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/ExpandDims/dim"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+        }
+        int_val: 2
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/Tile/multiples/0"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/Tile/multiples/1"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/repeats"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+        }
+        int_val: 2
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/Reshape/shape_1"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/Tile/multiples/3"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/Tile/multiples/4"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/Shape"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 4
+          }
+        }
+        tensor_content: "\001\000\000\000\007\000\000\000\007\000\000\000\004\000\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/strided_slice/stack"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/strided_slice/stack_1"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/strided_slice/stack_2"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/strided_slice_1/stack"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/strided_slice_1/stack_1"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 2
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/strided_slice_1/stack_2"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/strided_slice_2/stack"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 2
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/strided_slice_2/stack_1"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/strided_slice_2/stack_2"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/concat/axis"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+        }
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/ExpandDims/dim"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+        }
+        int_val: 3
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/Tile/multiples/0"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/Tile/multiples/1"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/Tile/multiples/2"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/repeats"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+        }
+        int_val: 2
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/Reshape/shape_1"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/Tile/multiples/4"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/Shape"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 4
+          }
+        }
+        tensor_content: "\001\000\000\000\016\000\000\000\007\000\000\000\004\000\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/strided_slice/stack"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/strided_slice/stack_1"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 2
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/strided_slice/stack_2"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/strided_slice_1/stack"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 2
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/strided_slice_1/stack_1"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 3
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/strided_slice_1/stack_2"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/strided_slice_2/stack"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 3
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/strided_slice_2/stack_1"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/strided_slice_2/stack_2"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/concat/axis"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+        }
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/zpad_1/Const"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 4
+          }
+          dim {
+            size: 2
+          }
+        }
+        tensor_content: "\000\000\000\000\000\000\000\000\000\000\000\000\002\000\000\000\000\000\000\000\002\000\000\000\000\000\000\000\000\000\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/concat_1/concat/axis"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+        }
+        int_val: -1
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/gap_1/Mean/reduction_indices"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 2
+          }
+        }
+        tensor_content: "\001\000\000\000\002\000\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/logits_1/Cast/ReadVariableOp/resource"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 12
+          }
+          dim {
+            size: 10
+          }
+        }
+        tensor_content: "\030\236\323\276@\226n<\226\030\376>\200\345\320\275f6\356\276`\030\235<P`\225=\234(\201>\004~\322\275x\277^>f \207>R\006\373>H9>>\254\237\306>\206E\332>\030gQ\275\234\335\236\276\n\353\263>\"\036\341>F\177#\276D\346B\276r\222\254>z\233\332>\244\362\271\276\372@\321>\376\027\313\276\200\300\324<\020\r\225\276\022\0065\276\\\213\313\276\2562\"\276\300\364\220=\350\276f>Ps\000\277\260VY\275\034\230\266\276\016\010\351>p%\235=\252\n[\276(\374\253\276\200\0244=\n6`\276\245\005\326\276\010\355\234\276\022=\336\276\000*@\2732\355\024\276\254\374\006>\324w<\276,\375\327\275\000\364\372\273\256\352\214>\0242\274\275\231V\252\276tU\251\275\020M=\276\374\3612\276\"\304\232>\314Nj>\000P\230\273\204Q\233\275\220\227\340\276\240\352\'>U\t\320\276\244\340\271>\364\371\035>\340\374\343=\003\253\001?\200\261R=\200\314U=\346\315\327\276\354\244\202>\273\037\005\277\300}?=@\225\024\274\262B@\276\240\240\213=\374gN>t\013V>\000@n=\350\334\361=0 \277\276\364\337\000\277J\006\242>\300\201\213>H2\311=\360\312\233=\251\326\205\276,\302J>\266\303\301\276\202\371\037\276\000p\270\275\240\332\240<,j\000\277\304/\001\277\204\227Q\276\354\200\024>\022?\341\276(o\315>\374\340\322\276r\326r\276\230\372\006\275\311\375\004\277\306\214^\2768g\214>t\017\251\276?\351\360\276d\014\226>&\352\254\276T\276\244>\014c\n\276\242C\215>\330e\336=fU\353>`\007\273=\024\306\203\276\276\234I\276\245:\262\276Z\020\230>\276\r\030\276"
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/logits_1/BiasAdd/ReadVariableOp/resource"
+  op: "Const"
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 10
+          }
+        }
+        tensor_content: "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/stem_conv_1/convolution/ReadVariableOp"
+  op: "Identity"
+  input: "tiny_functional_1/stem_conv_1/convolution/ReadVariableOp/resource"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_has_manual_control_dependencies"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/stem_conv_1/convolution"
+  op: "Conv2D"
+  input: "image"
+  input: "tiny_functional_1/stem_conv_1/convolution/ReadVariableOp"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+  attr {
+    key: "dilations"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "explicit_paddings"
+    value {
+      list {
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "SAME"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "use_cudnn_on_gpu"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/stem_conv_1/Reshape/ReadVariableOp"
+  op: "Identity"
+  input: "tiny_functional_1/stem_conv_1/Reshape/ReadVariableOp/resource"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_has_manual_control_dependencies"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/stem_conv_1/Reshape"
+  op: "Reshape"
+  input: "tiny_functional_1/stem_conv_1/Reshape/ReadVariableOp"
+  input: "tiny_functional_1/stem_conv_1/Reshape/shape"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tshape"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/stem_conv_1/Squeeze"
+  op: "Squeeze"
+  input: "tiny_functional_1/stem_conv_1/Reshape"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "squeeze_dims"
+    value {
+      list {
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/stem_conv_1/BiasAdd"
+  op: "BiasAdd"
+  input: "tiny_functional_1/stem_conv_1/convolution"
+  input: "tiny_functional_1/stem_conv_1/Squeeze"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/stem_bn_1/Cast_1/ReadVariableOp"
+  op: "Identity"
+  input: "tiny_functional_1/stem_bn_1/Cast_1/ReadVariableOp/resource"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_has_manual_control_dependencies"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/stem_bn_1/batchnorm/add"
+  op: "AddV2"
+  input: "tiny_functional_1/stem_bn_1/Cast_1/ReadVariableOp"
+  input: "tiny_functional_1/stem_bn_1/batchnorm/add/y"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/stem_bn_1/batchnorm/Rsqrt"
+  op: "Rsqrt"
+  input: "tiny_functional_1/stem_bn_1/batchnorm/add"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/stem_bn_1/Cast_2/ReadVariableOp"
+  op: "Identity"
+  input: "tiny_functional_1/stem_bn_1/Cast_2/ReadVariableOp/resource"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_has_manual_control_dependencies"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/stem_bn_1/batchnorm/mul"
+  op: "Mul"
+  input: "tiny_functional_1/stem_bn_1/batchnorm/Rsqrt"
+  input: "tiny_functional_1/stem_bn_1/Cast_2/ReadVariableOp"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/stem_bn_1/batchnorm/mul_1"
+  op: "Mul"
+  input: "tiny_functional_1/stem_conv_1/BiasAdd"
+  input: "tiny_functional_1/stem_bn_1/batchnorm/mul"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/stem_bn_1/Cast_3/ReadVariableOp"
+  op: "Identity"
+  input: "tiny_functional_1/stem_bn_1/Cast_3/ReadVariableOp/resource"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_has_manual_control_dependencies"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/stem_bn_1/Cast/ReadVariableOp"
+  op: "Identity"
+  input: "tiny_functional_1/stem_bn_1/Cast/ReadVariableOp/resource"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_has_manual_control_dependencies"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/stem_bn_1/batchnorm/mul_2"
+  op: "Mul"
+  input: "tiny_functional_1/stem_bn_1/Cast/ReadVariableOp"
+  input: "tiny_functional_1/stem_bn_1/batchnorm/mul"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/stem_bn_1/batchnorm/sub"
+  op: "Sub"
+  input: "tiny_functional_1/stem_bn_1/Cast_3/ReadVariableOp"
+  input: "tiny_functional_1/stem_bn_1/batchnorm/mul_2"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/stem_bn_1/batchnorm/add_1"
+  op: "AddV2"
+  input: "tiny_functional_1/stem_bn_1/batchnorm/mul_1"
+  input: "tiny_functional_1/stem_bn_1/batchnorm/sub"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/stem_relu_1/Relu"
+  op: "Relu"
+  input: "tiny_functional_1/stem_bn_1/batchnorm/add_1"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/dw_1/depthwise/ReadVariableOp"
+  op: "Identity"
+  input: "tiny_functional_1/dw_1/depthwise/ReadVariableOp/resource"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_has_manual_control_dependencies"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/dw_1/depthwise"
+  op: "DepthwiseConv2dNative"
+  input: "tiny_functional_1/stem_relu_1/Relu"
+  input: "tiny_functional_1/dw_1/depthwise/ReadVariableOp"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+  attr {
+    key: "dilations"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "explicit_paddings"
+    value {
+      list {
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "SAME"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/dw_1/Reshape/ReadVariableOp"
+  op: "Identity"
+  input: "tiny_functional_1/dw_1/Reshape/ReadVariableOp/resource"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_has_manual_control_dependencies"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/dw_1/Reshape"
+  op: "Reshape"
+  input: "tiny_functional_1/dw_1/Reshape/ReadVariableOp"
+  input: "tiny_functional_1/dw_1/Reshape/shape"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tshape"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/dw_1/Squeeze"
+  op: "Squeeze"
+  input: "tiny_functional_1/dw_1/Reshape"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "squeeze_dims"
+    value {
+      list {
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/dw_1/BiasAdd"
+  op: "BiasAdd"
+  input: "tiny_functional_1/dw_1/depthwise"
+  input: "tiny_functional_1/dw_1/Squeeze"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/pw_1/convolution/ReadVariableOp"
+  op: "Identity"
+  input: "tiny_functional_1/pw_1/convolution/ReadVariableOp/resource"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_has_manual_control_dependencies"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/pw_1/convolution"
+  op: "Conv2D"
+  input: "tiny_functional_1/dw_1/BiasAdd"
+  input: "tiny_functional_1/pw_1/convolution/ReadVariableOp"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+  attr {
+    key: "dilations"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "explicit_paddings"
+    value {
+      list {
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "VALID"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "use_cudnn_on_gpu"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/pw_1/Reshape/ReadVariableOp"
+  op: "Identity"
+  input: "tiny_functional_1/pw_1/Reshape/ReadVariableOp/resource"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_has_manual_control_dependencies"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/pw_1/Reshape"
+  op: "Reshape"
+  input: "tiny_functional_1/pw_1/Reshape/ReadVariableOp"
+  input: "tiny_functional_1/pw_1/Reshape/shape"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tshape"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/pw_1/Squeeze"
+  op: "Squeeze"
+  input: "tiny_functional_1/pw_1/Reshape"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "squeeze_dims"
+    value {
+      list {
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/pw_1/BiasAdd"
+  op: "BiasAdd"
+  input: "tiny_functional_1/pw_1/convolution"
+  input: "tiny_functional_1/pw_1/Squeeze"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/pw_1/Relu"
+  op: "Relu"
+  input: "tiny_functional_1/pw_1/BiasAdd"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/residual_1/Add"
+  op: "AddV2"
+  input: "tiny_functional_1/stem_relu_1/Relu"
+  input: "tiny_functional_1/pw_1/Relu"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/pool_1/MaxPool2d"
+  op: "MaxPool"
+  input: "tiny_functional_1/residual_1/Add"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+  attr {
+    key: "explicit_paddings"
+    value {
+      list {
+      }
+    }
+  }
+  attr {
+    key: "ksize"
+    value {
+      list {
+        i: 1
+        i: 2
+        i: 2
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "VALID"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 2
+        i: 2
+        i: 1
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/sep_1/separable_conv2d/ReadVariableOp"
+  op: "Identity"
+  input: "tiny_functional_1/sep_1/separable_conv2d/ReadVariableOp/resource"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_has_manual_control_dependencies"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/sep_1/separable_conv2d/depthwise"
+  op: "DepthwiseConv2dNative"
+  input: "tiny_functional_1/pool_1/MaxPool2d"
+  input: "tiny_functional_1/sep_1/separable_conv2d/ReadVariableOp"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+  attr {
+    key: "dilations"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "explicit_paddings"
+    value {
+      list {
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "SAME"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/sep_1/separable_conv2d/ReadVariableOp_1"
+  op: "Identity"
+  input: "tiny_functional_1/sep_1/separable_conv2d/ReadVariableOp_1/resource"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_has_manual_control_dependencies"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/sep_1/separable_conv2d"
+  op: "Conv2D"
+  input: "tiny_functional_1/sep_1/separable_conv2d/depthwise"
+  input: "tiny_functional_1/sep_1/separable_conv2d/ReadVariableOp_1"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+  attr {
+    key: "dilations"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "explicit_paddings"
+    value {
+      list {
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "VALID"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "use_cudnn_on_gpu"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/sep_1/Reshape/ReadVariableOp"
+  op: "Identity"
+  input: "tiny_functional_1/sep_1/Reshape/ReadVariableOp/resource"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_has_manual_control_dependencies"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/sep_1/Reshape"
+  op: "Reshape"
+  input: "tiny_functional_1/sep_1/Reshape/ReadVariableOp"
+  input: "tiny_functional_1/sep_1/Reshape/shape"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tshape"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/sep_1/Squeeze"
+  op: "Squeeze"
+  input: "tiny_functional_1/sep_1/Reshape"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "squeeze_dims"
+    value {
+      list {
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/sep_1/BiasAdd"
+  op: "BiasAdd"
+  input: "tiny_functional_1/sep_1/separable_conv2d"
+  input: "tiny_functional_1/sep_1/Squeeze"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/strided_1/convolution/ReadVariableOp"
+  op: "Identity"
+  input: "tiny_functional_1/strided_1/convolution/ReadVariableOp/resource"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_has_manual_control_dependencies"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/strided_1/convolution"
+  op: "Conv2D"
+  input: "tiny_functional_1/pool_1/MaxPool2d"
+  input: "tiny_functional_1/strided_1/convolution/ReadVariableOp"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+  attr {
+    key: "dilations"
+    value {
+      list {
+        i: 1
+        i: 1
+        i: 1
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "explicit_paddings"
+    value {
+      list {
+      }
+    }
+  }
+  attr {
+    key: "padding"
+    value {
+      s: "VALID"
+    }
+  }
+  attr {
+    key: "strides"
+    value {
+      list {
+        i: 1
+        i: 2
+        i: 2
+        i: 1
+      }
+    }
+  }
+  attr {
+    key: "use_cudnn_on_gpu"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/strided_1/Reshape/ReadVariableOp"
+  op: "Identity"
+  input: "tiny_functional_1/strided_1/Reshape/ReadVariableOp/resource"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_has_manual_control_dependencies"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/strided_1/Reshape"
+  op: "Reshape"
+  input: "tiny_functional_1/strided_1/Reshape/ReadVariableOp"
+  input: "tiny_functional_1/strided_1/Reshape/shape"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tshape"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/strided_1/Squeeze"
+  op: "Squeeze"
+  input: "tiny_functional_1/strided_1/Reshape"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "squeeze_dims"
+    value {
+      list {
+      }
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/strided_1/BiasAdd"
+  op: "BiasAdd"
+  input: "tiny_functional_1/strided_1/convolution"
+  input: "tiny_functional_1/strided_1/Squeeze"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/ExpandDims"
+  op: "ExpandDims"
+  input: "tiny_functional_1/strided_1/BiasAdd"
+  input: "tiny_functional_1/up_1/Repeat/ExpandDims/dim"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tdim"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/Cast"
+  op: "Cast"
+  input: "tiny_functional_1/up_1/Repeat/repeats"
+  attr {
+    key: "DstT"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "SrcT"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "Truncate"
+    value {
+      b: false
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/Reshape"
+  op: "Reshape"
+  input: "tiny_functional_1/up_1/Repeat/Cast"
+  input: "tiny_functional_1/up_1/Repeat/Reshape/shape_1"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "Tshape"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/Tile/multiples"
+  op: "Pack"
+  input: "tiny_functional_1/up_1/Repeat/Tile/multiples/0"
+  input: "tiny_functional_1/up_1/Repeat/Tile/multiples/1"
+  input: "tiny_functional_1/up_1/Repeat/Reshape"
+  input: "tiny_functional_1/up_1/Repeat/Tile/multiples/3"
+  input: "tiny_functional_1/up_1/Repeat/Tile/multiples/4"
+  attr {
+    key: "N"
+    value {
+      i: 5
+    }
+  }
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "axis"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/Tile"
+  op: "Tile"
+  input: "tiny_functional_1/up_1/Repeat/ExpandDims"
+  input: "tiny_functional_1/up_1/Repeat/Tile/multiples"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tmultiples"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/strided_slice"
+  op: "StridedSlice"
+  input: "tiny_functional_1/up_1/Repeat/Shape"
+  input: "tiny_functional_1/up_1/Repeat/strided_slice/stack"
+  input: "tiny_functional_1/up_1/Repeat/strided_slice/stack_1"
+  input: "tiny_functional_1/up_1/Repeat/strided_slice/stack_2"
+  attr {
+    key: "Index"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "begin_mask"
+    value {
+      i: 1
+    }
+  }
+  attr {
+    key: "ellipsis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "end_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "new_axis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "shrink_axis_mask"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/strided_slice_1"
+  op: "StridedSlice"
+  input: "tiny_functional_1/up_1/Repeat/Shape"
+  input: "tiny_functional_1/up_1/Repeat/strided_slice_1/stack"
+  input: "tiny_functional_1/up_1/Repeat/strided_slice_1/stack_1"
+  input: "tiny_functional_1/up_1/Repeat/strided_slice_1/stack_2"
+  attr {
+    key: "Index"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "begin_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "ellipsis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "end_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "new_axis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "shrink_axis_mask"
+    value {
+      i: 1
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/mul"
+  op: "Mul"
+  input: "tiny_functional_1/up_1/Repeat/Reshape"
+  input: "tiny_functional_1/up_1/Repeat/strided_slice_1"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/concat/values_1"
+  op: "Pack"
+  input: "tiny_functional_1/up_1/Repeat/mul"
+  attr {
+    key: "N"
+    value {
+      i: 1
+    }
+  }
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "axis"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/strided_slice_2"
+  op: "StridedSlice"
+  input: "tiny_functional_1/up_1/Repeat/Shape"
+  input: "tiny_functional_1/up_1/Repeat/strided_slice_2/stack"
+  input: "tiny_functional_1/up_1/Repeat/strided_slice_2/stack_1"
+  input: "tiny_functional_1/up_1/Repeat/strided_slice_2/stack_2"
+  attr {
+    key: "Index"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "begin_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "ellipsis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "end_mask"
+    value {
+      i: 1
+    }
+  }
+  attr {
+    key: "new_axis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "shrink_axis_mask"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/concat"
+  op: "ConcatV2"
+  input: "tiny_functional_1/up_1/Repeat/strided_slice"
+  input: "tiny_functional_1/up_1/Repeat/concat/values_1"
+  input: "tiny_functional_1/up_1/Repeat/strided_slice_2"
+  input: "tiny_functional_1/up_1/Repeat/concat/axis"
+  attr {
+    key: "N"
+    value {
+      i: 3
+    }
+  }
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "Tidx"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat/Reshape_1"
+  op: "Reshape"
+  input: "tiny_functional_1/up_1/Repeat/Tile"
+  input: "tiny_functional_1/up_1/Repeat/concat"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tshape"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/ExpandDims"
+  op: "ExpandDims"
+  input: "tiny_functional_1/up_1/Repeat/Reshape_1"
+  input: "tiny_functional_1/up_1/Repeat_1/ExpandDims/dim"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tdim"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/Cast"
+  op: "Cast"
+  input: "tiny_functional_1/up_1/Repeat_1/repeats"
+  attr {
+    key: "DstT"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "SrcT"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "Truncate"
+    value {
+      b: false
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/Reshape"
+  op: "Reshape"
+  input: "tiny_functional_1/up_1/Repeat_1/Cast"
+  input: "tiny_functional_1/up_1/Repeat_1/Reshape/shape_1"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "Tshape"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/Tile/multiples"
+  op: "Pack"
+  input: "tiny_functional_1/up_1/Repeat_1/Tile/multiples/0"
+  input: "tiny_functional_1/up_1/Repeat_1/Tile/multiples/1"
+  input: "tiny_functional_1/up_1/Repeat_1/Tile/multiples/2"
+  input: "tiny_functional_1/up_1/Repeat_1/Reshape"
+  input: "tiny_functional_1/up_1/Repeat_1/Tile/multiples/4"
+  attr {
+    key: "N"
+    value {
+      i: 5
+    }
+  }
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "axis"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/Tile"
+  op: "Tile"
+  input: "tiny_functional_1/up_1/Repeat_1/ExpandDims"
+  input: "tiny_functional_1/up_1/Repeat_1/Tile/multiples"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tmultiples"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/strided_slice"
+  op: "StridedSlice"
+  input: "tiny_functional_1/up_1/Repeat_1/Shape"
+  input: "tiny_functional_1/up_1/Repeat_1/strided_slice/stack"
+  input: "tiny_functional_1/up_1/Repeat_1/strided_slice/stack_1"
+  input: "tiny_functional_1/up_1/Repeat_1/strided_slice/stack_2"
+  attr {
+    key: "Index"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "begin_mask"
+    value {
+      i: 1
+    }
+  }
+  attr {
+    key: "ellipsis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "end_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "new_axis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "shrink_axis_mask"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/strided_slice_1"
+  op: "StridedSlice"
+  input: "tiny_functional_1/up_1/Repeat_1/Shape"
+  input: "tiny_functional_1/up_1/Repeat_1/strided_slice_1/stack"
+  input: "tiny_functional_1/up_1/Repeat_1/strided_slice_1/stack_1"
+  input: "tiny_functional_1/up_1/Repeat_1/strided_slice_1/stack_2"
+  attr {
+    key: "Index"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "begin_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "ellipsis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "end_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "new_axis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "shrink_axis_mask"
+    value {
+      i: 1
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/mul"
+  op: "Mul"
+  input: "tiny_functional_1/up_1/Repeat_1/Reshape"
+  input: "tiny_functional_1/up_1/Repeat_1/strided_slice_1"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/concat/values_1"
+  op: "Pack"
+  input: "tiny_functional_1/up_1/Repeat_1/mul"
+  attr {
+    key: "N"
+    value {
+      i: 1
+    }
+  }
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "axis"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/strided_slice_2"
+  op: "StridedSlice"
+  input: "tiny_functional_1/up_1/Repeat_1/Shape"
+  input: "tiny_functional_1/up_1/Repeat_1/strided_slice_2/stack"
+  input: "tiny_functional_1/up_1/Repeat_1/strided_slice_2/stack_1"
+  input: "tiny_functional_1/up_1/Repeat_1/strided_slice_2/stack_2"
+  attr {
+    key: "Index"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "begin_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "ellipsis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "end_mask"
+    value {
+      i: 1
+    }
+  }
+  attr {
+    key: "new_axis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "shrink_axis_mask"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/concat"
+  op: "ConcatV2"
+  input: "tiny_functional_1/up_1/Repeat_1/strided_slice"
+  input: "tiny_functional_1/up_1/Repeat_1/concat/values_1"
+  input: "tiny_functional_1/up_1/Repeat_1/strided_slice_2"
+  input: "tiny_functional_1/up_1/Repeat_1/concat/axis"
+  attr {
+    key: "N"
+    value {
+      i: 3
+    }
+  }
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "Tidx"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/up_1/Repeat_1/Reshape_1"
+  op: "Reshape"
+  input: "tiny_functional_1/up_1/Repeat_1/Tile"
+  input: "tiny_functional_1/up_1/Repeat_1/concat"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tshape"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/zpad_1/Pad"
+  op: "Pad"
+  input: "tiny_functional_1/up_1/Repeat_1/Reshape_1"
+  input: "tiny_functional_1/zpad_1/Const"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tpaddings"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/concat_1/concat"
+  op: "ConcatV2"
+  input: "tiny_functional_1/sep_1/BiasAdd"
+  input: "tiny_functional_1/zpad_1/Pad"
+  input: "tiny_functional_1/concat_1/concat/axis"
+  attr {
+    key: "N"
+    value {
+      i: 2
+    }
+  }
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tidx"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/gap_1/Mean"
+  op: "Mean"
+  input: "tiny_functional_1/concat_1/concat"
+  input: "tiny_functional_1/gap_1/Mean/reduction_indices"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tidx"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "keep_dims"
+    value {
+      b: false
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/logits_1/Cast/ReadVariableOp"
+  op: "Identity"
+  input: "tiny_functional_1/logits_1/Cast/ReadVariableOp/resource"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_has_manual_control_dependencies"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/logits_1/MatMul"
+  op: "MatMul"
+  input: "tiny_functional_1/gap_1/Mean"
+  input: "tiny_functional_1/logits_1/Cast/ReadVariableOp"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "grad_a"
+    value {
+      b: false
+    }
+  }
+  attr {
+    key: "grad_b"
+    value {
+      b: false
+    }
+  }
+  attr {
+    key: "transpose_a"
+    value {
+      b: false
+    }
+  }
+  attr {
+    key: "transpose_b"
+    value {
+      b: false
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/logits_1/BiasAdd/ReadVariableOp"
+  op: "Identity"
+  input: "tiny_functional_1/logits_1/BiasAdd/ReadVariableOp/resource"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_has_manual_control_dependencies"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/logits_1/BiasAdd"
+  op: "BiasAdd"
+  input: "tiny_functional_1/logits_1/MatMul"
+  input: "tiny_functional_1/logits_1/BiasAdd/ReadVariableOp"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "data_format"
+    value {
+      s: "NHWC"
+    }
+  }
+}
+node {
+  name: "tiny_functional_1/logits_1/Softmax"
+  op: "Softmax"
+  input: "tiny_functional_1/logits_1/BiasAdd"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "NoOp"
+  op: "NoOp"
+  input: "^tiny_functional_1/dw_1/Reshape/ReadVariableOp"
+  input: "^tiny_functional_1/dw_1/depthwise/ReadVariableOp"
+  input: "^tiny_functional_1/logits_1/BiasAdd/ReadVariableOp"
+  input: "^tiny_functional_1/logits_1/Cast/ReadVariableOp"
+  input: "^tiny_functional_1/pw_1/Reshape/ReadVariableOp"
+  input: "^tiny_functional_1/pw_1/convolution/ReadVariableOp"
+  input: "^tiny_functional_1/sep_1/Reshape/ReadVariableOp"
+  input: "^tiny_functional_1/sep_1/separable_conv2d/ReadVariableOp"
+  input: "^tiny_functional_1/sep_1/separable_conv2d/ReadVariableOp_1"
+  input: "^tiny_functional_1/stem_bn_1/Cast/ReadVariableOp"
+  input: "^tiny_functional_1/stem_bn_1/Cast_1/ReadVariableOp"
+  input: "^tiny_functional_1/stem_bn_1/Cast_2/ReadVariableOp"
+  input: "^tiny_functional_1/stem_bn_1/Cast_3/ReadVariableOp"
+  input: "^tiny_functional_1/stem_conv_1/Reshape/ReadVariableOp"
+  input: "^tiny_functional_1/stem_conv_1/convolution/ReadVariableOp"
+  input: "^tiny_functional_1/strided_1/Reshape/ReadVariableOp"
+  input: "^tiny_functional_1/strided_1/convolution/ReadVariableOp"
+  attr {
+    key: "_has_manual_control_dependencies"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "Identity"
+  op: "Identity"
+  input: "tiny_functional_1/logits_1/Softmax"
+  input: "^NoOp"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+versions {
+  producer: 2474
+}

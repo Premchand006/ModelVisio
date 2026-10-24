@@ -15,7 +15,7 @@ import type { FetchLike } from "./fetchBridge";
 // Instead we fetch the worker script's TEXT up front (connect-src allows it)
 // and build the blob from the code itself: nothing is loaded from inside the
 // worker, so script-src never comes into play. This needs the worker chunk to
-// be self-contained (no imports) — vite.webview.config.ts checks that at build.
+// be self-contained (no imports); vite.webview.config.ts checks that at build.
 //
 // Prefetching (rather than a lazy proxy Worker) keeps `new Worker()`
 // synchronous and returns a REAL Worker, so core's onmessage/onerror wiring is

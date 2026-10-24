@@ -5,7 +5,7 @@ import { parseContainer } from "./container";
 
 // Parses modern PyTorch `.pt`/`.pth`/`.bin` archives (torch.save → ZIP since
 // 1.6). We unpickle `data.pkl` and walk the nn.Module hierarchy
-// (_modules/_parameters/_buffers) to recover module classes + weight shapes —
+// (_modules/_parameters/_buffers) to recover module classes + weight shapes,
 // the same structure Netron shows. No compute graph exists in a pickle, so the
 // "edges" are the parent→child module tree (renders as a tree in the graph).
 
@@ -105,7 +105,7 @@ function pickModel(root: unknown): PyObj | Map<unknown, unknown> | null {
 export function parsePytorch(input: ArrayBuffer | Uint8Array, name = "model.pt"): Model {
   const buf = input instanceof Uint8Array ? input : new Uint8Array(input);
   try {
-    if (!isZip(buf)) return parseContainer(buf, name); // legacy tar/pickle — not yet supported
+    if (!isZip(buf)) return parseContainer(buf, name); // legacy tar/pickle, not yet supported
     const entries = readZipEntries(buf);
     const pkl = entries.find((e) => /(^|\/)data\.pkl$/.test(e.name)) ?? entries.find((e) => e.name.endsWith(".pkl"));
     const bytes = pkl ? extractStored(buf, pkl) : null;

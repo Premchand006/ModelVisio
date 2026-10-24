@@ -2,7 +2,7 @@ name: CI
 
 # Typecheck every workspace package and run the unit tests (parsers, core, ai,
 # vscode), build the web app, and package the VS Code extension.
-# Fast (~1 min) and needs no secrets, so it runs on every push and PR — including
+# Fast (~1 min) and needs no secrets, so it runs on every push and PR, including
 # PRs from forks.
 on:
   push:

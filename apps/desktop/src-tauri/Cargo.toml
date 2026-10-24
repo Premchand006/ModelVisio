@@ -1,7 +1,7 @@
 [package]
 name = "modelvisio"
-version = "1.0.0"
-description = "ModelVisio — desktop"
+version = "1.1.0"
+description = "ModelVisio desktop app"
 authors = ["ModelVisio"]
 edition = "2021"
 rust-version = "1.77.2"
@@ -25,6 +25,14 @@ serde_json = "1"
 # AI copilot proxy: holds the Gemini or xAI Grok key on the Rust side, calls that API.
 # rustls-tls avoids an OpenSSL system dependency on Windows/Linux builds.
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+# URL reading for the copilot (`scrape` command, src/scrape.rs): the desktop
+# mirror of packages/ai/src/scrape.ts. `url` gives WHATWG URL parsing (the same
+# host normalisation the web scraper relies on), `tokio` the DNS lookup + one
+# overall deadline, `regex` the HTML-to-text pass, `encoding_rs` charset decoding.
+url = "2"
+tokio = { version = "1", features = ["net", "time"] }
+regex = "1"
+encoding_rs = "0.8"
 
 [features]
 # By default Tauri runs in production mode; custom-protocol is enabled by Tauri CLI.

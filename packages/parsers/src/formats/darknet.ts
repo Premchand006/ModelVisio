@@ -116,7 +116,7 @@ export function parseDarknet(text: string, name = "model.cfg"): Model {
       cur = { c: out, w: 1, h: 1 };
       ins.push(k > 0 ? layerIds[k - 1] : 0);
     } else {
-      // yolo / region / softmax / dropout / cost / reorg etc. — pass through.
+      // yolo / region / softmax / dropout / cost / reorg etc.: pass through.
       ins.push(k > 0 ? layerIds[k - 1] : 0);
     }
 
@@ -156,7 +156,7 @@ function insightFor(type: string): string {
     case "convolutional": return "Darknet convolution (+ optional BN + activation).";
     case "route": return "Concatenates/selects earlier feature maps (FPN-style).";
     case "shortcut": return "Residual add from an earlier layer.";
-    case "yolo": return "YOLO detection head — decodes boxes at this scale.";
+    case "yolo": return "YOLO detection head; decodes boxes at this scale.";
     case "upsample": return "Nearest upsample for multi-scale fusion.";
     default: return `Darknet ${type} layer.`;
   }

@@ -6,7 +6,7 @@ import { scrapeOptionsFromEnv, scrapeUrl } from "@modelvisio/ai/scrape";
 import { logChat, logClientEvent, type ClientEvent } from "@modelvisio/ai/log";
 
 // Netlify proxy for the AI copilot. Holds the provider key (GEMINI_API_KEY, or
-// XAI_API_KEY for Grok — see packages/ai/src/providers.ts) server-side (set it
+// XAI_API_KEY for Grok; see packages/ai/src/providers.ts) server-side (set it
 // in the Netlify site env) so it NEVER reaches the browser. Reached at /api/chat
 // via the rewrite in netlify.toml (this function lives at /.netlify/functions/chat).
 //
@@ -16,12 +16,12 @@ import { logChat, logClientEvent, type ClientEvent } from "@modelvisio/ai/log";
 // call. The v1 handler is detected reliably on every plan/build image.
 //
 // Netlify synchronous functions are killed at a HARD 10s on the free tier (not
-// raisable) — and that clock includes cold start. So we keep a conservative time
+// raisable), and that clock includes cold start. So we keep a conservative time
 // budget AND default BOTH kinds of web search OFF: Google-Search grounding and
 // the free crawler (search + page reads) are the slow paths and, with a cold
 // start, the main cause of free-tier 502s. A plain reply returns in ~1s.
 // Re-enable with MODELVISIO_WEB_SEARCH=on (Gemini) or MODELVISIO_FREE_SEARCH=auto
-// (Grok / ungrounded Gemini) — best on a paid plan + a higher
+// (Grok / ungrounded Gemini), best on a paid plan + a higher
 // MODELVISIO_TIMEOUT_MS. Vercel's 60s shell keeps both on.
 const PROVIDER = chatProviderFromEnv(process.env);
 const WEB_SEARCH = (process.env.MODELVISIO_WEB_SEARCH || "off") !== "off";

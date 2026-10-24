@@ -1,18 +1,25 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { Model, ModelLayer } from "@modelvisio/parsers";
 import { useT } from "../../theme/ThemeContext";
 import { DAGGraph, type DAGGraphHandle } from "./DAGGraph";
 import { LayersList } from "./LayersList";
 import { Tree } from "./Tree";
+import { COLOR_MODES, computeNodeColors, viridisGradient, type ColorMode } from "./colorBy";
+import { analyzeQuantization } from "../../quant/sensitivity";
 
 type View = "graph" | "layers" | "tree";
 
 export function GraphPanel({
-  model, selected, onSelect,
+  model, selected, onSelect, colorMode, onColorModeChange, streaming = false,
 }: {
   model: Model;
+  /** The model is a partial snapshot of a large file still being parsed. */
+  streaming?: boolean;
   selected: ModelLayer | null;
   onSelect: (l: ModelLayer) => void;
+  /** Optional controlled "Color by" mode (e.g. so the Quant panel can switch it on). */
+  colorMode?: ColorMode;
+  onColorModeChange?: (m: ColorMode) => void;
 }) {
   const t = useT();
   const graphRef = useRef<DAGGraphHandle>(null);
@@ -21,7 +28,11 @@ export function GraphPanel({
   const [showWeights, setShowWeights] = useState(true);
   const [showNames, setShowNames] = useState(false);
   const [showMetrics, setShowMetrics] = useState(false);
-  const [qHeatmap, setQHeatmap] = useState(false);
+  const [localColor, setLocalColor] = useState<ColorMode>("none");
+  const color = colorMode ?? localColor;
+  const setColor = (m: ColorMode) => { setLocalColor(m); onColorModeChange?.(m); };
+  const quant = useMemo(() => (color === "q8" || color === "q4" ? analyzeQuantization(model) : null), [model, color]);
+  const coloring = useMemo(() => computeNodeColors(model, color, t.bg3, quant), [model, color, t.bg3, quant]);
   const [zoom, setZoom] = useState(1);
   const [query, setQuery] = useState("");
 
@@ -61,8 +72,19 @@ export function GraphPanel({
           <button type="button" style={btn(showWeights)} title="Show weights" onClick={() => setShowWeights((v) => !v)}>W</button>
           <button type="button" style={btn(showNames)} title="Show names" onClick={() => setShowNames((v) => !v)}>Names</button>
           <button type="button" style={btn(showMetrics)} title="Show shapes & FLOPs" onClick={() => setShowMetrics((v) => !v)}>∑</button>
-          <button type="button" style={btn(qHeatmap)} title="Quantization heatmap" onClick={() => setQHeatmap((v) => !v)}>Q</button>
         </>}
+
+        {view !== "tree" && (
+          <select
+            value={color}
+            onChange={(e) => setColor(e.target.value as ColorMode)}
+            title="Color nodes by"
+            aria-label="Color nodes by"
+            style={{ padding: "3px 6px", borderRadius: 4, border: `1px solid ${color !== "none" ? t.acc : t.bdr}`, background: t.bg, color: color !== "none" ? t.acc : t.t2, fontSize: 11, cursor: "pointer" }}
+          >
+            {COLOR_MODES.map((m) => <option key={m.id} value={m.id}>{m.id === "none" ? "Color: None" : `Color: ${m.label}`}</option>)}
+          </select>
+        )}
 
         <span style={{ flex: 1 }} />
 
@@ -81,6 +103,21 @@ export function GraphPanel({
         </>}
       </div>
 
+      {/* Color-by legend */}
+      {coloring && view !== "tree" && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 10px", borderBottom: `1px solid ${t.bdr}`, background: t.bg1, fontSize: 10, color: t.t2, flexWrap: "wrap" }}>
+          <span style={{ fontWeight: 600, color: t.t1 }}>{coloring.legend.label}</span>
+          <span style={{ fontFamily: "'JetBrains Mono',monospace" }}>{coloring.legend.min}</span>
+          <span aria-hidden style={{ width: 140, height: 8, borderRadius: 4, background: viridisGradient(), border: `1px solid ${t.bdr}` }} />
+          <span style={{ fontFamily: "'JetBrains Mono',monospace" }}>{coloring.legend.max}</span>
+          {coloring.legend.scale === "log" && <span style={{ color: t.t3 }}>(log scale)</span>}
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+            <span aria-hidden style={{ width: 10, height: 10, borderRadius: 2, background: t.bg3, border: `1px solid ${t.bdr2}` }} />{coloring.legend.naLabel}
+          </span>
+          {(color === "q8" || color === "q4") && <span style={{ color: t.t3 }}>Statistical estimate, not measured accuracy</span>}
+        </div>
+      )}
+
       {/* View */}
       {view === "graph" && (
         <DAGGraph
@@ -92,13 +129,14 @@ export function GraphPanel({
           showWeights={showWeights}
           showNames={showNames}
           showMetrics={showMetrics}
-          qHeatmap={qHeatmap}
+          nodeColors={coloring?.colors ?? null}
           zoom={zoom}
           onZoomChange={setZoom}
           query={query}
+          streaming={streaming}
         />
       )}
-      {view === "layers" && <LayersList model={model} selected={selected} onSelect={onSelect} qHeatmap={qHeatmap} query={query} />}
+      {view === "layers" && <LayersList model={model} selected={selected} onSelect={onSelect} nodeColors={coloring?.colors ?? null} query={query} />}
       {view === "tree" && <Tree model={model} selected={selected} onSelect={onSelect} />}
     </div>
   );

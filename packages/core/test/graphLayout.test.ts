@@ -27,7 +27,7 @@ function assertNoLabelOverlap(model: Model, o: LayoutOpts) {
   }
 }
 
-// A deep chain of tiny activation nodes with long shape labels — the worst case
+// A deep chain of tiny activation nodes with long shape labels: the worst case
 // for label/node collisions (short edges, big labels), like the reported Sigmoid.
 function chainModel(n: number): Model {
   const layers: ModelLayer[] = Array.from({ length: n }, (_, i) => ({
@@ -50,7 +50,7 @@ const OPT_COMBOS: LayoutOpts[] = [
   { direction: "LR", showWeights: true, showNames: true, showMetrics: true },
 ];
 
-describe("graph layout — edge labels never overlap nodes", () => {
+describe("graph layout: edge labels never overlap nodes", () => {
   for (const o of OPT_COMBOS) {
     it(`demo model: no label/node overlap (${o.direction}, metrics=${o.showMetrics})`, () => {
       assertNoLabelOverlap(demoModel, o);

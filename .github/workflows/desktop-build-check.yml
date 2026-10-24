@@ -23,12 +23,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [macos-latest, ubuntu-22.04, windows-latest]
+        include:
+          # Same universal (Apple Silicon + Intel) .dmg the release ships.
+          - platform: macos-latest
+            args: "--target universal-apple-darwin"
+          - platform: ubuntu-22.04
+            args: ""
+          - platform: windows-latest
+            args: ""
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
 
-      # No `version:` input on purpose — pnpm/action-setup@v4 reads the version
+      # No `version:` input on purpose: pnpm/action-setup@v4 reads the version
       # from the root package.json `packageManager` field (pnpm@10.29.3). Pinning
       # it here too makes the action error with ERR_PNPM_BAD_PM_VERSION.
       - uses: pnpm/action-setup@v4
@@ -45,6 +52,8 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
       - uses: swatinem/rust-cache@v2
         with:
@@ -61,4 +70,30 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           projectPath: apps/desktop
-          args: --config src-tauri/tauri.ci.conf.json
+          args: --config src-tauri/tauri.ci.conf.json ${{ matrix.args }}
+
+      # The .app must carry a valid (ad-hoc) signature (without one, Apple
+      # Silicon Macs report a downloaded app as "damaged") and both slices.
+      - name: Verify macOS bundle
+        if: matrix.platform == 'macos-latest'
+        shell: bash
+        run: |
+          bundle=apps/desktop/src-tauri/target/universal-apple-darwin/release/bundle
+          app="$bundle/macos/ModelVisio.app"
+          codesign --verify --deep --strict --verbose=2 "$app"
+          for bin in "$app"/Contents/MacOS/*; do
+            archs=$(lipo -archs "$bin"); echo "$bin: $archs"
+            case "$archs" in *x86_64*arm64*|*arm64*x86_64*) ;; *) echo "::error::$bin is not universal"; exit 1;; esac
+          done
+          ls -la "$bundle/dmg"
+
+      # Download the .dmg from the run's Artifacts tab to try it on a Mac
+      # without cutting a release.
+      - name: Upload macOS .dmg
+        if: matrix.platform == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ModelVisio-macOS-universal-dmg
+          path: apps/desktop/src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+          if-no-files-found: error
+          retention-days: 14

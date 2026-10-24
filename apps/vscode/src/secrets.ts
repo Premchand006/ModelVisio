@@ -14,7 +14,7 @@ import { errMsg, log } from "./log";
 /** Legacy plain-text Gemini key setting (Grok never had one). */
 const LEGACY_SETTING = "geminiApiKey";
 /** globalState flag: the legacy setting has been dealt with (migrated, or
- *  superseded by a key the user stored or cleared) — never migrate again. */
+ *  superseded by a key the user stored or cleared); never migrate again. */
 const MIGRATED_FLAG = "modelvisio.keyMigrated";
 
 /** The legacy setting's user-level value; workspace values are never used. */
@@ -25,7 +25,7 @@ function legacyUserKey(): string | undefined {
 /**
  * Where one provider's API key lives. The key only ever leaves the extension
  * host as the request header to that provider (x-goog-api-key for Gemini, a
- * Bearer token for xAI) — it is never posted to the WebView.
+ * Bearer token for xAI). It is never posted to the WebView.
  */
 export class ApiKeyStore {
   readonly provider: ChatProvider;
@@ -131,7 +131,7 @@ export function createApiKeys(secrets: vscode.SecretStorage, state: vscode.Memen
   };
 }
 
-/** "ModelVisio: Set Gemini / Grok API Key" — password InputBox with a "get a key" link button. */
+/** "ModelVisio: Set Gemini / Grok API Key": password InputBox with a "get a key" link button. */
 export async function promptForApiKey(store: ApiKeyStore): Promise<boolean> {
   const info = PROVIDERS[store.provider];
   const input = vscode.window.createInputBox();
@@ -210,7 +210,7 @@ export function notifyMissingKey(provider: ChatProvider = "gemini"): void {
   });
 }
 
-/** "ModelVisio: Select AI Provider" — switch the copilot between Gemini and
+/** "ModelVisio: Select AI Provider": switch the copilot between Gemini and
  *  Grok (user setting), then offer to add a key if the choice has none. */
 export async function selectProvider(keys: ApiKeys): Promise<void> {
   const current = vscode.workspace.getConfiguration("modelvisio").get<string>("provider") ?? "gemini";
@@ -219,8 +219,8 @@ export async function selectProvider(keys: ApiKeys): Promise<void> {
     label: PROVIDERS[id].label,
     description: id === current ? "current" : undefined,
     detail: id === "gemini"
-      ? "Google Gemini — free key from Google AI Studio."
-      : "xAI Grok — key from console.x.ai. Live answers via the free web search.",
+      ? "Google Gemini: free key from Google AI Studio."
+      : "xAI Grok: key from console.x.ai. Live answers via the free web search.",
   }));
   const picked = await vscode.window.showQuickPick(items, { title: "ModelVisio: AI copilot provider" });
   if (!picked) return;

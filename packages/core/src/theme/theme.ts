@@ -18,7 +18,7 @@ export interface ThemePalette {
 
 export const TH: Record<ThemeName, ThemePalette> = {
   dark: {
-    // Neutral near-black surfaces (zinc/neutral ramp) — no blue tint. Reads like a
+    // Neutral near-black surfaces (zinc/neutral ramp), no blue tint. Reads like a
     // serious dev tool (GitHub/Vercel dark), not a glossy "AI" product.
     mode: "dark",
     bg: "#0A0A0B", bg1: "#141417", bg2: "#1C1C20", bg3: "#2A2A30",

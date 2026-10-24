@@ -1,4 +1,4 @@
-// @modelvisio/ai — copilot prompt templates + client (Gemini or Grok behind the proxy).
+// @modelvisio/ai: copilot prompt templates + client (Gemini or Grok behind the proxy).
 // Pure functions, no React. The API key NEVER lives here or in the browser;
 // this calls the per-shell server-side proxy (see Security in ARCHITECTURE.md).
 
@@ -20,16 +20,16 @@ export type Source = { title: string; url: string };
 export type ChatResponse = { text: string; sources: Source[] };
 
 /**
- * System prompt for the ModelVisio copilot — a deep edge-ML deployment
+ * System prompt for the ModelVisio copilot, a deep edge-ML deployment
  * expert. The proxy enables Google Search grounding, so it can cite real,
  * current reference links; this prompt tells it the domain and when to cite.
  */
 export function buildSystemPrompt(modelSummary: string): string {
   return [
-    "You are ModelVisio's copilot — a world-class expert in neural-network",
+    "You are ModelVisio's copilot, an expert in neural-network",
     "architecture and edge/on-device deployment. You know, in depth:",
     "",
-    "- ARCHITECTURES: CNNs (ResNet, MobileNet, EfficientNet), detectors (YOLO v5–v11/v26,",
+    "- ARCHITECTURES: CNNs (ResNet, MobileNet, EfficientNet), detectors (YOLO v5-v11/v26,",
     "  SSD, RetinaNet, DETR), transformers & ViT, segmentation (U-Net, DeepLab, SAM),",
     "  LLMs/SLMs (Llama, Qwen, Phi, Gemma), diffusion, RNN/LSTM, GNNs.",
     "- FORMATS: ONNX, TFLite/LiteRT, PyTorch (.pt/.pth)/TorchScript/torch.export/ExecuTorch,",
@@ -48,15 +48,15 @@ export function buildSystemPrompt(modelSummary: string): string {
     "",
     "RULES:",
     "1. Lead with the direct answer in 1-2 sentences, THEN the specifics. Be concise and to",
-    "   the point — no filler, no restating the question, no generic 101 explanations. Prefer",
+    "   the point. No filler, no restating the question, no generic 101 explanations. Prefer",
     "   compact bullets and short code/CLI over long prose.",
     "2. Be technically precise and actionable: name the exact ops, shapes, flags, CLI/Python,",
     "   precision, and target. Give a concrete recommendation, not a list of options.",
-    "3. The app has ALREADY run a roofline-based hardware-fit analysis for THIS model — scores,",
+    "3. The app has ALREADY run a roofline-based hardware-fit analysis for THIS model. Scores,",
     "   estimated FPS, FPS/W, the compute- vs memory-bound regime, memory-fit, and op/CPU-",
     "   fallback coverage are in the context below. USE it: cite the specific devices and",
     "   numbers, explain WHY (the binding bottleneck), and tailor optimization advice to this",
-    "   model's actual bottleneck layers and quantization-sensitive layers — don't give advice",
+    "   model's actual bottleneck layers and quantization-sensitive layers. Don't give advice",
     "   that ignores the computed analysis.",
     "4. When the user asks for references, links, docs, papers, or current/version-specific",
     "   facts (latest releases, benchmarks, op support), rely on web search grounding (Google",
@@ -96,7 +96,7 @@ export type UploadMeta = {
 /**
  * Fire-and-forget usage beacon for a loaded model. POSTs to the same proxy
  * endpoint as chat (so no extra/identifiable request shows up), where the server
- * records it. Never throws and never blocks the UI — all errors are swallowed.
+ * records it. Never throws and never blocks the UI; all errors are swallowed.
  */
 export function logUpload(meta: UploadMeta, endpoint: string = DEFAULT_CHAT_ENDPOINT): void {
   try {
@@ -119,7 +119,7 @@ export function logUpload(meta: UploadMeta, endpoint: string = DEFAULT_CHAT_ENDP
       }),
     }).catch(() => {});
   } catch {
-    // ignore — best-effort only
+    // ignore: best-effort only
   }
 }
 
@@ -156,8 +156,8 @@ export async function sendChat({
 
 // ─── Web scraping (real-time URL grounding) ──────────────────────────────────
 // Companion to Gemini's google_search grounding. The user (or a copilot step)
-// can pin a specific URL — a vendor op-support page, an MLPerf result table, a
-// changelog — and get its readable text back to feed into the chat context, so
+// can pin a specific URL (a vendor op-support page, an MLPerf result table, a
+// changelog) and get its readable text back to feed into the chat context, so
 // answers stay grounded in the actual document rather than the model's prior.
 
 export type FetchScrapedArgs = {
@@ -169,7 +169,7 @@ export type FetchScrapedArgs = {
 /**
  * POST a URL to the /api/scrape proxy and return the page's readable text +
  * title. The proxy enforces SSRF guards, size caps, timeouts, and the optional
- * MODELVISIO_SCRAPE_ALLOWLIST — the browser never fetches cross-origin itself.
+ * MODELVISIO_SCRAPE_ALLOWLIST. The browser never fetches cross-origin itself.
  */
 export async function fetchScraped({
   url,
@@ -210,7 +210,7 @@ export type ScrapeMessageUrlsArgs = {
 /**
  * Scrape every URL the user pasted into `text` (up to `maxUrls`, in parallel)
  * via the /api/scrape proxy. Never throws: a URL that can't be read lands in
- * `failures` so the chat can still answer — and say it couldn't read it.
+ * `failures` so the chat can still answer and say it couldn't read it.
  */
 export async function scrapeMessageUrls(
   text: string,
@@ -235,7 +235,7 @@ export async function scrapeMessageUrls(
 export function formatScrapedForPrompt(pages: ScrapedPage[], failures: ScrapeFailure[] = []): string {
   if (pages.length === 0 && failures.length === 0) return "";
   const parts = pages.map((p, i) => {
-    const head = `[Source ${i + 1}] ${p.title || "(untitled)"} — ${p.finalUrl}`;
+    const head = `[Source ${i + 1}] ${p.title || "(untitled)"} - ${p.finalUrl}`;
     return `${head}\n<<<PAGE ${i + 1}\n${p.text}${p.truncated ? "\n…(truncated)" : ""}\nPAGE ${i + 1}>>>`;
   });
   const lines = [
@@ -248,9 +248,15 @@ export function formatScrapedForPrompt(pages: ScrapedPage[], failures: ScrapeFai
   if (failures.length) {
     lines.push(
       "",
-      "Could NOT read these linked URLs — say so if relevant; do not guess their contents:",
-      ...failures.map((f) => `  ${f.url} — ${f.error}`),
+      "Could NOT read these linked URLs. Say so if relevant; do not guess their contents:",
+      ...failures.map((f) => `  ${f.url}: ${f.error}`),
     );
   }
   return lines.join("\n");
 }
+
+// AI performance investigator (evidence-pack prompt, validated parsing, rule-based fallback).
+export * from "./investigate";
+
+// AI deployment agent (JSON action protocol over the chat proxy, injected tools, planner fallback).
+export * from "./deployAgent";

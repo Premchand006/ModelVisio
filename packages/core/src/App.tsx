@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
-import { FORMAT_SUPPORT, type Model, type ModelLayer } from "@modelvisio/parsers";
-import { parseBufferInWorker } from "./workers/parseClient";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FORMAT_SUPPORT, pickPrimary, type Companions, type Model, type ModelLayer } from "@modelvisio/parsers";
+import { parseBufferInWorker, parseBufferStreaming, shouldStream } from "./workers/parseClient";
+import { PartialModelBuilder, throttleFrames } from "./workers/streaming";
 import { ThemeCtx } from "./theme/ThemeContext";
 import { TH, type ThemeName } from "./theme/theme";
 import { fB, fmt } from "./utils/format";
@@ -15,17 +16,31 @@ import { HWReport } from "./components/HWReport";
 import { Converter } from "./components/Converter";
 import { DeployRecipe } from "./components/DeployRecipe";
 import { Chat } from "./components/Chat";
+import { QuantHeatmap } from "./components/QuantHeatmap";
+import { ModelAdvisor } from "./components/ModelAdvisor";
+import { Benchmark } from "./components/Benchmark";
+import { Investigator } from "./components/Investigator";
+import { OptimizationSearch } from "./components/OptimizationSearch";
+import { DeployAgent } from "./components/DeployAgent";
+import { FleetSim } from "./components/FleetSim";
+import { ModelRegistry } from "./components/ModelRegistry";
+import type { ColorMode } from "./components/Graph/colorBy";
 import { logUpload } from "@modelvisio/ai";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { BuildingPage } from "./components/BuildingPage";
 import { applyFix, type FixId } from "./fixes/transforms";
 import { useViewport } from "./hooks/useViewport";
-import { GITHUB_URL, AUTHOR, DESKTOP_DOWNLOAD_URL } from "./data/links";
+import { GITHUB_URL, AUTHOR, DESKTOP_BUILDS, DESKTOP_RELEASES_URL } from "./data/links";
 import { isDesktop, isVsCodeWebview } from "./utils/apiKey";
+import { detectOS } from "./utils/platform";
+import { OsIcon } from "./components/OsIcon";
+import { DownloadPanel } from "./components/DownloadPanel";
+import { MacInstallHelp } from "./components/MacInstallHelp";
 import logoUrl from "./assets/logo.png";
 import graphHexUrl from "./assets/graph-hex.png";
 
-const ACCEPT = FORMAT_SUPPORT.flatMap((f) => f.exts).map((e) => "." + e).join(",");
+// Plus weight-only companions picked alongside their graph file.
+const ACCEPT = [...FORMAT_SUPPORT.flatMap((f) => f.exts), "pdiparams", "index", "data-00000-of-00001"].map((e) => "." + e).join(",");
 
 // GitHub "mark" glyph, reused in the header and landing page.
 const GH_PATH = "M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z";
@@ -34,7 +49,8 @@ const GhIcon = ({ size = 15 }: { size?: number }) => (
 );
 
 /** Imperative handle a shell can use to drive the app (e.g. native menus). */
-export type AppApi = { openFile: (f: File) => void };
+/** `companions`: sibling files the format keeps its weights in (e.g. OpenVINO .bin). */
+export type AppApi = { openFile: (f: File, companions?: File[]) => void };
 
 /**
  * Top-level ModelVisio UI. Owns theme + loaded-model state and composes
@@ -59,14 +75,15 @@ export function App({
   // Undo stack of pre-fix model snapshots, so applied compiler fixes are reversible.
   const [fixUndo, setFixUndo] = useState<Model[]>([]);
   const [rightTab, setRightTab] = useState("inspector");
+  const [graphColor, setGraphColor] = useState<ColorMode>("none");
   const [drag, setDrag] = useState(false);
   // When set, shows the full-screen "Building" (coming-soon) page for a surface
-  // that isn't shipped yet — e.g. the desktop app or VS Code extension.
+  // that isn't shipped yet, e.g. the desktop app or VS Code extension.
   const [building, setBuilding] = useState<string | null>(null);
   const [sidebarW, setSidebarW] = useState(400);
   const [resizeHover, setResizeHover] = useState(false);
   const { vw, narrow, compact } = useViewport();
-  // Side-by-side: never let the sidebar starve the graph — keep ≥380px for it.
+  // Side-by-side: never let the sidebar starve the graph; keep at least 380px for it.
   const effSidebarW = Math.min(sidebarW, Math.max(260, vw - 380));
 
   const startResize = (e: React.MouseEvent) => {
@@ -82,10 +99,22 @@ export function App({
     document.body.style.userSelect = "none";
   };
   const [parsing, setParsing] = useState(false);
+  // Desktop download: one-click installer for the visitor's OS (SSR / mobile /
+  // unknown → the releases page), plus an "Other platforms" panel.
+  const os = useMemo(() => detectOS(), []);
+  const build = DESKTOP_BUILDS.find((b) => b.os === os);
+  const [dlPanel, setDlPanel] = useState(false);
+  const [macHelp, setMacHelp] = useState(false);
+  const closeDlPanel = useCallback(() => setDlPanel(false), []);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // Progressive load of a large model: progress while chunks stream in, plus a
+  // load token so a newer load (or closing the model) discards stale updates.
+  const [streamProg, setStreamProg] = useState<{ pct: number; layers: number } | null>(null);
+  const loadSeq = useRef(0);
+  const cancelLoad = () => { loadSeq.current++; setStreamProg(null); setParsing(false); };
 
-  const loadDemo = () => { setModel(demoModel); setModelBytes(null); setSel(null); setLoadError(null); setFixUndo([]); };
-  const clearModel = () => { setModel(null); setModelBytes(null); setSel(null); setFixUndo([]); };
+  const loadDemo = () => { cancelLoad(); setModel(demoModel); setModelBytes(null); setSel(null); setLoadError(null); setFixUndo([]); };
+  const clearModel = () => { cancelLoad(); setModel(null); setModelBytes(null); setSel(null); setFixUndo([]); };
 
   // Apply a compiler auto-fix to the in-memory model (graph/stats/issues update
   // live), pushing a snapshot so it can be undone. Updaters stay pure (no nested
@@ -103,42 +132,96 @@ export function App({
     setSel(null);
   }, [fixUndo]);
 
-  const handleFile = useCallback(async (f?: File) => {
+  const handleFile = useCallback(async (f?: File, extra: File[] = []) => {
     if (!f) return;
+    const seq = ++loadSeq.current;
+    const live = () => seq === loadSeq.current;
     setLoadError(null);
     setParsing(true);
+    setStreamProg(null);
+    let flush: ReturnType<typeof throttleFrames> | null = null;
+    let shown = false; // a partial model of this load is on screen
     try {
       // Read the bytes once: parse them, and retain them for conversion/export.
       const buf = await f.arrayBuffer();
-      const m = await parseBufferInWorker(buf, f.name);
-      setModel(m); setModelBytes(buf); setSel(null); setFixUndo([]);
+      const companions: Companions | undefined = extra.length
+        ? Object.fromEntries(await Promise.all(extra.map(async (c) => [c.webkitRelativePath || c.name, await c.arrayBuffer()] as const)))
+        : undefined;
+      if (!live()) return;
+      let m: Model;
+      if (shouldStream(buf.byteLength)) {
+        // Large model: show layers as they are parsed. Partial snapshots render
+        // at most ~4x/sec; the final Model replaces them when parsing completes.
+        const acc = new PartialModelBuilder();
+        setStreamProg({ pct: 0, layers: 0 });
+        flush = throttleFrames(() => {
+          if (!live()) return;
+          setStreamProg({ pct: Math.round(acc.progress * 100), layers: acc.layers.length });
+          if (!acc.layers.length) return;
+          if (!shown) { shown = true; setSel(null); setFixUndo([]); setModelBytes(null); }
+          setModel(acc.snapshot());
+        }, 250);
+        const tick = flush;
+        m = await parseBufferStreaming(buf, f.name, (c) => { if (live()) { acc.push(c); tick(); } }, companions);
+        flush.cancel();
+      } else {
+        m = await parseBufferInWorker(buf, f.name, companions);
+      }
+      if (!live()) return;
+      const final = m;
+      setModel(final); setModelBytes(buf); setFixUndo([]);
+      // Keep a node picked while streaming, re-pointed at the final layer object.
+      setSel((s) => (s && shown ? final.layers.find((l) => l.id === s.id) ?? null : null));
       logUpload({
         modelName: m.name, format: m.format, framework: m.framework,
         sizeBytes: m.sizeBytes, params: m.layers.reduce((s, l) => s + l.params, 0),
         layers: m.layers.length,
       });
     } catch (err) {
+      if (!live()) return;
+      // Drop a half-streamed graph so the landing screen shows the error.
+      if (shown) { setModel(null); setSel(null); }
       setLoadError(err instanceof Error ? err.message : String(err));
     } finally {
-      setParsing(false);
+      flush?.cancel();
+      if (live()) { setParsing(false); setStreamProg(null); }
     }
   }, []);
 
   // Expose an imperative handle so shells (e.g. the Tauri native menu) can open
   // files without reaching into the UI.
-  useEffect(() => { onReady?.({ openFile: (f: File) => { void handleFile(f); } }); }, [onReady, handleFile]);
+  // Several files opened together (multi-select / drop): parse the graph file,
+  // pass the rest as its weight companions.
+  const handleFiles = useCallback((list?: FileList | File[] | null) => {
+    const files = Array.from(list ?? []);
+    const primary = pickPrimary(files.map((x) => x.name));
+    const f = files.find((x) => x.name === primary);
+    void handleFile(f, files.filter((x) => x !== f));
+  }, [handleFile]);
+
+  useEffect(() => { onReady?.({ openFile: (f: File, companions?: File[]) => { void handleFile(f, companions); } }); }, [onReady, handleFile]);
 
   const totalP = model ? model.layers.reduce((s, l) => s + l.params, 0) : 0;
   const totalF = model ? model.layers.reduce((s, l) => s + l.flops, 0) : 0;
 
+  // While a large model streams in, analysis tabs wait for the final model
+  // (they'd show misleading partial numbers); the Inspector works on partial data.
+  const sideTab = streamProg && rightTab !== "inspector" ? "parsing" : rightTab;
+
   const RTABS = [
     { id: "inspector", label: "Inspector" }, { id: "compiler", label: "Compiler" },
-    { id: "hardware", label: "Hardware" }, { id: "convert", label: "Convert" },
-    { id: "deploy", label: "Deploy" }, { id: "chat", label: "AI" },
+    { id: "hardware", label: "Hardware" },
+    { id: "quant", label: "Quant" }, { id: "advisor", label: "Advisor" },
+    { id: "bench", label: "Bench" }, { id: "investigate", label: "Investigate" },
+    { id: "optimize", label: "Optimize" }, { id: "convert", label: "Convert" },
+    { id: "deploy", label: "Deploy" }, { id: "agent", label: "Deploy Agent" },
+    { id: "fleet", label: "Fleet" }, { id: "registry", label: "Registry" },
+    { id: "chat", label: "AI" },
   ];
 
   return <ThemeCtx.Provider value={t}>
     <ErrorBoundary>
+    {dlPanel && <DownloadPanel detected={os} onClose={closeDlPanel} />}
     {building && <BuildingPage label={building} theme={theme} onToggleTheme={() => setTheme((p) => (p === "dark" ? "light" : "dark"))} onBack={() => setBuilding(null)} />}
     <div style={{ height: "100dvh", display: "flex", flexDirection: "column", background: t.bg, color: t.t0, fontFamily: "'Inter',-apple-system,sans-serif", overflow: "hidden", transition: "background .3s" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700;800&display=swap');
@@ -147,7 +230,7 @@ export function App({
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
         ::selection{background:${t.acc}44}`}</style>
 
-      {/* Header — a full-width ribbon with real presence */}
+      {/* Header: full-width ribbon */}
       <header style={{ padding: compact ? "10px 14px" : "13px 24px", borderBottom: `1px solid ${t.bdr}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, rowGap: 8, flexWrap: "wrap", flexShrink: 0, background: t.bg1 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 11, minWidth: 0 }}>
           <img src={logoUrl} alt="ModelVisio" width={34} height={34} style={{ width: 34, height: 34, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
@@ -171,30 +254,33 @@ export function App({
             <div style={{ display: "inline-block", fontSize: "clamp(30px, 9vw, 54px)", fontWeight: 800, fontFamily: "'Space Grotesk'", letterSpacing: "-0.03em", lineHeight: 1.08, paddingBottom: 6, color: t.t0 }}>Model<span style={{ color: t.acc }}>Visio</span></div>
             <div style={{ fontSize: "clamp(11px, 2.6vw, 14px)", color: t.t2, marginTop: 4 }}>Model analyzer · Compiler pre-flight · Edge deployment intelligence</div>
           </div>
-          <div onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); handleFile(e.dataTransfer.files[0]); }}
+          <div onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); handleFiles(e.dataTransfer.files); }}
             style={{ width: "min(480px, 100%)", padding: compact ? "24px 18px" : 40, borderRadius: 14, border: `2px dashed ${drag ? t.acc : t.bdr}`, background: drag ? t.acc + "10" : t.bg1, textAlign: "center", transition: "border-color .2s, background .2s" }}>
             {/* Node-graph hexagon mark, tinted via CSS mask so it adopts the theme
                 color (works on both the dark and light dropzone). */}
             <div style={{ width: 82, height: 65, margin: "0 auto 8px", opacity: 0.6, background: t.t2, WebkitMaskImage: `url(${graphHexUrl})`, maskImage: `url(${graphHexUrl})`, WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat", WebkitMaskPosition: "center", maskPosition: "center", WebkitMaskSize: "contain", maskSize: "contain" }} />
-            <div style={{ fontSize: 15, fontWeight: 600, color: t.t0, marginBottom: 3 }}>{parsing ? "Parsing model…" : "Drop your model file"}</div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: t.t0, marginBottom: 3 }}>{parsing ? (streamProg ? `Parsing model… ${streamProg.pct}%` : "Parsing model…") : "Drop your model file"}</div>
             <div style={{ fontSize: 11.5, color: t.t2, marginBottom: 16, lineHeight: 1.7 }}>
               {FORMATS.join(" · ")}
             </div>
+            <div style={{ fontSize: 10, color: t.t3, marginBottom: 12, lineHeight: 1.5 }}>OpenVINO, ncnn, Paddle, TF.js: select or drop the weights file together with the graph file.</div>
             {loadError && <div style={{ fontSize: 11, color: t.err, marginBottom: 12, lineHeight: 1.4 }}>{loadError}</div>}
             <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
               <label style={{ padding: "9px 24px", borderRadius: 7, background: t.acc, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>
-                Browse Files<input type="file" accept={ACCEPT} hidden onChange={(e) => handleFile(e.target.files?.[0] || undefined)} />
+                Browse Files<input type="file" accept={ACCEPT} multiple hidden onChange={(e) => handleFiles(e.target.files)} />
               </label>
               <button type="button" onClick={loadDemo} style={{ padding: "9px 24px", borderRadius: 7, border: `1px solid ${t.bdr}`, background: "transparent", color: t.t2, fontSize: 12, fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap" }}>Load Demo · YOLO26n</button>
             </div>
           </div>
           <div style={{ display: "flex", gap: 10, rowGap: 8, flexWrap: "wrap", justifyContent: "center" }}>
-            {/* Distribution downloads — web only. Hidden inside the desktop app and
+            {/* Distribution downloads, web only. Hidden inside the desktop app and
                 the VS Code extension: you're already running one of them. */}
             {!isDesktop() && !isVsCodeWebview() && <>
-              <a href={DESKTOP_DOWNLOAD_URL} target="_blank" rel="noreferrer noopener" title="Download the Windows desktop installer"
-                style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 16px", borderRadius: 8, border: `1px solid ${t.bdr}`, background: t.bg1, color: t.t1, fontSize: 11.5, fontWeight: 600, textDecoration: "none", cursor: "pointer" }}>
-                ⬇ Download Desktop App
+              <a href={build ? build.url : DESKTOP_RELEASES_URL} target="_blank" rel="noreferrer noopener"
+                title={build ? `Download the ${build.label} desktop app (${build.file})` : "Download the desktop app (all platforms)"}
+                onClick={() => { if (os === "mac") setMacHelp(true); }}
+                style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "7px 16px", borderRadius: 8, border: `1px solid ${t.acc}77`, background: t.acc + "14", color: t.t0, fontSize: 11.5, fontWeight: 600, textDecoration: "none", cursor: "pointer" }}>
+                <OsIcon os={os} size={13} />{build ? `Download for ${build.label}` : "Download Desktop App"}
               </a>
               <button type="button" onClick={() => setBuilding("VS Code Extension")}
                 style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 16px", borderRadius: 8, border: `1px solid ${t.bdr}`, background: t.bg1, color: t.t1, fontSize: 11.5, fontWeight: 600, cursor: "pointer" }}>
@@ -206,6 +292,15 @@ export function App({
               <GhIcon /> GitHub
             </a>
           </div>
+          {!isDesktop() && !isVsCodeWebview() && <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, width: "min(480px, 100%)", marginTop: compact ? -12 : -18 }}>
+            <button type="button" onClick={() => setDlPanel(true)} aria-haspopup="dialog"
+              style={{ border: "none", background: "transparent", padding: "2px 4px", color: t.t2, fontSize: 11, cursor: "pointer", textDecoration: "underline", textDecorationStyle: "dotted", textUnderlineOffset: 3 }}>
+              {build ? "Other platforms" : "macOS · Windows · Linux"}
+            </button>
+            {macHelp && <div role="status" style={{ width: "100%", border: `1px solid ${t.bdr}`, background: t.bg1, borderRadius: 10, padding: compact ? "10px 12px" : "12px 14px" }}>
+              <MacInstallHelp onDismiss={() => setMacHelp(false)} />
+            </div>}
+          </div>}
           <div style={{ marginTop: compact ? 4 : 10, fontSize: 11, color: t.t3, textAlign: "center", letterSpacing: .3 }}>
             Developed by <span style={{ fontWeight: 700, color: t.t1 }}>Premchand</span> · © 2026{" "}
             <a href={GITHUB_URL} target="_blank" rel="noreferrer noopener" style={{ color: t.t2, fontWeight: 600, textDecoration: "none" }}>@{AUTHOR}</a>
@@ -215,18 +310,26 @@ export function App({
         <>
           {/* Stats */}
           <div style={{ padding: compact ? "6px 10px" : "8px 24px", borderBottom: `1px solid ${t.bdr}`, display: "flex", gap: 6, overflowX: "auto", flexShrink: 0, background: t.bg1 }}>
-            {[{ l: "Params", v: fmt(totalP), c: t.acc }, { l: "FLOPs", v: fmt(totalF), c: t.acc2 }, { l: "Size", v: fB(model.sizeBytes), c: t.suc }, { l: "Input", v: model.inputShape.slice(2).join("×") || "—", c: t.wrn }, { l: "Layers", v: model.layers.length, c: t.cH }, { l: "Opset", v: model.opset, c: t.t2 }].map((s) =>
+            {[{ l: "Params", v: fmt(totalP), c: t.acc }, { l: "FLOPs", v: fmt(totalF), c: t.acc2 }, { l: "Size", v: fB(model.sizeBytes), c: t.suc }, { l: "Input", v: model.inputShape.slice(2).join("×") || "-", c: t.wrn }, { l: "Layers", v: model.layers.length, c: t.cH }, { l: "Opset", v: model.opset, c: t.t2 }].map((s) =>
               <div key={s.l} style={{ background: t.bg1, border: `1px solid ${t.bdr}`, borderRadius: 6, padding: "5px 11px", minWidth: 84, flexShrink: 0 }}>
                 <div style={{ fontSize: 9.5, color: t.t2, textTransform: "uppercase", letterSpacing: .6 }}>{s.l}</div>
                 <div style={{ fontSize: 17, fontWeight: 700, color: s.c, fontFamily: "'JetBrains Mono'", marginTop: 1 }}>{s.v}</div>
               </div>
             )}
+            {streamProg && <div role="status" aria-live="polite" style={{ background: t.bg1, border: `1px solid ${t.acc}66`, borderRadius: 6, padding: "5px 11px", minWidth: 180, flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 5 }}>
+              <div style={{ fontSize: 11, color: t.t1, fontFamily: "'JetBrains Mono'", whiteSpace: "nowrap" }}>Parsing… {streamProg.pct}% · {streamProg.layers.toLocaleString("en-US")} layers</div>
+              <div style={{ height: 3, borderRadius: 2, background: t.bdr, overflow: "hidden" }}><div style={{ width: `${streamProg.pct}%`, height: "100%", background: t.acc, transition: "width .25s" }} /></div>
+            </div>}
           </div>
+          {/* Parser caveats: numbers above that are assumed or incomplete. */}
+          {!!model.notes?.length && <div role="note" style={{ padding: compact ? "4px 10px" : "5px 24px", borderBottom: `1px solid ${t.bdr}`, background: t.wrn + "12", fontSize: 11, color: t.t1, lineHeight: 1.45, flexShrink: 0 }}>
+            {model.notes.map((n, i) => <div key={i}><span style={{ color: t.wrn, fontWeight: 700 }}>Note · </span>{n}</div>)}
+          </div>}
 
           {/* Workspace: graph dominant (Netron-style), analysis sidebar on the right.
               On narrow viewports it stacks vertically and the splitter is hidden. */}
           <div style={{ flex: 1, display: "flex", flexDirection: narrow ? "column" : "row", overflow: "hidden" }}>
-            <GraphPanel model={model} selected={sel} onSelect={setSel} />
+            <GraphPanel model={model} selected={sel} onSelect={setSel} streaming={!!streamProg} colorMode={graphColor} onColorModeChange={setGraphColor} />
 
             {!narrow && (
               <div
@@ -241,14 +344,23 @@ export function App({
             <aside style={narrow
               ? { width: "100%", height: compact ? "52%" : "45%", flexShrink: 0, display: "flex", flexDirection: "column", overflow: "hidden", background: t.bg1, borderTop: `1px solid ${t.bdr}` }
               : { width: effSidebarW, flexShrink: 0, display: "flex", flexDirection: "column", overflow: "hidden", background: t.bg1 }}>
-              <div style={{ padding: "4px 8px", borderBottom: `1px solid ${t.bdr}` }}><Tabs tabs={RTABS} active={rightTab} onChange={setRightTab} /></div>
+              <div style={{ padding: "4px 8px", borderBottom: `1px solid ${t.bdr}` }}><Tabs tabs={RTABS} active={rightTab} onChange={setRightTab} wrap /></div>
               <div style={{ flex: 1, overflow: "auto", padding: 10 }}>
-                {rightTab === "inspector" && <Inspector layer={sel} model={model} />}
-                {rightTab === "compiler" && <CompilerChecker model={model} onApplyFix={onApplyFix} onUndo={onUndoFix} undoDepth={fixUndo.length} />}
-                {rightTab === "hardware" && <HWReport model={model} />}
-                {rightTab === "convert" && <Converter model={model} modelBytes={modelBytes} />}
-                {rightTab === "deploy" && <DeployRecipe model={model} />}
-                {rightTab === "chat" && <div style={{ height: "100%" }}><Chat model={model} sel={sel} /></div>}
+                {streamProg && sideTab === "parsing" && <div style={{ fontSize: 11.5, color: t.t2, lineHeight: 1.6, padding: 6 }}>Parsing… {streamProg.pct}%. This panel opens once the whole model has loaded; the Inspector works now.</div>}
+                {sideTab === "inspector" && <Inspector layer={sel} model={model} />}
+                {sideTab === "compiler" && <CompilerChecker model={model} onApplyFix={onApplyFix} onUndo={onUndoFix} undoDepth={fixUndo.length} />}
+                {sideTab === "hardware" && <HWReport model={model} />}
+                {sideTab === "quant" && <QuantHeatmap model={model} selected={sel} onSelectLayer={setSel} onShowOnGraph={setGraphColor} />}
+                {sideTab === "advisor" && <ModelAdvisor model={model} onSelectLayer={setSel} />}
+                {sideTab === "bench" && <Benchmark model={model} modelBytes={modelBytes} />}
+                {sideTab === "investigate" && <Investigator model={model} onSelectLayer={setSel} />}
+                {sideTab === "optimize" && <OptimizationSearch model={model} onApplyFix={onApplyFix} />}
+                {sideTab === "convert" && <Converter model={model} modelBytes={modelBytes} />}
+                {sideTab === "deploy" && <DeployRecipe model={model} />}
+                {sideTab === "agent" && <DeployAgent model={model} onApplyFix={onApplyFix} />}
+                {sideTab === "fleet" && <FleetSim model={model} />}
+                {sideTab === "registry" && <ModelRegistry model={model} modelBytes={modelBytes} />}
+                {sideTab === "chat" && <div style={{ height: "100%" }}><Chat model={model} sel={sel} /></div>}
               </div>
             </aside>
           </div>

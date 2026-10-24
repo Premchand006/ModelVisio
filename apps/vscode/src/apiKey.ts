@@ -11,7 +11,7 @@ export type KeySource = "secret" | "setting" | "env";
 export type KeyCandidates = {
   /** VS Code SecretStorage (encrypted, per machine). */
   secret?: string | null;
-  /** Legacy plain-text `modelvisio.geminiApiKey` setting — user level only
+  /** Legacy plain-text `modelvisio.geminiApiKey` setting, user level only
    *  (see userSettingKey). Gemini only. */
   setting?: string | null;
   /** GEMINI_API_KEY / XAI_API_KEY in the environment that launched VS Code. */
@@ -88,7 +88,7 @@ export function userSettingKey(inspected: { globalValue?: unknown } | undefined)
 }
 
 /** Migrate the legacy user setting into SecretStorage only when no secret
- *  exists yet — never overwrite a key the user stored deliberately. */
+ *  exists yet. Never overwrite a key the user stored deliberately. */
 export function shouldMigrate(secret: string | null | undefined, legacySetting: string | null | undefined): boolean {
   return !secret?.trim() && !!legacySetting?.trim();
 }
@@ -97,6 +97,6 @@ export function shouldMigrate(secret: string | null | undefined, legacySetting: 
 export function validateApiKeyInput(value: string): string | null {
   const v = value.trim();
   if (!v) return "The API key cannot be empty.";
-  if (/\s/.test(v)) return "API keys don't contain spaces — check what was pasted.";
+  if (/\s/.test(v)) return "API keys don't contain spaces. Check what was pasted.";
   return null;
 }

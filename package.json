@@ -1,8 +1,8 @@
 {
   "name": "modelvisio",
-  "version": "0.0.0",
+  "version": "1.1.0",
   "private": true,
-  "description": "AI-native neural-network model analyzer for edge deployment. One engine, three shells.",
+  "description": "Neural-network model analyzer for edge deployment, for the web, desktop and VS Code.",
   "type": "module",
   "scripts": {
     "dev": "pnpm --filter @modelvisio/web dev",

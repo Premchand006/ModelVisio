@@ -8,7 +8,7 @@ name: Desktop Release
 #   git tag desktop-v1.0.0 && git push origin desktop-v1.0.0
 #
 # The Release is created as a DRAFT so a single failed platform can never publish
-# a half-finished release — review it on the Releases page and click "Publish".
+# a half-finished release. Review it on the Releases page and click "Publish".
 on:
   push:
     tags:
@@ -29,10 +29,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: macos-latest # Apple Silicon (M-series)
-            args: "--target aarch64-apple-darwin"
-          - platform: macos-latest # Intel
-            args: "--target x86_64-apple-darwin"
+          # One universal .dmg (Apple Silicon + Intel in a single app) so the
+          # website has ONE macOS download and nobody picks the wrong chip.
+          # tauri-action still writes darwin-aarch64 AND darwin-x86_64 entries
+          # into latest.json from it, so both kinds of Mac keep auto-updating.
+          - platform: macos-latest
+            args: "--target universal-apple-darwin"
           - platform: ubuntu-22.04
             args: ""
           - platform: windows-latest
@@ -80,7 +82,7 @@ jobs:
           fi
           echo "Updater signing key looks valid."
 
-      # No `version:` input on purpose — pnpm/action-setup@v4 reads the version
+      # No `version:` input on purpose: pnpm/action-setup@v4 reads the version
       # from the root package.json `packageManager` field (pnpm@10.29.3). Pinning
       # it here too makes the action error with ERR_PNPM_BAD_PM_VERSION.
       - uses: pnpm/action-setup@v4
@@ -113,6 +115,42 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Optional Apple Developer ID signing + notarization. Without these secrets
+      # the app is ad-hoc signed (bundle.macOS.signingIdentity "-" in
+      # tauri.conf.json): it opens after the user clicks "Open Anyway" once.
+      # Exported ONLY when set: tauri reads them with var_os, so an EMPTY value
+      # (what GitHub gives an undefined secret) still counts as present. An
+      # empty APPLE_CERTIFICATE fails the keychain import and an empty
+      # APPLE_SIGNING_IDENTITY overrides the ad-hoc "-".
+      - name: Configure Apple signing (if secrets are set)
+        if: matrix.platform == 'macos-latest'
+        shell: bash
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          put() { { echo "$1<<__APPLE_EOF__"; printf '%s\n' "$2"; echo "__APPLE_EOF__"; } >> "$GITHUB_ENV"; }
+          if [ -n "$APPLE_CERTIFICATE" ] && [ -n "$APPLE_SIGNING_IDENTITY" ]; then
+            put APPLE_CERTIFICATE "$APPLE_CERTIFICATE"
+            put APPLE_CERTIFICATE_PASSWORD "$APPLE_CERTIFICATE_PASSWORD"
+            put APPLE_SIGNING_IDENTITY "$APPLE_SIGNING_IDENTITY"
+            echo "Developer ID signing: on"
+            if [ -n "$APPLE_ID" ] && [ -n "$APPLE_PASSWORD" ] && [ -n "$APPLE_TEAM_ID" ]; then
+              put APPLE_ID "$APPLE_ID"
+              put APPLE_PASSWORD "$APPLE_PASSWORD"
+              put APPLE_TEAM_ID "$APPLE_TEAM_ID"
+              echo "Notarization: on"
+            else
+              echo "Notarization: off (APPLE_ID / APPLE_PASSWORD / APPLE_TEAM_ID not all set)"
+            fi
+          else
+            echo "No Apple certificate secrets, using ad-hoc signing (users click \"Open Anyway\" once)."
+          fi
+
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -127,17 +165,22 @@ jobs:
           tagName: ${{ steps.version.outputs.tag }}
           releaseName: "ModelVisio ${{ steps.version.outputs.version }}"
           releaseBody: |
-            ModelVisio ${{ steps.version.outputs.version }} — AI-native neural-network model analyzer for edge deployment.
+            ModelVisio ${{ steps.version.outputs.version }}: neural-network model analyzer for edge deployment.
 
             ### Downloads
             | OS | File |
             | --- | --- |
             | **Windows** | `ModelVisio_${{ steps.version.outputs.version }}_x64-setup.exe` (or `.msi`) |
-            | **macOS** (Apple Silicon) | `ModelVisio_${{ steps.version.outputs.version }}_aarch64.dmg` |
-            | **macOS** (Intel) | `ModelVisio_${{ steps.version.outputs.version }}_x64.dmg` |
+            | **macOS** (Apple Silicon + Intel) | `ModelVisio_${{ steps.version.outputs.version }}_universal.dmg` |
             | **Linux** | `.AppImage`, `.deb`, or `.rpm` |
 
-            The AI copilot uses your own free Gemini API key — click the key icon in the
+            **macOS first launch:** open the `.dmg` and drag ModelVisio to Applications.
+            The app isn't notarized yet, so macOS blocks the first launch: open it once,
+            then go to **System Settings → Privacy & Security** and click **Open Anyway**
+            (on macOS 14 and older, Control-click the app → Open). Terminal alternative:
+            `xattr -dr com.apple.quarantine /Applications/ModelVisio.app`
+
+            The AI copilot uses your own free Gemini API key. Click the key icon in the
             AI Copilot panel and paste it (get one at https://aistudio.google.com/apikey).
             Installed apps update themselves automatically from new releases.
 
@@ -163,3 +206,37 @@ jobs:
           echo "Stable-naming: $setup"
           cp "$setup" "ModelVisio-Windows-x64-setup.exe"
           gh release upload "${{ steps.version.outputs.tag }}" "ModelVisio-Windows-x64-setup.exe" --clobber
+
+      # Same idea for macOS and Linux, so the website links never change:
+      #   /releases/latest/download/ModelVisio-macOS-universal.dmg
+      #   /releases/latest/download/ModelVisio-Linux-x86_64.AppImage
+      # The macOS step also fails the release if the .app isn't validly signed
+      # (ad-hoc or Developer ID). An unsigned Apple Silicon app shows users
+      # "ModelVisio is damaged and can't be opened".
+      - name: Verify and attach stable-named macOS .dmg
+        if: matrix.platform == 'macos-latest'
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          bundle=apps/desktop/src-tauri/target/universal-apple-darwin/release/bundle
+          app="$bundle/macos/ModelVisio.app"
+          codesign --verify --deep --strict --verbose=2 "$app"
+          for bin in "$app"/Contents/MacOS/*; do echo "$bin: $(lipo -archs "$bin")"; done
+          dmg=$(find "$bundle/dmg" -name '*.dmg' | head -n1)
+          if [ -z "$dmg" ]; then echo "No .dmg found under $bundle/dmg" >&2; exit 1; fi
+          echo "Stable-naming: $dmg"
+          cp "$dmg" "ModelVisio-macOS-universal.dmg"
+          gh release upload "${{ steps.version.outputs.tag }}" "ModelVisio-macOS-universal.dmg" --clobber
+
+      - name: Attach stable-named Linux AppImage
+        if: matrix.platform == 'ubuntu-22.04'
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          appimage=$(find apps/desktop/src-tauri/target/release/bundle/appimage -name '*.AppImage' | head -n1)
+          if [ -z "$appimage" ]; then echo "No AppImage found under bundle/appimage" >&2; exit 1; fi
+          echo "Stable-naming: $appimage"
+          cp "$appimage" "ModelVisio-Linux-x86_64.AppImage"
+          gh release upload "${{ steps.version.outputs.tag }}" "ModelVisio-Linux-x86_64.AppImage" --clobber

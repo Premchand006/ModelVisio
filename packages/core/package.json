@@ -8,17 +8,22 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./registry": "./src/registry/index.ts",
+    "./scoring": "./src/scoring/index.ts",
+    "./hardware": "./src/data/hardware.ts",
     "./styles.css": "./src/styles.css",
     "./tailwind-preset.js": "./tailwind-preset.js"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:live-ai": "vitest run test/deploy-live.test.ts"
   },
   "dependencies": {
-    "@modelvisio/parsers": "workspace:*",
+    "@dagrejs/dagre": "^1.1.4",
     "@modelvisio/ai": "workspace:*",
-    "@dagrejs/dagre": "^1.1.4"
+    "@modelvisio/parsers": "workspace:*",
+    "onnxruntime-web": "1.30.0"
   },
   "peerDependencies": {
     "react": "^18.3.1",

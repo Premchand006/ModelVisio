@@ -1,0 +1,76 @@
+# Example workflow: copy to .github/workflows/modelvisio.yml in the repo that
+# holds your models. (It lives in docs/ so it doesn't run on ModelVisio itself.)
+#
+# On every PR that touches a model file it:
+#   1. runs the compiler-compat pre-flight for the listed targets,
+#   2. enforces size and latency budgets,
+#   3. diffs each model against the PR's base branch and fails on regressions,
+#   4. writes everything to the job summary and a JUnit report.
+name: Model check
+
+on:
+  pull_request:
+    paths:
+      - "models/**"
+  push:
+    branches: [main]
+    paths:
+      - "models/**"
+
+permissions:
+  contents: read
+  checks: write   # only needed for the JUnit report step below
+
+jobs:
+  modelvisio:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # the baseline diff needs the base commit
+          lfs: true        # if your models are stored with Git LFS
+
+      - name: ModelVisio check
+        id: modelvisio
+        # Pin to a release tag or commit SHA in real use.
+        uses: Premchand006/ModelVisio/.github/actions/modelvisio-check@main
+        with:
+          models: |
+            models/**/*.onnx
+            models/**/*.tflite
+          targets: coral,rk3588,hailo
+          device: orin_nano
+          max-latency-ms: "15"
+          max-size-mb: "25"
+          fail-on: error
+          baseline-ref: ${{ github.event.pull_request.base.sha || 'HEAD~1' }}
+          fail-on-regression: "true"
+          latency-tolerance: "10"
+          junit-path: reports/modelvisio.xml
+
+      # Optional: show the JUnit report as a check run.
+      - name: Publish test report
+        if: always()
+        uses: mikepenz/action-junit-report@v4
+        with:
+          report_paths: reports/modelvisio.xml
+          check_name: ModelVisio
+
+  # Optional: keep a model registry in the repo. On main, add the current
+  # models as new versions and upload the updated registry; commit it from a
+  # follow-up step or a bot if you want it versioned.
+  registry:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: Premchand006/ModelVisio/.github/actions/modelvisio-check@main
+        with:
+          models: models/**/*.onnx
+          registry: modelvisio-registry.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: modelvisio-registry
+          path: modelvisio-registry.json

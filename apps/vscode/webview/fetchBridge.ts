@@ -4,7 +4,7 @@ import { abortError } from "./rpc";
 // The copilot POSTs to /api/chat and /api/scrape, which don't exist inside a
 // webview. We intercept exactly those two and forward them to the extension
 // host (which holds the Gemini key and runs the SSRF-guarded scraper), then
-// answer with the same JSON the web proxies return — so core's sendChat /
+// answer with the same JSON the web proxies return, so core's sendChat /
 // fetchScraped run unchanged. Everything else goes to the real fetch.
 
 export type FetchLike = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;

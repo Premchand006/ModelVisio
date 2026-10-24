@@ -21,7 +21,7 @@ pnpm-debug.log*
 .DS_Store
 Thumbs.db
 
-# Env / secrets — never commit the Gemini API key
+# Env / secrets: never commit the Gemini API key
 .env
 .env.*
 !.env.example

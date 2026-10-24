@@ -6,7 +6,7 @@ export const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash";
 export const DEFAULT_GROK_MODEL = "grok-4.7";
 
 /** A plain model id, or `fallback`. The setting's enum is only an editor hint
- *  — a hand-edited value can be anything — and the Gemini id is interpolated
+ *  (a hand-edited value can be anything), and the Gemini id is interpolated
  *  into the request URL path, so only plain ids are accepted. */
 function sanitizeModelId(value: unknown, fallback: string): string {
   const id = typeof value === "string" ? value.trim() : "";

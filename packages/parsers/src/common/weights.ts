@@ -19,7 +19,7 @@ function groupFor(name: string): ModelLayer["group"] {
 /**
  * Build a normalized Model from a flat collection of stored tensors (the shape
  * of weight-only formats: safetensors, GGUF, NumPy). There is no true compute
- * graph, so layers are chained in file order — the insight notes this. The
+ * graph, so layers are chained in file order, and the insight notes this. The
  * Layers panel and Inspector remain fully useful.
  */
 export function weightsToModel(
