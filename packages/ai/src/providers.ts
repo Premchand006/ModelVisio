@@ -18,7 +18,7 @@ type Env = Record<string, string | undefined>;
 
 export type ProviderConfig = {
   provider: ChatProvider;
-  /** Undefined when the chosen provider has no key — answer with `missingKeyError`. */
+  /** Undefined when the chosen provider has no key; answer with `missingKeyError`. */
   key: string | undefined;
   model: string;
   missingKeyError: string;

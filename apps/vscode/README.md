@@ -68,8 +68,8 @@ progress. Folder bundles (`.mlpackage`, `.mlmodelc`) can't be opened by a custom
 | `modelvisio.grokModel` | `grok-4.7` | xAI Grok model used when the provider is `grok`. Same plain-id rule; anything else falls back to `grok-4.7`. |
 | `modelvisio.webSearch` | `false` | Gemini only: Google Search grounding, so answers cite live links. Needs a paid-tier key; with it off, the free web search below covers live answers. |
 | `modelvisio.freeWebSearch` | `auto` | Free, keyless web search (DuckDuckGo): reads the top results through the same guarded reader as pasted URLs and cites them. `auto` searches only when the question asks for something live (docs, links, versions, releases, benchmarks, op support); `always` every question; `off` never. Used with Grok, and with Gemini when `webSearch` is off. |
-| `modelvisio.thinking` | `false` | Let the model think before answering — `gemini-2.5` thinking, or Grok at its default reasoning effort instead of low (slower, sometimes better). |
-| `modelvisio.scrapeAllowlist` | `[]` | Host suffixes the copilot may read — pasted URLs and free web search results (e.g. `docs.nvidia.com`). Empty = any public host. |
+| `modelvisio.thinking` | `false` | Let the model think before answering: `gemini-2.5` thinking, or Grok at its default reasoning effort instead of low (slower, sometimes better). |
+| `modelvisio.scrapeAllowlist` | `[]` | Host suffixes the copilot may read: pasted URLs and free web search results (e.g. `docs.nvidia.com`). Empty = any public host. |
 | `modelvisio.geminiApiKey` | `""` | **Deprecated** plain-text Gemini key. Use **Set Gemini API Key** instead. (Grok has no plain-text setting.) |
 
 ## AI copilot setup
@@ -102,7 +102,7 @@ key you kept in user settings still applies until you remove it; the command tel
   summary of the model's computed analysis (layer stats, hardware scores, compiler issues), not
   the model file.
 - With `modelvisio.freeWebSearch` on (`auto` by default), a question that asks for something
-  live also sends a search query — your latest message, with URLs removed — to DuckDuckGo, and
+  live also sends a search query (your latest message, with URLs removed) to DuckDuckGo, and
   the host reads the top results like pasted URLs. Set it to `off` to never search. The usage beacon the website
   logs on each upload (model name, format, size) is answered inside the extension and never
   sent anywhere.

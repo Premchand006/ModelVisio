@@ -382,7 +382,7 @@ fn grok_error_text(data: &serde_json::Value) -> String {
         .unwrap_or_else(|| data.to_string())
 }
 
-/// xAI Grok — the desktop mirror of `runGrokChat` (packages/ai/src/grok.ts).
+/// xAI Grok: the desktop mirror of `runGrokChat` (packages/ai/src/grok.ts).
 /// Grok's chat-completions endpoint has no free built-in web search and returns
 /// no citations for plain calls, so `sources` is always empty here (the web
 /// shell's free crawler is not ported to desktop).

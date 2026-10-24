@@ -86,7 +86,7 @@ export function Inspector({ layer, model }: { layer: ModelLayer | null; model: M
       </div>}
 
       {tab === "ai" && <div style={{ background: t.acc2 + "12", border: `1px solid ${t.acc2}33`, borderRadius: 6, padding: 10 }}>
-        <div style={{ fontSize: 9, fontWeight: 700, color: t.acc2, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>✦ AI Analysis</div>
+        <div style={{ fontSize: 9, fontWeight: 700, color: t.acc2, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>AI Analysis</div>
         <div style={{ fontSize: 11, color: t.t1, lineHeight: 1.6 }}>{layer.insight || "No insight."}</div>
         {layer.compIssues?.length > 0 && <>
           <div style={{ fontSize: 9, fontWeight: 700, color: t.err, textTransform: "uppercase", letterSpacing: 1, marginTop: 10, marginBottom: 4 }}>⚠ Compiler Issues</div>

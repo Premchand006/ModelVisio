@@ -50,7 +50,7 @@ export function setAiProvider(provider: AiProvider): void {
   try {
     localStorage.setItem(AI_PROVIDER_STORAGE, provider === "grok" ? "grok" : "gemini");
   } catch {
-    // ignore — storage unavailable (private mode, etc.)
+    // ignore: storage unavailable (private mode, etc.)
   }
 }
 

@@ -14,7 +14,7 @@ function clientIp(req: VercelRequest): string | null {
 }
 
 // Server-side proxy for the AI copilot. Holds the provider key (GEMINI_API_KEY,
-// or XAI_API_KEY for Grok — see packages/ai/src/providers.ts) in the Vercel
+// or XAI_API_KEY for Grok; see packages/ai/src/providers.ts) in the Vercel
 // project env so it NEVER reaches the browser. Gemini runs with Google Search
 // grounding; Grok (or Gemini with grounding off) gets the free web crawler
 // instead (MODELVISIO_FREE_SEARCH=auto|always|off, default auto).

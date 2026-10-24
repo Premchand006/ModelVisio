@@ -1,4 +1,4 @@
-// Server-side xAI Grok call — the second copilot provider next to Gemini
+// Server-side xAI Grok call: the second copilot provider next to Gemini
 // (proxy.ts). Same contract as runChatProxy: Anthropic-style { system,
 // messages } in, { text, sources } out, so every proxy entrypoint can switch
 // providers without touching the UI or client.
@@ -12,7 +12,7 @@
 // comes from the free crawler in search.ts (chatWithWebResearch), which the
 // entrypoints wrap around this call.
 //
-// TIME BUDGET: same rules as proxy.ts — abort the fetch at the deadline and
+// TIME BUDGET: same rules as proxy.ts: abort the fetch at the deadline and
 // only wait out a transient 429/5xx if the wait still fits, so a serverless
 // function returns a clean error instead of an opaque platform 502.
 
@@ -98,7 +98,7 @@ const TIMEOUT = "TIMEOUT";
 /**
  * Run one copilot turn against xAI Grok and return the assistant text. Grok's
  * chat-completions endpoint returns no citations for plain calls, so `sources`
- * is empty here — the free web research wrapper adds its own.
+ * is empty here; the free web research wrapper adds its own.
  */
 export async function runGrokChat({
   key,

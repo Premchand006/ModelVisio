@@ -26,7 +26,7 @@ export type ChatResponse = { text: string; sources: Source[] };
  */
 export function buildSystemPrompt(modelSummary: string): string {
   return [
-    "You are ModelVisio's copilot, a world-class expert in neural-network",
+    "You are ModelVisio's copilot, an expert in neural-network",
     "architecture and edge/on-device deployment. You know, in depth:",
     "",
     "- ARCHITECTURES: CNNs (ResNet, MobileNet, EfficientNet), detectors (YOLO v5-v11/v26,",

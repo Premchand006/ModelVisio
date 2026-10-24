@@ -71,7 +71,7 @@ export function CompilerChecker({
         <div style={{ fontSize: 11, color: t.t1 }}>{ci.msg}</div>
       </div>)}
 
-      <div style={{ fontSize: 12, fontWeight: 700, color: t.acc3, marginTop: 8 }}>✦ Auto-Fix Engine</div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: t.acc3, marginTop: 8 }}>Auto-Fix Engine</div>
       {fixes.length === 0 && <div style={{ fontSize: 10, color: t.t3 }}>No applicable transforms for this model.</div>}
       {fixes.map(({ def, layers }) => <div key={def.id} style={{ background: t.acc3 + "08", border: `1px solid ${t.acc3}25`, borderRadius: 6, padding: 10 }}>
         <div style={{ fontSize: 11, fontWeight: 600, color: t.t0, marginBottom: 2 }}>{def.title} <span style={{ color: t.t3, fontWeight: 400 }}>· {layers.length} layer{layers.length > 1 ? "s" : ""}</span></div>

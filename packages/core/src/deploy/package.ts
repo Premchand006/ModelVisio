@@ -132,7 +132,7 @@ function risks(d: DeployDecision, e: DeviceEstimate, session: DeploySession, aiR
 }
 
 function stepLine(s: AgentStep): string {
-  return `${s.index}. [${s.source}] ${s.tool}${Object.keys(s.args).length ? ` ${JSON.stringify(s.args)}` : ""}${s.thought ? ` — ${s.thought}` : ""}\n   → ${s.ok ? s.digest : `ERROR: ${s.error}`}`;
+  return `${s.index}. [${s.source}] ${s.tool}${Object.keys(s.args).length ? ` ${JSON.stringify(s.args)}` : ""}${s.thought ? `: ${s.thought}` : ""}\n   → ${s.ok ? s.digest : `ERROR: ${s.error}`}`;
 }
 
 /** Build the package. `minFps` / `maxLatencyMs` default to the parsed goal. */

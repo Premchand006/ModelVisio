@@ -4,7 +4,7 @@ import {
   getAiProvider, setAiProvider, getUserApiKey, setUserApiKey,
 } from "../src/utils/apiKey";
 
-// Node env has no Web Storage — stub an in-memory localStorage so the
+// Node env has no Web Storage, so stub an in-memory localStorage so the
 // bring-your-own-key helpers can be exercised as they run in the WebView.
 function memoryStorage() {
   const m = new Map<string, string>();
