@@ -8,7 +8,11 @@ import { fB, fmt } from "./utils/format";
 import { FORMATS } from "./data/hardware";
 import { demoModel } from "./demo/demoModel";
 import { Badge } from "./components/Badge";
-import { Tabs } from "./components/Tabs";
+import { ToolStages, ToolTabs } from "./components/ToolNav";
+import { CommandPalette, type Command } from "./components/CommandPalette";
+import { Icon } from "./components/Icon";
+import { ALL_TOOLS, TOOL_GROUPS } from "./data/tools";
+import { APP_VERSION } from "./data/version";
 import { GraphPanel } from "./components/Graph/GraphPanel";
 import { Inspector } from "./components/Inspector";
 import { CompilerChecker } from "./components/CompilerChecker";
@@ -47,6 +51,13 @@ const GH_PATH = "M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.5
 const GhIcon = ({ size = 15 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d={GH_PATH} /></svg>
 );
+
+// One-line summary per workflow stage, for the landing page.
+const STAGE_BLURB: Record<string, string> = {
+  analyze: "An interactive graph with a per-layer inspector, compiler pre-flight for each target, and a hardware-fit score for 21 edge accelerators.",
+  optimize: "Ranked fixes with estimated latency and size impact, bottleneck investigation, a Pareto search and on-device benchmarks.",
+  ship: "Format conversion, ready-to-run TensorRT, HailoRT and RKNN scripts, a deployment agent, fleet simulation and a model registry.",
+};
 
 /** Imperative handle a shell can use to drive the app (e.g. native menus). */
 /** `companions`: sibling files the format keeps its weights in (e.g. OpenVINO .bin). */
@@ -98,6 +109,8 @@ export function App({
     window.addEventListener("mouseup", up);
     document.body.style.userSelect = "none";
   };
+  const [palette, setPalette] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
   const [parsing, setParsing] = useState(false);
   // Desktop download: one-click installer for the visitor's OS (SSR / mobile /
   // unknown → the releases page), plus an "Other platforms" panel.
@@ -208,20 +221,44 @@ export function App({
   // (they'd show misleading partial numbers); the Inspector works on partial data.
   const sideTab = streamProg && rightTab !== "inspector" ? "parsing" : rightTab;
 
-  const RTABS = [
-    { id: "inspector", label: "Inspector" }, { id: "compiler", label: "Compiler" },
-    { id: "hardware", label: "Hardware" },
-    { id: "quant", label: "Quant" }, { id: "advisor", label: "Advisor" },
-    { id: "bench", label: "Bench" }, { id: "investigate", label: "Investigate" },
-    { id: "optimize", label: "Optimize" }, { id: "convert", label: "Convert" },
-    { id: "deploy", label: "Deploy" }, { id: "agent", label: "Deploy Agent" },
-    { id: "fleet", label: "Fleet" }, { id: "registry", label: "Registry" },
-    { id: "chat", label: "AI" },
-  ];
+  // Layers with at least one compiler finding, surfaced in the stats strip.
+  const issueLayers = model ? model.layers.filter((l) => l.compIssues.length > 0).length : 0;
+
+  // Ctrl/Cmd+K opens the command palette from anywhere in the app.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPalette((p) => !p);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const commands = useMemo<Command[]>(() => {
+    const out: Command[] = [];
+    if (model) {
+      for (const tl of ALL_TOOLS) out.push({ id: `tool:${tl.id}`, section: "Tools", label: tl.label, hint: tl.group.label, icon: tl.group.id, run: () => setRightTab(tl.id) });
+    }
+    out.push({ id: "act:open", section: "Actions", label: "Open model file…", icon: "upload", run: () => fileInput.current?.click() });
+    out.push({ id: "act:demo", section: "Actions", label: "Load demo model (YOLO26n)", icon: "action", run: loadDemo });
+    out.push({ id: "act:theme", section: "Actions", label: `Switch to ${theme === "dark" ? "light" : "dark"} theme`, icon: theme === "dark" ? "sun" : "moon", run: () => setTheme((p) => (p === "dark" ? "light" : "dark")) });
+    if (model) {
+      out.push({ id: "act:close", section: "Actions", label: "Close model", icon: "close", run: clearModel });
+      for (const l of model.layers) {
+        out.push({ id: `layer:${l.id}`, section: "Layers", label: l.name, hint: `${l.op} · ${l.group}`, icon: "layer", run: () => { setSel(l); setRightTab("inspector"); } });
+      }
+    }
+    return out;
+    // loadDemo/clearModel only touch state setters and refs, so they are stable in effect.
+  }, [model, theme]);
 
   return <ThemeCtx.Provider value={t}>
     <ErrorBoundary>
     {dlPanel && <DownloadPanel detected={os} onClose={closeDlPanel} />}
+    {palette && <CommandPalette commands={commands} onClose={() => setPalette(false)} />}
+    <input ref={fileInput} type="file" accept={ACCEPT} multiple hidden onChange={(e) => { handleFiles(e.target.files); e.target.value = ""; }} />
     {building && <BuildingPage label={building} theme={theme} onToggleTheme={() => setTheme((p) => (p === "dark" ? "light" : "dark"))} onBack={() => setBuilding(null)} />}
     <div style={{ height: "100dvh", display: "flex", flexDirection: "column", background: t.bg, color: t.t0, fontFamily: "'Inter',-apple-system,sans-serif", overflow: "hidden", transition: "background .3s" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700;800&display=swap');
@@ -235,87 +272,120 @@ export function App({
         <div style={{ display: "flex", alignItems: "center", gap: 11, minWidth: 0 }}>
           <img src={logoUrl} alt="ModelVisio" width={34} height={34} style={{ width: 34, height: 34, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 17, fontWeight: 800, color: t.t0, fontFamily: "'Space Grotesk'", letterSpacing: -.3 }}>ModelVisio <span style={{ fontSize: 10.5, fontWeight: 600, color: t.t3 }}>by Premchand</span></div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: t.t0, fontFamily: "'Space Grotesk'", letterSpacing: -.3, display: "flex", alignItems: "center", gap: 7 }}>ModelVisio
+              <span title={`Version ${APP_VERSION}`} style={{ fontSize: 10.5, fontWeight: 500, color: t.t2, fontFamily: "'JetBrains Mono'", border: `1px solid ${t.bdr}`, borderRadius: 4, padding: "0 5px", letterSpacing: 0 }}>{APP_VERSION}</span>
+              {!compact && <span style={{ fontSize: 10.5, fontWeight: 600, color: t.t2, letterSpacing: 0 }}>by Premchand</span>}</div>
             {!compact && <div style={{ fontSize: 10, color: t.t2, letterSpacing: .5, textTransform: "uppercase", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Model Analyzer · Edge Deployment Intelligence</div>}
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
           {model && <Badge c={t.suc}>{model.format}</Badge>}
           {model && <span style={{ fontSize: 10, color: t.t2, fontFamily: "'JetBrains Mono'", maxWidth: compact ? 90 : 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{model.name}</span>}
-          {model && <button type="button" onClick={clearModel} style={{ padding: "2px 6px", borderRadius: 3, border: `1px solid ${t.bdr}`, background: "transparent", color: t.t3, fontSize: 9, cursor: "pointer" }}>✕</button>}
+          {model && <button type="button" onClick={clearModel} aria-label="Close model" title="Close model" style={{ width: 24, height: 24, borderRadius: 5, border: `1px solid ${t.bdr}`, background: "transparent", color: t.t2, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="close" size={12} stroke={2} /></button>}
+          <button type="button" onClick={() => setPalette(true)} aria-label="Search tools, layers and actions" aria-keyshortcuts="Control+K" title="Search tools, layers and actions (Ctrl+K)"
+            style={{ height: 28, display: "flex", alignItems: "center", gap: 8, padding: compact ? "0 7px" : "0 6px 0 10px", borderRadius: 6, border: `1px solid ${t.bdr}`, background: t.bg, color: t.t2, fontSize: 12, cursor: "pointer", flexShrink: 0 }}>
+            <Icon name="analyze" size={14} stroke={2} />
+            {!compact && <><span style={{ minWidth: narrow ? 0 : 110, textAlign: "left" }}>Search</span><span style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: t.t1, border: `1px solid ${t.bdr2}`, borderRadius: 4, padding: "0 5px" }}>Ctrl K</span></>}
+          </button>
           <a href={GITHUB_URL} target="_blank" rel="noreferrer noopener" title="View source on GitHub" style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${t.bdr}`, background: t.bg2, color: t.t1, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><GhIcon /></a>
-          <button type="button" onClick={() => setTheme((p) => (p === "dark" ? "light" : "dark"))} style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${t.bdr}`, background: t.bg2, color: t.t1, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>{theme === "dark" ? "☀" : "☾"}</button>
+          <button type="button" onClick={() => setTheme((p) => (p === "dark" ? "light" : "dark"))} aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`} style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${t.bdr}`, background: t.bg2, color: t.t1, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name={theme === "dark" ? "sun" : "moon"} size={15} /></button>
         </div>
       </header>
 
       {!model ? (
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: compact ? "24px 16px" : 40, gap: compact ? 20 : 28, background: t.bg, overflow: "auto" }}>
-          <div style={{ textAlign: "center" }}>
-            <div style={{ display: "inline-block", fontSize: "clamp(30px, 9vw, 54px)", fontWeight: 800, fontFamily: "'Space Grotesk'", letterSpacing: "-0.03em", lineHeight: 1.08, paddingBottom: 6, color: t.t0 }}>Model<span style={{ color: t.acc }}>Visio</span></div>
-            <div style={{ fontSize: "clamp(11px, 2.6vw, 14px)", color: t.t2, marginTop: 4 }}>Model analyzer · Compiler pre-flight · Edge deployment intelligence</div>
-          </div>
-          <div onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); handleFiles(e.dataTransfer.files); }}
-            style={{ width: "min(480px, 100%)", padding: compact ? "24px 18px" : 40, borderRadius: 14, border: `2px dashed ${drag ? t.acc : t.bdr}`, background: drag ? t.acc + "10" : t.bg1, textAlign: "center", transition: "border-color .2s, background .2s" }}>
-            {/* Node-graph hexagon mark, tinted via CSS mask so it adopts the theme
-                color (works on both the dark and light dropzone). */}
-            <div style={{ width: 82, height: 65, margin: "0 auto 8px", opacity: 0.6, background: t.t2, WebkitMaskImage: `url(${graphHexUrl})`, maskImage: `url(${graphHexUrl})`, WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat", WebkitMaskPosition: "center", maskPosition: "center", WebkitMaskSize: "contain", maskSize: "contain" }} />
-            <div style={{ fontSize: 15, fontWeight: 600, color: t.t0, marginBottom: 3 }}>{parsing ? (streamProg ? `Parsing model… ${streamProg.pct}%` : "Parsing model…") : "Drop your model file"}</div>
-            <div style={{ fontSize: 11.5, color: t.t2, marginBottom: 16, lineHeight: 1.7 }}>
-              {FORMATS.join(" · ")}
+        <div style={{ flex: 1, overflow: "auto", background: t.bg }}>
+          <div style={{ width: "100%", maxWidth: 1120, margin: "0 auto", padding: compact ? "28px 16px 24px" : "56px 24px 32px", display: "flex", flexDirection: "column", gap: compact ? 32 : 48 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: compact ? 28 : 40, alignItems: "center" }}>
+              <div style={{ flex: "1 1 420px", minWidth: 0, display: "flex", flexDirection: "column", gap: 16 }}>
+                <span style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: .8, textTransform: "uppercase", color: t.acc }}>Edge deployment, from the model file</span>
+                <h1 style={{ fontFamily: "'Space Grotesk'", fontSize: "clamp(30px, 5vw, 48px)", lineHeight: 1.06, letterSpacing: "-0.025em", fontWeight: 700, color: t.t0 }}>See whether your model fits the edge before you flash it.</h1>
+                <p style={{ fontSize: compact ? 14 : 15.5, lineHeight: 1.6, color: t.t1, maxWidth: 520 }}>Graph, compiler pre-flight, hardware fit for 21 accelerators and deploy scripts. Parsing runs in your browser; the model file never leaves your machine.</p>
+                <div style={{ display: "flex", gap: 10, rowGap: 8, flexWrap: "wrap", paddingTop: 4 }}>
+                  {/* Distribution downloads, web only. Hidden inside the desktop app and
+                      the VS Code extension: you're already running one of them. */}
+                  {!isDesktop() && !isVsCodeWebview() && <>
+                    <a href={build ? build.url : DESKTOP_RELEASES_URL} target="_blank" rel="noreferrer noopener"
+                      title={build ? `Download the ${build.label} desktop app (${build.file})` : "Download the desktop app (all platforms)"}
+                      onClick={() => { if (os === "mac") setMacHelp(true); }}
+                      style={{ display: "inline-flex", alignItems: "center", gap: 8, minHeight: 40, padding: "0 16px", borderRadius: 9, border: `1px solid ${t.bdr}`, background: t.bg1, color: t.t0, fontSize: 13, fontWeight: 600, textDecoration: "none", cursor: "pointer" }}>
+                      <OsIcon os={os} size={14} />{build ? `Download for ${build.label}` : "Download Desktop App"}
+                    </a>
+                    <button type="button" onClick={() => setBuilding("VS Code Extension")}
+                      style={{ display: "inline-flex", alignItems: "center", gap: 6, minHeight: 40, padding: "0 16px", borderRadius: 9, border: `1px solid ${t.bdr}`, background: "transparent", color: t.t0, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                      VS Code Extension
+                    </button>
+                  </>}
+                  <a href={GITHUB_URL} target="_blank" rel="noreferrer noopener"
+                    style={{ display: "inline-flex", alignItems: "center", gap: 7, minHeight: 40, padding: "0 16px", borderRadius: 9, border: `1px solid ${t.bdr}`, background: "transparent", color: t.t0, fontSize: 13, fontWeight: 600, textDecoration: "none", cursor: "pointer" }}>
+                    <GhIcon /> GitHub
+                  </a>
+                </div>
+                {!isDesktop() && !isVsCodeWebview() && <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10 }}>
+                  <button type="button" onClick={() => setDlPanel(true)} aria-haspopup="dialog"
+                    style={{ border: "none", background: "transparent", padding: "2px 0", color: t.t2, fontSize: 12, cursor: "pointer", textDecoration: "underline", textDecorationStyle: "dotted", textUnderlineOffset: 3 }}>
+                    {build ? "Other platforms" : "macOS · Windows · Linux"}
+                  </button>
+                  {macHelp && <div role="status" style={{ width: "100%", border: `1px solid ${t.bdr}`, background: t.bg1, borderRadius: 10, padding: compact ? "10px 12px" : "12px 14px" }}>
+                    <MacInstallHelp onDismiss={() => setMacHelp(false)} />
+                  </div>}
+                </div>}
+              </div>
+
+              <div onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); handleFiles(e.dataTransfer.files); }}
+                style={{ flex: "1 1 400px", minWidth: 0, padding: compact ? "24px 18px" : 32, borderRadius: 16, border: `1.5px dashed ${drag ? t.acc : t.bdr2}`, background: drag ? t.acc + "10" : t.bg1, display: "flex", flexDirection: "column", alignItems: "center", gap: 12, textAlign: "center", transition: "border-color .2s, background .2s" }}>
+                {/* Node-graph hexagon mark, tinted via CSS mask so it adopts the theme
+                    color (works on both the dark and light dropzone). */}
+                <div style={{ width: 72, height: 57, opacity: 0.75, background: drag ? t.acc : t.t2, WebkitMaskImage: `url(${graphHexUrl})`, maskImage: `url(${graphHexUrl})`, WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat", WebkitMaskPosition: "center", maskPosition: "center", WebkitMaskSize: "contain", maskSize: "contain" }} />
+                <div role="status" aria-live="polite" style={{ fontSize: 17, fontWeight: 600, color: t.t0 }}>{parsing ? (streamProg ? `Parsing model… ${streamProg.pct}%` : "Parsing model…") : "Drop a model file here"}</div>
+                <details style={{ fontSize: 12.5, color: t.t2, lineHeight: 1.6, maxWidth: 400 }}>
+                  <summary style={{ cursor: "pointer", listStyle: "none" }}>ONNX, TFLite, PyTorch, Core ML, OpenVINO, TensorRT, GGUF <span style={{ color: t.t1, textDecoration: "underline", textDecorationStyle: "dotted", textUnderlineOffset: 3 }}>and {FORMATS.length - 7} more</span></summary>
+                  <div style={{ marginTop: 8, fontSize: 11.5 }}>{FORMATS.join(" · ")}</div>
+                </details>
+                {loadError && <div role="alert" style={{ fontSize: 12, color: t.err, lineHeight: 1.4 }}>{loadError}</div>}
+                <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap", paddingTop: 4 }}>
+                  <button type="button" onClick={() => fileInput.current?.click()} style={{ minHeight: 42, padding: "0 22px", borderRadius: 9, border: "none", background: t.acc, color: "#fff", fontSize: 13.5, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>Browse files</button>
+                  <button type="button" onClick={loadDemo} style={{ minHeight: 42, padding: "0 18px", borderRadius: 9, border: `1px solid ${t.bdr2}`, background: "transparent", color: t.t0, fontSize: 13.5, fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap" }}>Try the demo · YOLO26n</button>
+                </div>
+                <div style={{ fontSize: 11.5, color: t.t2, lineHeight: 1.5 }}>OpenVINO, ncnn, Paddle, TF.js: select or drop the weights file together with the graph file.</div>
+              </div>
             </div>
-            <div style={{ fontSize: 10, color: t.t3, marginBottom: 12, lineHeight: 1.5 }}>OpenVINO, ncnn, Paddle, TF.js: select or drop the weights file together with the graph file.</div>
-            {loadError && <div style={{ fontSize: 11, color: t.err, marginBottom: 12, lineHeight: 1.4 }}>{loadError}</div>}
-            <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
-              <label style={{ padding: "9px 24px", borderRadius: 7, background: t.acc, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>
-                Browse Files<input type="file" accept={ACCEPT} multiple hidden onChange={(e) => handleFiles(e.target.files)} />
-              </label>
-              <button type="button" onClick={loadDemo} style={{ padding: "9px 24px", borderRadius: 7, border: `1px solid ${t.bdr}`, background: "transparent", color: t.t2, fontSize: 12, fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap" }}>Load Demo · YOLO26n</button>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 }}>
+              {TOOL_GROUPS.filter((g) => g.id !== "copilot").map((g, i) => (
+                <div key={g.id} style={{ padding: 18, border: `1px solid ${t.bdr}`, borderRadius: 12, background: t.bg1, display: "flex", flexDirection: "column", gap: 9 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ width: 30, height: 30, borderRadius: 8, background: t.bg2, color: t.acc, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name={g.id} size={16} /></span>
+                    <span style={{ fontFamily: "'JetBrains Mono'", fontSize: 11.5, color: t.t2 }}>0{i + 1}</span>
+                    <span style={{ fontFamily: "'Space Grotesk'", fontSize: 17, fontWeight: 700, color: t.t0 }}>{g.label}</span>
+                  </div>
+                  <p style={{ fontSize: 12.5, lineHeight: 1.6, color: t.t1 }}>{STAGE_BLURB[g.id]}</p>
+                  <div style={{ fontSize: 11.5, color: t.t2, fontFamily: "'JetBrains Mono'" }}>{g.tools.map((tl) => tl.label).join(" · ")}</div>
+                </div>
+              ))}
             </div>
-          </div>
-          <div style={{ display: "flex", gap: 10, rowGap: 8, flexWrap: "wrap", justifyContent: "center" }}>
-            {/* Distribution downloads, web only. Hidden inside the desktop app and
-                the VS Code extension: you're already running one of them. */}
-            {!isDesktop() && !isVsCodeWebview() && <>
-              <a href={build ? build.url : DESKTOP_RELEASES_URL} target="_blank" rel="noreferrer noopener"
-                title={build ? `Download the ${build.label} desktop app (${build.file})` : "Download the desktop app (all platforms)"}
-                onClick={() => { if (os === "mac") setMacHelp(true); }}
-                style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "7px 16px", borderRadius: 8, border: `1px solid ${t.acc}77`, background: t.acc + "14", color: t.t0, fontSize: 11.5, fontWeight: 600, textDecoration: "none", cursor: "pointer" }}>
-                <OsIcon os={os} size={13} />{build ? `Download for ${build.label}` : "Download Desktop App"}
-              </a>
-              <button type="button" onClick={() => setBuilding("VS Code Extension")}
-                style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 16px", borderRadius: 8, border: `1px solid ${t.bdr}`, background: t.bg1, color: t.t1, fontSize: 11.5, fontWeight: 600, cursor: "pointer" }}>
-                VS Code Extension
-              </button>
-            </>}
-            <a href={GITHUB_URL} target="_blank" rel="noreferrer noopener"
-              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 16px", borderRadius: 8, border: `1px solid ${t.bdr}`, background: t.bg1, color: t.t1, fontSize: 11.5, fontWeight: 600, textDecoration: "none", cursor: "pointer" }}>
-              <GhIcon /> GitHub
-            </a>
-          </div>
-          {!isDesktop() && !isVsCodeWebview() && <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, width: "min(480px, 100%)", marginTop: compact ? -12 : -18 }}>
-            <button type="button" onClick={() => setDlPanel(true)} aria-haspopup="dialog"
-              style={{ border: "none", background: "transparent", padding: "2px 4px", color: t.t2, fontSize: 11, cursor: "pointer", textDecoration: "underline", textDecorationStyle: "dotted", textUnderlineOffset: 3 }}>
-              {build ? "Other platforms" : "macOS · Windows · Linux"}
-            </button>
-            {macHelp && <div role="status" style={{ width: "100%", border: `1px solid ${t.bdr}`, background: t.bg1, borderRadius: 10, padding: compact ? "10px 12px" : "12px 14px" }}>
-              <MacInstallHelp onDismiss={() => setMacHelp(false)} />
-            </div>}
-          </div>}
-          <div style={{ marginTop: compact ? 4 : 10, fontSize: 11, color: t.t3, textAlign: "center", letterSpacing: .3 }}>
-            Developed by <span style={{ fontWeight: 700, color: t.t1 }}>Premchand</span> · © 2026{" "}
-            <a href={GITHUB_URL} target="_blank" rel="noreferrer noopener" style={{ color: t.t2, fontWeight: 600, textDecoration: "none" }}>@{AUTHOR}</a>
+
+            <div style={{ fontSize: 11.5, color: t.t2, textAlign: "center", letterSpacing: .3 }}>
+              Developed by <span style={{ fontWeight: 700, color: t.t1 }}>Premchand</span> · © 2026{" "}
+              <a href={GITHUB_URL} target="_blank" rel="noreferrer noopener" style={{ color: t.t1, fontWeight: 600, textDecoration: "none" }}>@{AUTHOR}</a>
+            </div>
           </div>
         </div>
       ) : (
         <>
           {/* Stats */}
-          <div style={{ padding: compact ? "6px 10px" : "8px 24px", borderBottom: `1px solid ${t.bdr}`, display: "flex", gap: 6, overflowX: "auto", flexShrink: 0, background: t.bg1 }}>
-            {[{ l: "Params", v: fmt(totalP), c: t.acc }, { l: "FLOPs", v: fmt(totalF), c: t.acc2 }, { l: "Size", v: fB(model.sizeBytes), c: t.suc }, { l: "Input", v: model.inputShape.slice(2).join("×") || "-", c: t.wrn }, { l: "Layers", v: model.layers.length, c: t.cH }, { l: "Opset", v: model.opset, c: t.t2 }].map((s) =>
-              <div key={s.l} style={{ background: t.bg1, border: `1px solid ${t.bdr}`, borderRadius: 6, padding: "5px 11px", minWidth: 84, flexShrink: 0 }}>
-                <div style={{ fontSize: 9.5, color: t.t2, textTransform: "uppercase", letterSpacing: .6 }}>{s.l}</div>
-                <div style={{ fontSize: 17, fontWeight: 700, color: s.c, fontFamily: "'JetBrains Mono'", marginTop: 1 }}>{s.v}</div>
+          <div style={{ minHeight: 42, padding: compact ? "0 12px" : "0 24px", borderBottom: `1px solid ${t.bdr}`, display: "flex", alignItems: "center", gap: compact ? 16 : 22, overflowX: "auto", flexShrink: 0, background: t.bg1, whiteSpace: "nowrap" }}>
+            {[{ l: "Params", v: fmt(totalP) }, { l: "FLOPs", v: fmt(totalF) }, { l: "Size", v: fB(model.sizeBytes) }, { l: "Input", v: model.inputShape.slice(2).join("×") || "-" }, { l: "Layers", v: model.layers.length }, { l: "Opset", v: model.opset }].map((s) =>
+              <div key={s.l} style={{ display: "flex", alignItems: "baseline", gap: 7, flexShrink: 0 }}>
+                <span style={{ fontSize: 10.5, color: t.t2, textTransform: "uppercase", letterSpacing: .6 }}>{s.l}</span>
+                <span style={{ fontSize: 14.5, fontWeight: 600, color: t.t0, fontFamily: "'JetBrains Mono'" }}>{s.v}</span>
               </div>
             )}
+            <span style={{ flex: 1 }} />
+            {issueLayers > 0 && !streamProg && <button type="button" onClick={() => setRightTab("compiler")}
+              style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0, minHeight: 28, padding: "0 10px", borderRadius: 6, border: `1px solid ${t.wrn}55`, background: t.wrn + "12", color: t.t0, fontSize: 12, cursor: "pointer" }}>
+              <span style={{ color: t.wrn, display: "flex" }}><Icon name="warn" size={14} stroke={2} /></span>
+              Compiler: {issueLayers} {issueLayers === 1 ? "layer needs" : "layers need"} attention
+            </button>}
             {streamProg && <div role="status" aria-live="polite" style={{ background: t.bg1, border: `1px solid ${t.acc}66`, borderRadius: 6, padding: "5px 11px", minWidth: 180, flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 5 }}>
               <div style={{ fontSize: 11, color: t.t1, fontFamily: "'JetBrains Mono'", whiteSpace: "nowrap" }}>Parsing… {streamProg.pct}% · {streamProg.layers.toLocaleString("en-US")} layers</div>
               <div style={{ height: 3, borderRadius: 2, background: t.bdr, overflow: "hidden" }}><div style={{ width: `${streamProg.pct}%`, height: "100%", background: t.acc, transition: "width .25s" }} /></div>
@@ -344,8 +414,9 @@ export function App({
             <aside style={narrow
               ? { width: "100%", height: compact ? "52%" : "45%", flexShrink: 0, display: "flex", flexDirection: "column", overflow: "hidden", background: t.bg1, borderTop: `1px solid ${t.bdr}` }
               : { width: effSidebarW, flexShrink: 0, display: "flex", flexDirection: "column", overflow: "hidden", background: t.bg1 }}>
-              <div style={{ padding: "4px 8px", borderBottom: `1px solid ${t.bdr}` }}><Tabs tabs={RTABS} active={rightTab} onChange={setRightTab} wrap /></div>
-              <div style={{ flex: 1, overflow: "auto", padding: 10 }}>
+              {!narrow && <ToolStages active={rightTab} onChange={setRightTab} />}
+              <ToolTabs active={rightTab} onChange={setRightTab} />
+              <div role="tabpanel" style={{ flex: 1, overflow: "auto", padding: 10 }}>
                 {streamProg && sideTab === "parsing" && <div style={{ fontSize: 11.5, color: t.t2, lineHeight: 1.6, padding: 6 }}>Parsing… {streamProg.pct}%. This panel opens once the whole model has loaded; the Inspector works now.</div>}
                 {sideTab === "inspector" && <Inspector layer={sel} model={model} />}
                 {sideTab === "compiler" && <CompilerChecker model={model} onApplyFix={onApplyFix} onUndo={onUndoFix} undoDepth={fixUndo.length} />}
@@ -365,14 +436,14 @@ export function App({
             </aside>
           </div>
 
-          {/* Footer */}
-          <div style={{ padding: compact ? "4px 10px" : "5px 24px", borderTop: `1px solid ${t.bdr}`, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, fontSize: 9.5, color: t.t2, background: t.bg1, flexShrink: 0 }}>
+          {/* Narrow layouts dock the stage switcher at the bottom, in thumb reach, in place of the footer. */}
+          {narrow ? <ToolStages active={rightTab} onChange={setRightTab} docked /> : <div style={{ padding: compact ? "4px 10px" : "5px 24px", borderTop: `1px solid ${t.bdr}`, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, fontSize: 9.5, color: t.t2, background: t.bg1, flexShrink: 0 }}>
             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>ModelVisio · {model.format} · opset {model.opset} · {model.framework}{model.producer ? ` · ${model.producer}` : ""}</span>
             <span style={{ display: "flex", alignItems: "center", gap: 10, whiteSpace: "nowrap", flexShrink: 0 }}>
               <span>© 2026 {AUTHOR}</span>
               <a href={GITHUB_URL} target="_blank" rel="noreferrer noopener" title="View source on GitHub" style={{ color: t.t2, display: "inline-flex", alignItems: "center" }}><GhIcon size={12} /></a>
             </span>
-          </div>
+          </div>}
         </>
       )}
     </div>
