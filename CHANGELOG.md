@@ -3,7 +3,7 @@
 Release notes for the ModelVisio website and desktop app. The VS Code extension has its own
 [CHANGELOG](apps/vscode/CHANGELOG.md).
 
-## [1.2.0] - unreleased
+## [1.2.0] - 2026-10-28
 
 ### Changed
 
@@ -21,7 +21,7 @@ Release notes for the ModelVisio website and desktop app. The VS Code extension 
 - **Command palette** (Ctrl+K, or ⌘K on macOS, or the Search button): jump to any tool or layer,
   open a model file, load the demo, switch theme or close the model.
 
-## [1.1.0] - unreleased
+## [1.1.0] - 2026-10-24
 
 ### Added
 
@@ -61,6 +61,6 @@ First release: graph and inspector, compiler pre-flight, auto-fixes, hardware-fi
 accelerators, converters, deploy scripts and the Gemini copilot, on the web and as a desktop app
 for Windows, macOS and Linux.
 
-[1.2.0]: https://github.com/Premchand006/ModelVisio/compare/desktop-v1.0.0...main
-[1.1.0]: https://github.com/Premchand006/ModelVisio/compare/desktop-v1.0.0...main
+[1.2.0]: https://github.com/Premchand006/ModelVisio/compare/desktop-v1.1.0...desktop-v1.2.0
+[1.1.0]: https://github.com/Premchand006/ModelVisio/compare/desktop-v1.0.0...desktop-v1.1.0
 [1.0.0]: https://github.com/Premchand006/ModelVisio/releases/tag/desktop-v1.0.0
