@@ -24,6 +24,9 @@ follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- The UI fonts (Inter, Space Grotesk, JetBrains Mono) ship inside the extension instead of
+  loading from Google Fonts, so the view renders the same offline. The webview CSP no longer
+  allows the Google Fonts origins.
 - `modelvisio.thinking` now also applies to Grok (default reasoning effort instead of low).
 - `modelvisio.webSearch` is documented as Gemini only.
 - Untrusted workspaces: `modelvisio.provider`, `modelvisio.grokModel` and

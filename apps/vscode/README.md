@@ -110,7 +110,7 @@ key you kept in user settings still applies until you remove it; the command tel
   cloud-metadata addresses are always refused, including hostnames that resolve to them and
   redirects to them. `modelvisio.scrapeAllowlist` narrows reading to the hosts you list. Page
   text is passed to the model as untrusted data, never as instructions.
-- The view loads its fonts from Google Fonts.
+- Fonts ship inside the extension, so the view makes no requests to Google Fonts.
 - **Untrusted workspaces:** the extension runs in Restricted Mode, but `modelvisio.provider`,
   `modelvisio.geminiApiKey`, `modelvisio.geminiModel`, `modelvisio.grokModel`,
   `modelvisio.webSearch`, `modelvisio.freeWebSearch`, `modelvisio.thinking` and

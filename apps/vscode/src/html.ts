@@ -30,8 +30,8 @@ export function buildCsp(cspSource: string, nonce: string): string {
     `default-src 'none'`,
     `img-src ${cspSource} data: blob:`,
     `script-src 'nonce-${nonce}' 'unsafe-eval' 'wasm-unsafe-eval'`,
-    `style-src ${cspSource} 'unsafe-inline' https://fonts.googleapis.com`,
-    `font-src ${cspSource} https://fonts.gstatic.com data:`,
+    `style-src ${cspSource} 'unsafe-inline'`,
+    `font-src ${cspSource} data:`,
     `connect-src ${cspSource} https:`,
     `worker-src ${cspSource} blob:`,
   ].join("; ");

@@ -42,6 +42,7 @@ import { DownloadPanel } from "./components/DownloadPanel";
 import { MacInstallHelp } from "./components/MacInstallHelp";
 import logoUrl from "./assets/logo.png";
 import graphHexUrl from "./assets/graph-hex.png";
+import "./fonts.css";
 
 // Plus weight-only companions picked alongside their graph file.
 const ACCEPT = [...FORMAT_SUPPORT.flatMap((f) => f.exts), "pdiparams", "index", "data-00000-of-00001"].map((e) => "." + e).join(",");
@@ -261,7 +262,7 @@ export function App({
     <input ref={fileInput} type="file" accept={ACCEPT} multiple hidden onChange={(e) => { handleFiles(e.target.files); e.target.value = ""; }} />
     {building && <BuildingPage label={building} theme={theme} onToggleTheme={() => setTheme((p) => (p === "dark" ? "light" : "dark"))} onBack={() => setBuilding(null)} />}
     <div style={{ height: "100dvh", display: "flex", flexDirection: "column", background: t.bg, color: t.t0, fontFamily: "'Inter',-apple-system,sans-serif", overflow: "hidden", transition: "background .3s" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700;800&display=swap');
+      <style>{`
         *{box-sizing:border-box;margin:0;padding:0}
         ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:${t.bdr};border-radius:2px}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
