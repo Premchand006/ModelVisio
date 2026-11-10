@@ -1,0 +1,33 @@
+# ModelVisio
+
+> ModelVisio is an open-source (MIT) neural-network model analyzer for edge deployment: a Netron-style graph viewer, an edge hardware advisor and an AI copilot in one tool. It ships as a website, a desktop app (Tauri 2) and a VS Code extension, all built from the same code. Models are parsed locally in a Web Worker; the model file is not uploaded.
+
+Drop in a model file and ModelVisio shows an interactive graph with a per-layer inspector, a compiler pre-flight that flags op-support problems per target (Coral Edge TPU, RKNN, Hailo, Kneron) with undoable auto-fixes, a roofline-based hardware-fit score for 21 edge accelerators (estimated FPS, FPS/W, memory fit), format conversion, TensorRT/HailoRT/RKNN deploy scripts, on-device ONNX benchmarks, and an AI copilot (Google Gemini or xAI Grok) that sees the model's computed analysis.
+
+Fully parsed formats: ONNX, TFLite, PyTorch (.pt/.pth), Safetensors, GGUF, NumPy, Darknet, Core ML, OpenVINO IR, TensorFlow, Keras, Caffe, PaddlePaddle, ncnn, MNN, RKNN, MLIR, scikit-learn. Others (TensorRT engines, TorchScript, ExecuTorch, compiled Core ML) are detected and shown as metadata.
+
+Hardware-fit scores use the roofline model (Williams, Waterman and Patterson, 2009). Jetson AGX Orin and Hailo-8 are calibrated from MLPerf and vendor ResNet-50 numbers; other devices are estimates and are labelled as such. A model whose memory footprint exceeds the device's memory scores at most 15.
+
+## Docs
+
+- [README](https://github.com/Premchand006/ModelVisio/blob/main/README.md): features, architecture, supported formats, quick start, security
+- [Architecture](https://github.com/Premchand006/ModelVisio/blob/main/ARCHITECTURE.md): packages, conventions, the normalized Model type
+- [Roofline scoring research](https://github.com/Premchand006/ModelVisio/blob/main/docs/roofline-scoring-research.md): device numbers, calibration and score weights
+- [CLI and GitHub Action](https://github.com/Premchand006/ModelVisio/blob/main/docs/ci/README.md): inspect, check, diff and registry commands with budget and regression gates
+- [VS Code extension](https://github.com/Premchand006/ModelVisio/blob/main/apps/vscode/README.md): commands, settings, privacy
+- [macOS install](https://github.com/Premchand006/ModelVisio/blob/main/docs/install-macos.md): first launch, updates, uninstall
+
+## Apps
+
+- [Web app](https://modelvisio.netlify.app/): runs in the browser; "Try the demo · YOLO26n" loads a sample model
+- [Desktop installers](https://github.com/Premchand006/ModelVisio/releases/latest): macOS universal .dmg, Windows x64 .exe, Linux AppImage/.deb/.rpm
+
+## Project
+
+- [Source code](https://github.com/Premchand006/ModelVisio): TypeScript, React 18, Vite 5, Tauri 2, pnpm workspaces, Vitest
+- [Changelog](https://github.com/Premchand006/ModelVisio/blob/main/CHANGELOG.md): release notes
+- [License](https://github.com/Premchand006/ModelVisio/blob/main/LICENSE): MIT
+
+## Optional
+
+- [Issues](https://github.com/Premchand006/ModelVisio/issues): bug reports and feature, device or format requests

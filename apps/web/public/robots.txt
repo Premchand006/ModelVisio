@@ -1,0 +1,10 @@
+# ModelVisio: open-source neural-network model analyzer for edge deployment.
+# Everything public on this site may be crawled and indexed. The serverless
+# endpoints under /api/ are POST-only proxies with nothing to index.
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /.netlify/
+
+Sitemap: https://modelvisio.netlify.app/sitemap.xml
