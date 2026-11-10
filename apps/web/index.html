@@ -3,30 +3,170 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ModelVisio: neural-network model analyzer for edge deployment</title>
-    <meta name="description" content="Inspect, optimize, and deploy neural networks to edge hardware. Interactive graph + layer inspector, compiler pre-flight, roofline hardware-fit scoring, format conversion, and an AI copilot. Runs ONNX, TFLite, PyTorch, GGUF, Safetensors and more, all in the browser." />
-    <meta name="keywords" content="ONNX, TFLite, PyTorch, edge AI, model analyzer, Netron, TensorRT, quantization, Jetson, Hailo, Coral, neural network visualizer" />
+    <title>ONNX &amp; TFLite Model Viewer + Edge AI Analyzer | ModelVisio</title>
+    <meta name="description" content="Free, open-source Netron alternative in your browser. View ONNX, TFLite, PyTorch and GGUF models and check if they run on Jetson, Hailo, Coral or RKNN." />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <link rel="canonical" href="https://modelvisio.netlify.app/" />
+    <meta name="author" content="Premchand" />
+    <meta name="application-name" content="ModelVisio" />
     <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#0A0A0B" />
 
     <!-- Open Graph / social cards -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="ModelVisio" />
-    <meta property="og:description" content="Neural-network model analyzer for edge deployment: graph, inspector, compiler pre-flight, roofline hardware scoring, and an AI copilot. In the browser." />
-    <meta property="og:image" content="/icon-512.png" />
-    <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="ModelVisio" />
-    <meta name="twitter:description" content="Inspect, optimize, and deploy neural networks to edge hardware, in the browser." />
-    <meta name="twitter:image" content="/icon-512.png" />
+    <meta property="og:site_name" content="ModelVisio" />
+    <meta property="og:url" content="https://modelvisio.netlify.app/" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content="ModelVisio: neural-network model analyzer for edge deployment" />
+    <meta property="og:description" content="Open ONNX, TFLite, PyTorch, GGUF and Safetensors models in your browser and see whether they fit Jetson, Hailo, Coral or RKNN: graph, compiler pre-flight, hardware-fit scoring and deploy scripts. Free and open source." />
+    <meta property="og:image" content="https://modelvisio.netlify.app/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="ModelVisio: will your model fit the edge? A model graph next to the tagline." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="ModelVisio: neural-network model analyzer for edge deployment" />
+    <meta name="twitter:description" content="View ONNX, TFLite, PyTorch and GGUF models in your browser and check whether they run on your edge hardware. Free and open source." />
+    <meta name="twitter:image" content="https://modelvisio.netlify.app/og-image.png" />
+    <meta name="twitter:image:alt" content="ModelVisio: will your model fit the edge? A model graph next to the tagline." />
 
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <meta name="theme-color" content="#0A0A0B" />
+
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://modelvisio.netlify.app/#website",
+          "url": "https://modelvisio.netlify.app/",
+          "name": "ModelVisio",
+          "description": "Neural-network model analyzer for edge deployment: a graph viewer, an edge hardware advisor and an AI copilot in one tool.",
+          "inLanguage": "en",
+          "publisher": { "@id": "https://modelvisio.netlify.app/#author" },
+          "about": { "@id": "https://modelvisio.netlify.app/#app" }
+        },
+        {
+          "@type": "WebApplication",
+          "@id": "https://modelvisio.netlify.app/#app",
+          "name": "ModelVisio",
+          "url": "https://modelvisio.netlify.app/",
+          "description": "Open-source neural-network model analyzer for edge deployment. Drop in a model to get an interactive graph, compiler pre-flight checks, hardware-fit scores for 21 edge accelerators, format conversion, deploy scripts and an AI copilot. Runs in the browser, as a desktop app and as a VS Code extension.",
+          "applicationCategory": "DeveloperApplication",
+          "operatingSystem": "Web browser, macOS, Windows, Linux, Visual Studio Code",
+          "browserRequirements": "Requires JavaScript and Web Worker support",
+          "softwareVersion": "1.2.0",
+          "downloadUrl": "https://github.com/Premchand006/ModelVisio/releases/latest",
+          "license": "https://github.com/Premchand006/ModelVisio/blob/main/LICENSE",
+          "isAccessibleForFree": true,
+          "image": "https://modelvisio.netlify.app/og-image.png",
+          "screenshot": [
+            { "@type": "ImageObject", "url": "https://modelvisio.netlify.app/screenshots/graph.png", "caption": "Model graph with per-layer inspector" },
+            { "@type": "ImageObject", "url": "https://modelvisio.netlify.app/screenshots/hardware.png", "caption": "Hardware-fit scoring for edge accelerators" }
+          ],
+          "featureList": [
+            "Interactive model graph with per-layer inspector",
+            "Compiler pre-flight op-support checks with undoable auto-fixes",
+            "Hardware-fit scoring for 21 edge accelerators using a roofline model",
+            "Format conversion and deploy scripts for TensorRT, HailoRT and RKNN",
+            "AI copilot using Google Gemini or xAI Grok with the model's computed analysis",
+            "Quantization sensitivity heatmap",
+            "On-device ONNX benchmarking",
+            "CLI and GitHub Action for CI",
+            "Models are parsed locally; files are not uploaded"
+          ],
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+          "author": { "@id": "https://modelvisio.netlify.app/#author" },
+          "sameAs": ["https://github.com/Premchand006/ModelVisio"]
+        },
+        {
+          "@type": "SoftwareSourceCode",
+          "@id": "https://modelvisio.netlify.app/#source",
+          "name": "ModelVisio source code",
+          "codeRepository": "https://github.com/Premchand006/ModelVisio",
+          "programmingLanguage": "TypeScript",
+          "license": "https://github.com/Premchand006/ModelVisio/blob/main/LICENSE",
+          "author": { "@id": "https://modelvisio.netlify.app/#author" },
+          "targetProduct": { "@id": "https://modelvisio.netlify.app/#app" }
+        },
+        {
+          "@type": "Person",
+          "@id": "https://modelvisio.netlify.app/#author",
+          "name": "Premchand",
+          "alternateName": "Premchand006",
+          "url": "https://github.com/Premchand006",
+          "sameAs": ["https://github.com/Premchand006"]
+        }
+      ]
+    }
+    </script>
+
+    <style>
+      /* Pre-render landing: what crawlers, link previews and no-JS visitors see.
+         React replaces #root's children on mount, so this never shows beside the app. */
+      #seo { box-sizing: border-box; max-width: 1120px; margin: 0 auto; padding: 56px 24px 40px; color: #D2D2D8; font: 15px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+      #seo * { box-sizing: border-box; }
+      #seo h1 { color: #F4F4F5; font-size: clamp(28px, 5vw, 44px); line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 14px; }
+      #seo h2 { color: #F4F4F5; font-size: 19px; margin: 32px 0 8px; }
+      #seo .kicker { color: #4D8DFF; font-size: 12px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; }
+      #seo a { color: #4D8DFF; }
+      #seo .muted { color: #9A9AA4; font-size: 13px; }
+      #seo ul { padding-left: 20px; }
+      #seo dt { color: #F4F4F5; font-weight: 600; margin-top: 12px; }
+      #seo dd { margin: 2px 0 0; }
+      @media (max-width: 640px) { #seo { padding: 28px 16px 24px; } }
+    </style>
   </head>
-  <body>
-    <div id="root"></div>
+  <body style="margin:0;background:#0A0A0B">
+    <div id="root">
+      <main id="seo">
+        <span class="kicker">Edge deployment, from the model file</span>
+        <h1>Neural network model viewer and edge AI analyzer</h1>
+        <p>Open ONNX, TFLite, PyTorch, GGUF and Safetensors models in your browser, then see whether they will run on your edge hardware. ModelVisio is free and open source (MIT). Parsing runs in a Web Worker in your browser, so the model file never leaves your machine.</p>
+        <p><a href="https://github.com/Premchand006/ModelVisio/releases/latest">Download the desktop app</a> for macOS, Windows or Linux, use the VS Code extension, or <a href="https://github.com/Premchand006/ModelVisio">view the source on GitHub</a>.</p>
+        <noscript><p><strong>ModelVisio needs JavaScript to open and analyze models.</strong> Turn it on and reload the page.</p></noscript>
+
+        <h2>View any model graph</h2>
+        <p>A Netron-style interactive graph with a per-layer inspector showing shapes, weights, FLOPs/MACs and quantization sensitivity. Export the graph to SVG or PNG.</p>
+
+        <h2>Will it compile? Op-support pre-flight for Coral, Hailo, RKNN and Kneron</h2>
+        <p>Rule-based op-support checks against each vendor's documented limits (Coral Edge TPU op list and tensor rules; data-dependent ops and dynamic shapes on RKNN, Hailo and Kneron), plus memory warnings. Undoable auto-fixes include SiLU to HardSwish, SPPF to parallel SPP, Resize to ConvTranspose and channel pruning. The vendor compiler still has the final word. See <a href="/edge-npu-unsupported-ops/">which ops each NPU rejects</a>.</p>
+
+        <h2>Estimated FPS, FPS/W and memory fit on 21 edge accelerators</h2>
+        <p>A 0 to 100 hardware-fit score from the roofline model (Williams, Waterman and Patterson, 2009): estimated FPS, FPS/W, whether the model is compute- or memory-bound, and a memory-fit check. Jetson AGX Orin and Hailo-8 are calibrated from MLPerf and vendor ResNet-50 numbers; other devices are estimates and are labelled as such. A model that does not fit in device memory scores at most 15. Compare the specs in the <a href="/edge-ai-accelerators/">edge AI accelerator table</a>.</p>
+
+        <h2>Optimize and benchmark</h2>
+        <p>Ranked, device-specific recommendations with estimated latency and size impact, a per-layer INT8/INT4 quantization heatmap, a Pareto search over device, runtime, precision and input size, and on-device ONNX benchmarks with onnxruntime-web (WebAssembly, WebGPU or WebNN).</p>
+
+        <h2>Ship: conversion, deploy scripts and CI</h2>
+        <p>Graph JSON, Layers CSV, Safetensors and NumPy exports, ready-to-run TensorRT, HailoRT and RKNN deployment scripts, a deployment agent that plans from a goal such as "Jetson Orin Nano at 30 FPS", fleet simulation, a local model registry, and a CLI and GitHub Action with budget and regression gates.</p>
+
+        <h2>An AI copilot that reads your model's analysis</h2>
+        <p>Ask Google Gemini or xAI Grok about your model. The copilot is given the computed analysis and cites live sources. The API key stays on the server and never reaches the browser.</p>
+
+        <h2>Supported formats</h2>
+        <p>Fully parsed: ONNX, TFLite, PyTorch (.pt/.pth), Safetensors, GGUF, NumPy, Darknet, Core ML, OpenVINO IR, TensorFlow, Keras, Caffe, PaddlePaddle, ncnn, MNN, RKNN, MLIR and scikit-learn. Detected and shown as metadata: TensorRT engines, TorchScript, ExecuTorch, compiled Core ML and more. <a href="/model-formats/">All supported formats</a>.</p>
+
+        <h2>Frequently asked questions</h2>
+        <dl>
+          <dt>Is my model uploaded anywhere?</dt>
+          <dd>No. The model file is parsed locally in your browser and never uploaded. The web app may send basic usage metadata (file name, format, size, parameter and layer counts) to its server for usage logging, and messages you send to the optional AI copilot go to its server-side proxy.</dd>
+          <dt>How is ModelVisio different from Netron?</dt>
+          <dd>Both draw the model graph. ModelVisio adds edge deployment analysis on top: compiler pre-flight, hardware-fit scoring for 21 accelerators, auto-fixes, benchmarks and deploy scripts.</dd>
+          <dt>How accurate are the FPS estimates?</dt>
+          <dd>They are roofline estimates. Calibrated devices use published MLPerf and vendor numbers; the rest are marked as estimated. Benchmark on the real device before you ship.</dd>
+          <dt>What does it cost?</dt>
+          <dd>Nothing. ModelVisio is MIT-licensed open source.</dd>
+        </dl>
+
+        <p class="muted">ModelVisio 1.2.0 · Developed by Premchand · <a href="https://github.com/Premchand006/ModelVisio/blob/main/CHANGELOG.md">Changelog</a> · <a href="https://github.com/Premchand006/ModelVisio/blob/main/LICENSE">MIT License</a></p>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

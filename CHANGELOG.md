@@ -3,6 +3,45 @@
 Release notes for the ModelVisio website and desktop app. The VS Code extension has its own
 [CHANGELOG](apps/vscode/CHANGELOG.md).
 
+## [Unreleased]
+
+### Added
+
+- **Search and social discoverability for the website.** The page now ships crawlable landing
+  content (features, supported formats and an FAQ) for search engines, AI answer engines and
+  link previews that don't run JavaScript. The app replaces it as soon as it loads.
+- `robots.txt`, `sitemap.xml` and `llms.txt`, a canonical URL, structured data (JSON-LD) and a
+  1200×630 social card for link previews.
+- The install manifest gains screenshots and categories. A branded 404 page replaces the host's
+  default one.
+- Security headers (nosniff, frame and referrer policies, a report-only CSP) and long-lived caching
+  for fingerprinted assets, on both Netlify and Vercel.
+- **Reference pages**, generated at build time from the app's own data so they always match what
+  it checks: an [edge AI accelerator comparison](https://modelvisio.netlify.app/edge-ai-accelerators/)
+  (TOPS, bandwidth, power, TOPS/W and roofline ridge point for all 21 devices, with sources),
+  [unsupported operators on Coral, RKNN, Hailo and Kneron](https://modelvisio.netlify.app/edge-npu-unsupported-ops/)
+  and the [supported model formats](https://modelvisio.netlify.app/model-formats/). The sitemap is
+  generated with them.
+- `pnpm check:seo`, which CI runs after the web build to catch regressions in all of the above,
+  including every page in the sitemap.
+- `pnpm indexnow`, which tells Bing and other IndexNow search engines about changed pages after a
+  deploy.
+- Issue forms for bug reports and feature requests, and a pull request template.
+
+### Changed
+
+- **Faster first load.** The landing page now downloads 244 KB of JavaScript instead of 971 KB
+  (79 KB instead of 323 KB compressed). The graph and the tool panels load in the background and
+  are ready by the time a model opens.
+- **Fonts ship with the app** instead of loading from Google Fonts, so the desktop app and the VS
+  Code extension show the right fonts offline, and the website makes no third-party requests to
+  render.
+- The Content-Security-Policy is enforced, after testing the benchmark (including the WebGPU
+  runtime download), uploads and every tool panel under it.
+- The page title and description now lead with what people search for (ONNX and TFLite model
+  viewer, Jetson, Hailo, Coral, RKNN).
+- Removed an empty stylesheet that blocked rendering.
+
 ## [1.2.0] - 2026-10-28
 
 ### Changed

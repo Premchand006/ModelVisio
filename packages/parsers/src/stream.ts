@@ -14,8 +14,7 @@ import type { Companions } from "./companions";
 
 export type { ModelHeader, ModelStream, ParseChunk } from "./common/chunks";
 
-/** Files at or above this size are parsed progressively by the UI. */
-export const STREAM_THRESHOLD_BYTES = 100 * 1024 * 1024;
+export { STREAM_THRESHOLD_BYTES } from "./limits";
 
 /** Default number of layers per streamed chunk. */
 export const DEFAULT_STREAM_BATCH = 256;

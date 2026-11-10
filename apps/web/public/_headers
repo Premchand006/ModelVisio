@@ -1,0 +1,37 @@
+# Netlify response headers (copied to dist/ by Vite). Vercel mirrors these in
+# apps/web/vercel.json.
+#
+# CSP (same reasoning as the VS Code webview's, apps/vscode/src/html.ts):
+# - 'unsafe-eval': protobufjs (ONNX, Caffe, TF and other protobuf parsers)
+#   compiles its decoders with Function() in the parse worker; without it
+#   ONNX fails to parse. Script *loading* stays limited to the site and
+#   jsDelivr with no 'unsafe-inline', so injected <script>s are still blocked.
+# - 'wasm-unsafe-eval': onnxruntime compiles its WebAssembly.
+# - jsDelivr: the checksum-verified WebGPU onnxruntime build the benchmark
+#   downloads on first use. blob: workers run the benchmark.
+# - 'unsafe-inline' styles: the React UI's style props.
+
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+  Cross-Origin-Opener-Policy: same-origin
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; connect-src 'self' https://cdn.jsdelivr.net blob: data:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'
+
+# Vite fingerprints everything under /assets/, so it can be cached forever.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/manifest.webmanifest
+  Content-Type: application/manifest+json
+  Cache-Control: public, max-age=86400
+
+/llms.txt
+  Content-Type: text/plain; charset=utf-8
+
+/*.txt
+  Cache-Control: public, max-age=3600
+
+/api/*
+  X-Robots-Tag: noindex

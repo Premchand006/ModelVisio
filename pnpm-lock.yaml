@@ -75,6 +75,9 @@ importers:
       '@modelvisio/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@modelvisio/parsers':
+        specifier: workspace:*
+        version: link:../../packages/parsers
       react:
         specifier: ^18.3.1
         version: 18.3.1

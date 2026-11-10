@@ -6,9 +6,13 @@
   "main": "./src/index.ts",
   "module": "./src/index.ts",
   "types": "./src/index.ts",
+  "sideEffects": false,
   "exports": {
     ".": "./src/index.ts",
-    "./companions": "./src/companions.ts"
+    "./companions": "./src/companions.ts",
+    "./formats": "./src/formatSupport.ts",
+    "./limits": "./src/limits.ts",
+    "./compat": "./src/compat.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

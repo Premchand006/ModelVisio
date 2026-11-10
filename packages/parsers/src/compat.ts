@@ -86,6 +86,18 @@ function activationShape(l: ModelLayer): number[] | undefined {
   return s;
 }
 
+/**
+ * The op lists the rules above match against (normalized with normOp), for
+ * documentation such as the website's operator-support page.
+ */
+export const COMPAT_RULE_OPS: { dataDependent: readonly string[]; coralUnsupported: readonly string[]; resize: readonly string[]; softmax: readonly string[]; matmul: readonly string[] } = {
+  dataDependent: [...DATA_DEPENDENT],
+  coralUnsupported: [...CORAL_UNSUPPORTED],
+  resize: [...RESIZE],
+  softmax: [...SOFTMAX],
+  matmul: [...MATMUL],
+};
+
 const issue = (target: CompatTarget, severity: Issue["severity"], msg: string): Issue => ({ target, severity, msg });
 
 /** Rule-based compatibility findings for one layer. */

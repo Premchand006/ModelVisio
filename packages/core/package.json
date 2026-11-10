@@ -6,11 +6,16 @@
   "main": "./src/index.ts",
   "module": "./src/index.ts",
   "types": "./src/index.ts",
+  "sideEffects": [
+    "**/*.css",
+    "**/*.worker.ts"
+  ],
   "exports": {
     ".": "./src/index.ts",
     "./registry": "./src/registry/index.ts",
     "./scoring": "./src/scoring/index.ts",
     "./hardware": "./src/data/hardware.ts",
+    "./fixes": "./src/fixes/transforms.ts",
     "./styles.css": "./src/styles.css",
     "./tailwind-preset.js": "./tailwind-preset.js"
   },

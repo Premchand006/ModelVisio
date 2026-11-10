@@ -10,7 +10,7 @@ export { parseModel, detectFormat, FORMAT_SUPPORT, type FormatInfo, type ParserS
 export { companionNames, findCompanion, pickPrimary, type Companions } from "./companions";
 
 // Rule-based per-op compatibility notes (parseModel applies these already).
-export { annotateCompat, layerCompat, normOp, COMPAT_TARGETS, type CompatTarget } from "./compat";
+export { annotateCompat, layerCompat, normOp, COMPAT_TARGETS, COMPAT_RULE_OPS, type CompatTarget } from "./compat";
 
 // Individual parsers (also usable directly / in tests).
 export { parseOnnx, type ParseOptions } from "./onnx/parse";

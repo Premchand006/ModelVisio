@@ -11,6 +11,17 @@
 </p>
 
 <p align="center">
+  <a href="https://modelvisio.netlify.app/"><strong>Open the web app</strong></a> ·
+  <a href="https://github.com/Premchand006/ModelVisio/releases/latest"><strong>Download the desktop app</strong></a> ·
+  <a href="#features">Features</a> ·
+  <a href="#supported-formats">Formats</a> ·
+  <a href="docs/ci/README.md">CLI and CI</a>
+</p>
+
+<p align="center">
+  <a href="https://modelvisio.netlify.app/"><img src="https://img.shields.io/badge/try_it-in_your_browser-4D8DFF" alt="Try it in your browser" /></a>
+  <a href="https://github.com/Premchand006/ModelVisio/releases/latest"><img src="https://img.shields.io/github/v/release/Premchand006/ModelVisio?label=release" alt="Latest release" /></a>
+  <a href="https://github.com/Premchand006/ModelVisio/actions/workflows/ci.yml"><img src="https://github.com/Premchand006/ModelVisio/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>
   <img src="https://img.shields.io/badge/license-MIT-3DA639" alt="MIT License" />
   <img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/React_18-20232A?logo=react" alt="React 18" />
@@ -21,6 +32,12 @@
 </p>
 
 ## What it is
+
+**ModelVisio is a free, open-source neural network model viewer and edge AI analyzer that runs in
+your browser.** Open an ONNX, TFLite, PyTorch, GGUF or Safetensors model to get a Netron-style
+interactive graph, then answer the deployment questions: will it compile for Coral Edge TPU, Hailo,
+RKNN or Kneron, and what FPS and memory fit can you expect on 21 edge accelerators, from Jetson to
+RK3588?
 
 Getting a trained model onto edge hardware involves a lot of guesswork. Which accelerator should
 you use? Will the model fit in memory? Which ops fall back to the CPU? How fast will it run?
@@ -206,7 +223,8 @@ pnpm install
 pnpm dev          # web app at http://localhost:5173
 ```
 
-Click **Load Demo · YOLO26n** to try it without a file, or drop in your own model.
+Click **Try the demo · YOLO26n** to try it without a file, or drop in your own model. You don't
+need to build anything to try it: the hosted app is at <https://modelvisio.netlify.app/>.
 
 ### Turning on the AI copilot
 
@@ -229,7 +247,7 @@ The key stays on the server. See [Security](#security).
 
 | App | Develop | Build and release |
 |---|---|---|
-| Web | `pnpm dev` | `pnpm --filter @modelvisio/web build`, then deploy to Vercel (Root Directory `apps/web`, set `GEMINI_API_KEY`, or `XAI_API_KEY` with `MODELVISIO_PROVIDER=grok`) or Netlify (`netlify.toml` is included) |
+| Web | `pnpm dev` | `pnpm --filter @modelvisio/web build`, then deploy to Vercel (Root Directory `apps/web`, set `GEMINI_API_KEY`, or `XAI_API_KEY` with `MODELVISIO_PROVIDER=grok`) or Netlify (`netlify.toml` is included). After a production deploy, `pnpm indexnow` tells Bing and other IndexNow engines which pages changed. |
 | Desktop (Tauri 2) | `pnpm --filter @modelvisio/desktop dev` | `pnpm --filter @modelvisio/desktop build`. Needs the [Rust toolchain](https://rustup.rs). Push a `desktop-v*` tag to build installers with GitHub Actions. The desktop app adds File → Open Recent. |
 | VS Code | Open `apps/vscode` as the workspace folder and press F5 | `pnpm package:vscode` produces `apps/vscode/modelvisio.vsix`. Push a `vscode-v*` tag to attach it to a GitHub Release (and publish to the Marketplace if `VSCE_PAT` is set). |
 
@@ -310,6 +328,9 @@ apps/
   SSRF-guarded scraper (no private, loopback or metadata hosts, size and time caps, optional
   allowlist) and fenced in the prompt as data the model must not take instructions from.
 - Models are parsed locally in a Web Worker. Your files are not uploaded.
+- Usage logging is opt-in per deployment. When `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are
+  set on the server, the `/api/chat` proxy records model loads (file name, format, size, parameter
+  and layer counts) and chat queries. Without them nothing is logged. See `.env.example`.
 
 ## Roadmap
 
