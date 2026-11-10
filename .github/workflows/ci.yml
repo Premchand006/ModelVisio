@@ -35,6 +35,11 @@ jobs:
       - name: Build web app
         run: pnpm build
 
+      # Title/description lengths, canonical, social image, JSON-LD, crawlable
+      # static landing content, robots.txt, sitemap.xml, llms.txt and headers.
+      - name: Check SEO essentials
+        run: pnpm check:seo
+
       # Builds the host (esbuild) + webview (vite) and runs vsce package. Catches
       # .vscodeignore / manifest mistakes that typecheck and tests can't see.
       - name: Build + package VS Code extension
