@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Try ModelVisio in your browser
+    url: https://modelvisio.netlify.app/
+    about: The hosted web app, with a demo model you can load without a file.
+  - name: Download the desktop app
+    url: https://github.com/Premchand006/ModelVisio/releases/latest
+    about: Installers for macOS, Windows and Linux.

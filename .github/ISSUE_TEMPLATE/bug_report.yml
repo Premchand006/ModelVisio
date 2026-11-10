@@ -1,0 +1,50 @@
+name: Bug report
+description: Something in ModelVisio doesn't work as expected.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. For a security problem or a leaked API key, don't open a public
+        issue: email the maintainer instead (see the Security section of the README).
+  - type: dropdown
+    id: app
+    attributes:
+      label: Where did it happen?
+      options:
+        - Web app (modelvisio.netlify.app)
+        - Desktop app
+        - VS Code extension
+        - CLI or GitHub Action
+        - Self-hosted / local dev
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: format
+    attributes:
+      label: Model format
+      placeholder: e.g. ONNX opset 17, TFLite INT8, GGUF Q4_K_M
+  - type: textarea
+    id: sample
+    attributes:
+      label: Sample model
+      description: A link to a small model file that shows the problem, if you can share one.
+  - type: input
+    id: env
+    attributes:
+      label: Version, browser and OS
+      placeholder: e.g. ModelVisio 1.2.0, Chrome 131, Windows 11
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console errors
+      render: text
