@@ -1,8 +1,10 @@
 # Netlify response headers (copied to dist/ by Vite). Vercel mirrors these in
 # apps/web/vercel.json.
 #
-# The CSP is report-only until the benchmark (CPU + WebGPU wasm from jsDelivr)
-# and the copilot are verified under it; then rename it to Content-Security-Policy.
+# CSP: jsDelivr serves the checksum-verified WebGPU onnxruntime build the
+# benchmark downloads on first use; 'wasm-unsafe-eval' lets onnxruntime compile
+# its WebAssembly; blob: workers run the benchmark; inline styles come from the
+# React UI's style props.
 
 /*
   X-Content-Type-Options: nosniff
@@ -10,7 +12,7 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
   Cross-Origin-Opener-Policy: same-origin
-  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; connect-src 'self' https://cdn.jsdelivr.net blob: data:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; connect-src 'self' https://cdn.jsdelivr.net blob: data:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'
 
 # Vite fingerprints everything under /assets/, so it can be cached forever.
 /assets/*
