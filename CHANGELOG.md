@@ -3,6 +3,28 @@
 Release notes for the ModelVisio website and desktop app. The VS Code extension has its own
 [CHANGELOG](apps/vscode/CHANGELOG.md).
 
+## [Unreleased]
+
+### Added
+
+- **Search and social discoverability for the website.** The page now ships crawlable landing
+  content (features, supported formats and an FAQ) for search engines, AI answer engines and
+  link previews that don't run JavaScript. The app replaces it as soon as it loads.
+- `robots.txt`, `sitemap.xml` and `llms.txt`, a canonical URL, structured data (JSON-LD) and a
+  1200×630 social card for link previews.
+- The install manifest gains screenshots and categories. A branded 404 page replaces the host's
+  default one.
+- Security headers (nosniff, frame and referrer policies, a report-only CSP) and long-lived caching
+  for fingerprinted assets, on both Netlify and Vercel.
+- `pnpm check:seo`, which CI runs after the web build to catch regressions in all of the above.
+- Issue forms for bug reports and feature requests, and a pull request template.
+
+### Changed
+
+- The page title and description now lead with what people search for (ONNX and TFLite model
+  viewer, Jetson, Hailo, Coral, RKNN).
+- Removed an empty stylesheet that blocked rendering.
+
 ## [1.2.0] - 2026-10-28
 
 ### Changed
