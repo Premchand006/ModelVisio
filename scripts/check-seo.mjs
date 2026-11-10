@@ -73,6 +73,37 @@ check(!/^Disallow:\s*\/\s*$/m.test(robots), "robots.txt must not disallow the wh
 const sitemap = read("sitemap.xml");
 check(sitemap.includes(`<loc>${SITE}</loc>`), `sitemap.xml should list ${SITE}`);
 
+// Every other sitemap URL is a generated reference page (apps/web/seo/pages.ts):
+// it must exist, be self-canonical, carry a unique title and description, an
+// H1, real content, valid JSON-LD, and link back to the app.
+const titles = new Set([title]);
+const locs = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]).filter((u) => u !== SITE);
+check(locs.length > 0, "sitemap.xml should list the generated reference pages");
+for (const url of locs) {
+  const path = url.slice(SITE.length);
+  const file = join(dist, path, "index.html");
+  if (!existsSync(file)) { failures.push(`${path}: listed in sitemap.xml but ${file} is missing`); continue; }
+  const page = readFileSync(file, "utf8");
+  const t = decode(page.match(/<title>([^<]*)<\/title>/i)?.[1] ?? "");
+  check(t.length >= 20 && t.length <= 60 && t.includes("ModelVisio"), `${path}: <title> should be 20-60 chars with the brand (is ${t.length}): "${t}"`);
+  check(!titles.has(t), `${path}: duplicate <title> "${t}"`);
+  titles.add(t);
+  const d = decode(page.match(/<meta name="description" content="([^"]*)"/i)?.[1] ?? "");
+  check(d.length >= 70 && d.length <= 160, `${path}: meta description should be 70-160 chars (is ${d.length})`);
+  check(page.includes(`<link rel="canonical" href="${url}"`), `${path}: canonical should be ${url}`);
+  check((page.match(/<h1[\s>]/g) ?? []).length === 1, `${path}: should have exactly one <h1>`);
+  const main = page.match(/<main>([\s\S]*)<\/main>/)?.[1] ?? "";
+  const words = main.replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length;
+  check(words >= 250, `${path}: main content should have at least 250 words (has ${words})`);
+  check(/href="\/"/.test(page), `${path}: should link back to the app`);
+  try {
+    const ld = JSON.parse(page.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1] ?? "");
+    check(ld["@graph"]?.some((n) => n["@type"] === "BreadcrumbList"), `${path}: JSON-LD should include a BreadcrumbList`);
+  } catch (e) {
+    failures.push(`${path}: JSON-LD does not parse: ${e.message}`);
+  }
+}
+
 check(/^# ModelVisio\s*$/m.test(read("llms.txt")), "llms.txt should start with an H1");
 
 try {

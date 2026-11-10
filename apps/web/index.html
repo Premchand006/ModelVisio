@@ -135,10 +135,10 @@
         <p>A Netron-style interactive graph with a per-layer inspector showing shapes, weights, FLOPs/MACs and quantization sensitivity. Export the graph to SVG or PNG.</p>
 
         <h2>Will it compile? Op-support pre-flight for Coral, Hailo, RKNN and Kneron</h2>
-        <p>Rule-based op-support checks against each vendor's documented limits (Coral Edge TPU op list and tensor rules; data-dependent ops and dynamic shapes on RKNN, Hailo and Kneron), plus memory warnings. Undoable auto-fixes include SiLU to HardSwish, SPPF to parallel SPP, Resize to ConvTranspose and channel pruning. The vendor compiler still has the final word.</p>
+        <p>Rule-based op-support checks against each vendor's documented limits (Coral Edge TPU op list and tensor rules; data-dependent ops and dynamic shapes on RKNN, Hailo and Kneron), plus memory warnings. Undoable auto-fixes include SiLU to HardSwish, SPPF to parallel SPP, Resize to ConvTranspose and channel pruning. The vendor compiler still has the final word. See <a href="/edge-npu-unsupported-ops/">which ops each NPU rejects</a>.</p>
 
         <h2>Estimated FPS, FPS/W and memory fit on 21 edge accelerators</h2>
-        <p>A 0 to 100 hardware-fit score from the roofline model (Williams, Waterman and Patterson, 2009): estimated FPS, FPS/W, whether the model is compute- or memory-bound, and a memory-fit check. Jetson AGX Orin and Hailo-8 are calibrated from MLPerf and vendor ResNet-50 numbers; other devices are estimates and are labelled as such. A model that does not fit in device memory scores at most 15.</p>
+        <p>A 0 to 100 hardware-fit score from the roofline model (Williams, Waterman and Patterson, 2009): estimated FPS, FPS/W, whether the model is compute- or memory-bound, and a memory-fit check. Jetson AGX Orin and Hailo-8 are calibrated from MLPerf and vendor ResNet-50 numbers; other devices are estimates and are labelled as such. A model that does not fit in device memory scores at most 15. Compare the specs in the <a href="/edge-ai-accelerators/">edge AI accelerator table</a>.</p>
 
         <h2>Optimize and benchmark</h2>
         <p>Ranked, device-specific recommendations with estimated latency and size impact, a per-layer INT8/INT4 quantization heatmap, a Pareto search over device, runtime, precision and input size, and on-device ONNX benchmarks with onnxruntime-web (WebAssembly, WebGPU or WebNN).</p>
@@ -150,7 +150,7 @@
         <p>Ask Google Gemini or xAI Grok about your model. The copilot is given the computed analysis and cites live sources. The API key stays on the server and never reaches the browser.</p>
 
         <h2>Supported formats</h2>
-        <p>Fully parsed: ONNX, TFLite, PyTorch (.pt/.pth), Safetensors, GGUF, NumPy, Darknet, Core ML, OpenVINO IR, TensorFlow, Keras, Caffe, PaddlePaddle, ncnn, MNN, RKNN, MLIR and scikit-learn. Detected and shown as metadata: TensorRT engines, TorchScript, ExecuTorch, compiled Core ML and more.</p>
+        <p>Fully parsed: ONNX, TFLite, PyTorch (.pt/.pth), Safetensors, GGUF, NumPy, Darknet, Core ML, OpenVINO IR, TensorFlow, Keras, Caffe, PaddlePaddle, ncnn, MNN, RKNN, MLIR and scikit-learn. Detected and shown as metadata: TensorRT engines, TorchScript, ExecuTorch, compiled Core ML and more. <a href="/model-formats/">All supported formats</a>.</p>
 
         <h2>Frequently asked questions</h2>
         <dl>

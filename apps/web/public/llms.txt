@@ -8,6 +8,12 @@ Fully parsed formats: ONNX, TFLite, PyTorch (.pt/.pth), Safetensors, GGUF, NumPy
 
 Hardware-fit scores use the roofline model (Williams, Waterman and Patterson, 2009). Jetson AGX Orin and Hailo-8 are calibrated from MLPerf and vendor ResNet-50 numbers; other devices are estimates and are labelled as such. A model whose memory footprint exceeds the device's memory scores at most 15.
 
+## Reference pages
+
+- [Edge AI accelerator comparison](https://modelvisio.netlify.app/edge-ai-accelerators/): the 21 devices ModelVisio scores, with INT8 TOPS, memory bandwidth, power, TOPS/W, roofline ridge point and sources
+- [Unsupported ops on edge NPUs](https://modelvisio.netlify.app/edge-npu-unsupported-ops/): the compiler pre-flight rules for Coral Edge TPU, Rockchip RKNN, Hailo-8 and Kneron KL720, and the auto-fixes
+- [Supported model formats](https://modelvisio.netlify.app/model-formats/): every format ModelVisio opens, with file extensions and parse depth
+
 ## Docs
 
 - [README](https://github.com/Premchand006/ModelVisio/blob/main/README.md): features, architecture, supported formats, quick start, security
