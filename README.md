@@ -247,7 +247,7 @@ The key stays on the server. See [Security](#security).
 
 | App | Develop | Build and release |
 |---|---|---|
-| Web | `pnpm dev` | `pnpm --filter @modelvisio/web build`, then deploy to Vercel (Root Directory `apps/web`, set `GEMINI_API_KEY`, or `XAI_API_KEY` with `MODELVISIO_PROVIDER=grok`) or Netlify (`netlify.toml` is included) |
+| Web | `pnpm dev` | `pnpm --filter @modelvisio/web build`, then deploy to Vercel (Root Directory `apps/web`, set `GEMINI_API_KEY`, or `XAI_API_KEY` with `MODELVISIO_PROVIDER=grok`) or Netlify (`netlify.toml` is included). After a production deploy, `pnpm indexnow` tells Bing and other IndexNow engines which pages changed. |
 | Desktop (Tauri 2) | `pnpm --filter @modelvisio/desktop dev` | `pnpm --filter @modelvisio/desktop build`. Needs the [Rust toolchain](https://rustup.rs). Push a `desktop-v*` tag to build installers with GitHub Actions. The desktop app adds File → Open Recent. |
 | VS Code | Open `apps/vscode` as the workspace folder and press F5 | `pnpm package:vscode` produces `apps/vscode/modelvisio.vsix`. Push a `vscode-v*` tag to attach it to a GitHub Release (and publish to the Marketplace if `VSCE_PAT` is set). |
 

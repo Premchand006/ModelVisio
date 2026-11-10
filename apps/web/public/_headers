@@ -25,5 +25,8 @@
 /llms.txt
   Content-Type: text/plain; charset=utf-8
 
+/*.txt
+  Cache-Control: public, max-age=3600
+
 /api/*
   X-Robots-Tag: noindex
