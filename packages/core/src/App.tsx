@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FORMAT_SUPPORT, pickPrimary, type Companions, type Model, type ModelLayer } from "@modelvisio/parsers";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
+import type { Companions, Model, ModelLayer } from "@modelvisio/parsers";
+import { FORMAT_SUPPORT } from "@modelvisio/parsers/formats";
+import { pickPrimary } from "@modelvisio/parsers/companions";
 import { parseBufferInWorker, parseBufferStreaming, shouldStream } from "./workers/parseClient";
 import { PartialModelBuilder, throttleFrames } from "./workers/streaming";
 import { ThemeCtx } from "./theme/ThemeContext";
@@ -13,21 +15,6 @@ import { CommandPalette, type Command } from "./components/CommandPalette";
 import { Icon } from "./components/Icon";
 import { ALL_TOOLS, TOOL_GROUPS } from "./data/tools";
 import { APP_VERSION } from "./data/version";
-import { GraphPanel } from "./components/Graph/GraphPanel";
-import { Inspector } from "./components/Inspector";
-import { CompilerChecker } from "./components/CompilerChecker";
-import { HWReport } from "./components/HWReport";
-import { Converter } from "./components/Converter";
-import { DeployRecipe } from "./components/DeployRecipe";
-import { Chat } from "./components/Chat";
-import { QuantHeatmap } from "./components/QuantHeatmap";
-import { ModelAdvisor } from "./components/ModelAdvisor";
-import { Benchmark } from "./components/Benchmark";
-import { Investigator } from "./components/Investigator";
-import { OptimizationSearch } from "./components/OptimizationSearch";
-import { DeployAgent } from "./components/DeployAgent";
-import { FleetSim } from "./components/FleetSim";
-import { ModelRegistry } from "./components/ModelRegistry";
 import type { ColorMode } from "./components/Graph/colorBy";
 import { logUpload } from "@modelvisio/ai";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -43,6 +30,36 @@ import { MacInstallHelp } from "./components/MacInstallHelp";
 import logoUrl from "./assets/logo.png";
 import graphHexUrl from "./assets/graph-hex.png";
 import "./fonts.css";
+
+// The graph canvas and the tool panels only render once a model is open, so
+// they load as separate chunks and the landing page ships without them.
+// preloadWorkspace() starts every import as soon as a model starts loading.
+const workspaceLoaders: Array<() => Promise<unknown>> = [];
+function lazyNamed<K extends string, P>(load: () => Promise<Record<K, ComponentType<P>>>, name: K) {
+  workspaceLoaders.push(load);
+  return lazy(() => load().then((m) => ({ default: m[name] })));
+}
+let workspacePreloaded = false;
+function preloadWorkspace() {
+  if (workspacePreloaded) return;
+  workspacePreloaded = true;
+  for (const load of workspaceLoaders) void load().catch(() => { workspacePreloaded = false; });
+}
+const GraphPanel = lazyNamed(() => import("./components/Graph/GraphPanel"), "GraphPanel");
+const Inspector = lazyNamed(() => import("./components/Inspector"), "Inspector");
+const CompilerChecker = lazyNamed(() => import("./components/CompilerChecker"), "CompilerChecker");
+const HWReport = lazyNamed(() => import("./components/HWReport"), "HWReport");
+const Converter = lazyNamed(() => import("./components/Converter"), "Converter");
+const DeployRecipe = lazyNamed(() => import("./components/DeployRecipe"), "DeployRecipe");
+const Chat = lazyNamed(() => import("./components/Chat"), "Chat");
+const QuantHeatmap = lazyNamed(() => import("./components/QuantHeatmap"), "QuantHeatmap");
+const ModelAdvisor = lazyNamed(() => import("./components/ModelAdvisor"), "ModelAdvisor");
+const Benchmark = lazyNamed(() => import("./components/Benchmark"), "Benchmark");
+const Investigator = lazyNamed(() => import("./components/Investigator"), "Investigator");
+const OptimizationSearch = lazyNamed(() => import("./components/OptimizationSearch"), "OptimizationSearch");
+const DeployAgent = lazyNamed(() => import("./components/DeployAgent"), "DeployAgent");
+const FleetSim = lazyNamed(() => import("./components/FleetSim"), "FleetSim");
+const ModelRegistry = lazyNamed(() => import("./components/ModelRegistry"), "ModelRegistry");
 
 // Plus weight-only companions picked alongside their graph file.
 const ACCEPT = [...FORMAT_SUPPORT.flatMap((f) => f.exts), "pdiparams", "index", "data-00000-of-00001"].map((e) => "." + e).join(",");
@@ -80,6 +97,13 @@ export function App({
 }) {
   const [theme, setTheme] = useState<ThemeName>(themeOverride ?? initialTheme);
   useEffect(() => { if (themeOverride) setTheme(themeOverride); }, [themeOverride]);
+  // Fetch the workspace chunks once the landing page is idle, so opening a model doesn't wait on them.
+  useEffect(() => {
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
+    if (w.requestIdleCallback) { const id = w.requestIdleCallback(preloadWorkspace, { timeout: 4000 }); return () => w.cancelIdleCallback?.(id); }
+    const id = window.setTimeout(preloadWorkspace, 2000);
+    return () => window.clearTimeout(id);
+  }, []);
   const t = TH[theme];
   const [model, setModel] = useState<Model | null>(null);
   const [modelBytes, setModelBytes] = useState<ArrayBuffer | null>(null);
@@ -127,7 +151,7 @@ export function App({
   const loadSeq = useRef(0);
   const cancelLoad = () => { loadSeq.current++; setStreamProg(null); setParsing(false); };
 
-  const loadDemo = () => { cancelLoad(); setModel(demoModel); setModelBytes(null); setSel(null); setLoadError(null); setFixUndo([]); };
+  const loadDemo = () => { preloadWorkspace(); cancelLoad(); setModel(demoModel); setModelBytes(null); setSel(null); setLoadError(null); setFixUndo([]); };
   const clearModel = () => { cancelLoad(); setModel(null); setModelBytes(null); setSel(null); setFixUndo([]); };
 
   // Apply a compiler auto-fix to the in-memory model (graph/stats/issues update
@@ -151,6 +175,7 @@ export function App({
     const seq = ++loadSeq.current;
     const live = () => seq === loadSeq.current;
     setLoadError(null);
+    preloadWorkspace();
     setParsing(true);
     setStreamProg(null);
     let flush: ReturnType<typeof throttleFrames> | null = null;
@@ -400,7 +425,9 @@ export function App({
           {/* Workspace: graph dominant (Netron-style), analysis sidebar on the right.
               On narrow viewports it stacks vertically and the splitter is hidden. */}
           <div style={{ flex: 1, display: "flex", flexDirection: narrow ? "column" : "row", overflow: "hidden" }}>
-            <GraphPanel model={model} selected={sel} onSelect={setSel} streaming={!!streamProg} colorMode={graphColor} onColorModeChange={setGraphColor} />
+            <Suspense fallback={<div role="status" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: t.t2 }}>Loading graph…</div>}>
+              <GraphPanel model={model} selected={sel} onSelect={setSel} streaming={!!streamProg} colorMode={graphColor} onColorModeChange={setGraphColor} />
+            </Suspense>
 
             {!narrow && (
               <div
@@ -418,6 +445,7 @@ export function App({
               {!narrow && <ToolStages active={rightTab} onChange={setRightTab} />}
               <ToolTabs active={rightTab} onChange={setRightTab} />
               <div role="tabpanel" style={{ flex: 1, overflow: "auto", padding: 10 }}>
+                <Suspense fallback={<div role="status" style={{ fontSize: 11.5, color: t.t2, padding: 6 }}>Loading…</div>}>
                 {streamProg && sideTab === "parsing" && <div style={{ fontSize: 11.5, color: t.t2, lineHeight: 1.6, padding: 6 }}>Parsing… {streamProg.pct}%. This panel opens once the whole model has loaded; the Inspector works now.</div>}
                 {sideTab === "inspector" && <Inspector layer={sel} model={model} />}
                 {sideTab === "compiler" && <CompilerChecker model={model} onApplyFix={onApplyFix} onUndo={onUndoFix} undoDepth={fixUndo.length} />}
@@ -433,6 +461,7 @@ export function App({
                 {sideTab === "fleet" && <FleetSim model={model} />}
                 {sideTab === "registry" && <ModelRegistry model={model} modelBytes={modelBytes} />}
                 {sideTab === "chat" && <div style={{ height: "100%" }}><Chat model={model} sel={sel} /></div>}
+                </Suspense>
               </div>
             </aside>
           </div>

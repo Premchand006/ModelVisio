@@ -1,4 +1,4 @@
-import { parseModelStream, type Companions, type Model, type ModelLayer, type ParseChunk } from "@modelvisio/parsers";
+import type { Companions, Model, ModelLayer, ParseChunk } from "@modelvisio/parsers";
 
 // Helpers for progressive parsing, shared by the worker, the main-thread
 // fallback and the UI. Pure (no React), so they are unit-testable.
@@ -100,6 +100,8 @@ export async function parseStreamingOnMainThread(
   const sliceMs = opts.sliceMs ?? 12;
   const yieldFn = opts.yieldFn ?? yieldToEventLoop;
   const co = new ChunkCoalescer(onChunk, 400, 50, now);
+  // Loaded on demand: only the no-Worker fallback parses on the main thread.
+  const { parseModelStream } = await import("@modelvisio/parsers");
   const it = parseModelStream(buffer, name, { batchSize: opts.batchSize ?? 64, companions: opts.companions });
   let sliceStart = now();
   for (;;) {

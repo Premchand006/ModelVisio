@@ -1,8 +1,12 @@
-import {
-  convertWeights, parseModel, STREAM_THRESHOLD_BYTES,
-  type Companions, type ConvertResult, type ConvTarget, type Model, type ParseChunk, type Precision,
+import { STREAM_THRESHOLD_BYTES } from "@modelvisio/parsers/limits";
+import type {
+  Companions, ConvertResult, ConvTarget, Model, ParseChunk, Precision,
 } from "@modelvisio/parsers";
 import { parseStreamingOnMainThread } from "./streaming";
+
+// The parsers are loaded on the main thread only for these no-Worker
+// fallbacks, so import them on demand and keep them out of the main bundle.
+const loadParsers = () => import("@modelvisio/parsers");
 
 export { STREAM_THRESHOLD_BYTES };
 
@@ -49,7 +53,7 @@ export async function parseBufferInWorker(buffer: ArrayBuffer, name: string, com
   try {
     w = getWorker();
   } catch {
-    return parseModel(buffer, name, companions);
+    return (await loadParsers()).parseModel(buffer, name, companions);
   }
   const id = ++seq;
   return new Promise<Model>((resolve, reject) => {
@@ -105,7 +109,7 @@ export async function convertWeightsInWorker(
   try {
     w = getWorker();
   } catch {
-    return convertWeights(buffer, name, { format, target, precision });
+    return (await loadParsers()).convertWeights(buffer, name, { format, target, precision });
   }
   const id = ++seq;
   return new Promise<ConvertResult>((resolve, reject) => {
