@@ -12,6 +12,7 @@
   "dependencies": {
     "@modelvisio/ai": "workspace:*",
     "@modelvisio/core": "workspace:*",
+    "@modelvisio/parsers": "workspace:*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

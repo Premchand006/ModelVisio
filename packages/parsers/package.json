@@ -11,7 +11,8 @@
     ".": "./src/index.ts",
     "./companions": "./src/companions.ts",
     "./formats": "./src/formatSupport.ts",
-    "./limits": "./src/limits.ts"
+    "./limits": "./src/limits.ts",
+    "./compat": "./src/compat.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

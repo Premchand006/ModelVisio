@@ -1,3 +1,4 @@
+import { execSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, loadEnv, type PluginOption } from "vite";
@@ -8,6 +9,7 @@ import { chatProviderFromEnv } from "@modelvisio/ai/providers";
 import { chatWithWebResearch, freeSearchApplies, parseFreeSearchMode } from "@modelvisio/ai/search";
 import { logChat, logClientEvent } from "@modelvisio/ai/log";
 import { handleScrapeRequest, scrapeOptionsFromEnv, scrapeUrl } from "@modelvisio/ai/scrape";
+import { buildSeoPages, buildSitemap } from "./seo/pages";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../..");
@@ -111,6 +113,25 @@ function scrapeProxyDev(env: Record<string, string | undefined>): PluginOption {
 }
 
 /**
+ * Build-only: write the static reference pages (seo/pages.ts) and sitemap.xml
+ * into dist/. lastmod is the date of the latest commit, so it only moves when
+ * the content can have changed (falls back to today outside a git checkout).
+ */
+function seoPages(): PluginOption {
+  return {
+    name: "modelvisio:seo-pages",
+    apply: "build",
+    generateBundle() {
+      let lastmod = new Date().toISOString().slice(0, 10);
+      try { lastmod = execSync("git log -1 --format=%cs", { cwd: repoRoot, stdio: ["ignore", "pipe", "ignore"] }).toString().trim() || lastmod; } catch { /* not a git checkout */ }
+      const pages = buildSeoPages();
+      for (const p of pages) this.emitFile({ type: "asset", fileName: p.path.replace(/^\//, "") + "index.html", source: p.html });
+      this.emitFile({ type: "asset", fileName: "sitemap.xml", source: buildSitemap(pages, lastmod) });
+    },
+  };
+}
+
+/**
  * Keep onnxruntime-web's GPU binary (ort-wasm-simd-threaded.asyncify.wasm,
  * ~27 MB) out of the build: it is over Cloudflare Pages' 25 MiB per-file limit.
  * Core's GPU benchmark never lets ORT resolve that URL (it downloads the binary
@@ -143,6 +164,7 @@ export default defineConfig(({ mode }) => {
       react(),
       chatProxyDev(merged),
       scrapeProxyDev(merged),
+      seoPages(),
     ],
     envDir: repoRoot,
     server: { port: 5173 },
