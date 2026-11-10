@@ -2,7 +2,6 @@ import React, { useCallback } from "react";
 import ReactDOM from "react-dom/client";
 import { App, type AppApi } from "@modelvisio/core";
 import { installTauriChatProxy, isTauri, wireTauriMenu } from "./tauri";
-import "./index.css";
 
 // Under the desktop shell, route the copilot's /api/chat through the Rust side.
 installTauriChatProxy();
